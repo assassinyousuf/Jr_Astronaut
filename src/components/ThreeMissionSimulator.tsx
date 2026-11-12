@@ -407,6 +407,126 @@ const createProceduralOceanTexture = (): THREE.CanvasTexture => {
   return tex;
 };
 
+const createSupersonicRocketPlumeTexture = (): THREE.CanvasTexture => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  ctx.clearRect(0, 0, 512, 1024);
+
+  // 1. Soft billowing turbulent flame mantle (Vivid saturated NASA RP-1 fire)
+  for (let step = 0; step < 16; step++) {
+    const y = step * 62;
+    const progress = step / 16;
+    const halfWidth = 55 + progress * 165 + Math.sin(step * 0.8) * 12;
+    const hGrad = ctx.createRadialGradient(256, y + 30, 0, 256, y + 30, halfWidth);
+
+    if (progress < 0.2) {
+      hGrad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+      hGrad.addColorStop(0.35, 'rgba(254, 240, 138, 0.98)');
+      hGrad.addColorStop(0.75, 'rgba(249, 115, 22, 0.92)');
+      hGrad.addColorStop(1.0, 'rgba(234, 88, 12, 0.0)');
+    } else if (progress < 0.6) {
+      hGrad.addColorStop(0.0, 'rgba(254, 240, 138, 0.95)');
+      hGrad.addColorStop(0.30, 'rgba(249, 115, 22, 0.94)');
+      hGrad.addColorStop(0.75, 'rgba(225, 29, 72, 0.75)');
+      hGrad.addColorStop(1.0, 'rgba(190, 18, 60, 0.0)');
+    } else {
+      hGrad.addColorStop(0.0, 'rgba(249, 115, 22, 0.85)');
+      hGrad.addColorStop(0.40, 'rgba(225, 29, 72, 0.55)');
+      hGrad.addColorStop(0.80, 'rgba(159, 18, 57, 0.25)');
+      hGrad.addColorStop(1.0, 'rgba(15, 23, 42, 0.0)');
+    }
+
+    ctx.fillStyle = hGrad;
+    ctx.beginPath();
+    ctx.ellipse(256, y + 30, halfWidth, 48, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 2. High-intensity incandescent supersonic central column
+  const coreVGrad = ctx.createLinearGradient(0, 0, 0, 700);
+  coreVGrad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+  coreVGrad.addColorStop(0.2, 'rgba(240, 249, 255, 0.98)');
+  coreVGrad.addColorStop(0.5, 'rgba(254, 240, 138, 0.85)');
+  coreVGrad.addColorStop(0.85, 'rgba(249, 115, 22, 0.40)');
+  coreVGrad.addColorStop(1.0, 'rgba(234, 88, 12, 0.0)');
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(256 - 32, 0);
+  ctx.bezierCurveTo(256 - 45, 150, 256 - 65, 380, 256 - 48, 650);
+  ctx.lineTo(256, 700);
+  ctx.lineTo(256 + 48, 650);
+  ctx.bezierCurveTo(256 + 65, 380, 256 + 45, 150, 256 + 32, 0);
+  ctx.closePath();
+  ctx.fillStyle = coreVGrad;
+  ctx.fill();
+  ctx.restore();
+
+  // 3. Supersonic Mach Shock Diamonds
+  for (let d = 0; d < 5; d++) {
+    const dy = 55 + d * 95;
+    const dw = 26 - d * 3.5;
+    const dh = 40 - d * 4.5;
+    const dGrad = ctx.createRadialGradient(256, dy, 0, 256, dy, dw);
+    dGrad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+    dGrad.addColorStop(0.4, 'rgba(186, 230, 253, 0.95)');
+    dGrad.addColorStop(0.8, 'rgba(56, 189, 248, 0.55)');
+    dGrad.addColorStop(1.0, 'rgba(56, 189, 248, 0.0)');
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(256, dy - dh);
+    ctx.lineTo(256 + dw, dy);
+    ctx.lineTo(256, dy + dh);
+    ctx.lineTo(256 - dw, dy);
+    ctx.closePath();
+    ctx.fillStyle = dGrad;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.needsUpdate = true;
+  return tex;
+};
+
+const createAtmosphericSkyTexture = (): THREE.CanvasTexture => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  // In Three.js SphereGeometry, V=1.0 (Canvas y=0) is Zenith (North Pole, straight up),
+  // V=0.50 (Canvas y=256) is the Equator / Horizon,
+  // V=0.0 (Canvas y=512) is Nadir (South Pole, straight down).
+  const grad = ctx.createLinearGradient(0, 0, 0, 512);
+  grad.addColorStop(0.0, '#020617'); // Space Navy Zenith
+  grad.addColorStop(0.18, '#031a38'); // Deep Upper Stratosphere
+  grad.addColorStop(0.32, '#024b86'); // Mid Stratosphere
+  grad.addColorStop(0.42, '#0284c7'); // Vivid Florida Azure
+  grad.addColorStop(0.48, '#38bdf8'); // Bright Cyan Sky
+  grad.addColorStop(0.50, '#e0f2fe'); // Sunlit Maritime Horizon Haze (Equator)
+  grad.addColorStop(0.52, '#7dd3fc'); // Horizon boundary
+  grad.addColorStop(0.60, '#0369a1'); // Shallow ocean tone
+  grad.addColorStop(0.75, '#075985'); // Deep Atlantic waters
+  grad.addColorStop(1.0, '#02182b'); // Nadir ocean abyss
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 128, 512);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.needsUpdate = true;
+  return tex;
+};
+
 export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
   mission,
   onSuccess,
@@ -569,7 +689,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     pitchDeg: 90,
     rollDeg: 0,
     stage: 1,
-    timeRemaining: 120,
+    timeRemaining: 360,
     statusText: 'FLIGHT COMPUTER ONLINE · ALL SYSTEMS NOMINAL',
     statusColor: '#22c55e',
     gForce: 1.0,
@@ -619,7 +739,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     pitchDeg: 90,
     rollDeg: 0,
     stage: 1,
-    timeRemaining: (mission.params as LaunchParams).timeWindowSec || 120,
+    timeRemaining: Math.max(360, ((mission.params as LaunchParams).timeWindowSec || 60) * 6),
     statusText: 'FLIGHT COMPUTER ONLINE · ALL SYSTEMS NOMINAL',
     statusColor: '#22c55e',
     isFinished: false,
@@ -699,6 +819,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
   const roverDustRef = useRef<THREE.Points | null>(null);
   const earthMeshRef = useRef<THREE.Mesh | null>(null);
   const atmoMeshRef = useRef<THREE.Mesh | null>(null);
+  const skyDomeRef = useRef<THREE.Mesh | null>(null);
   const roverWaypointsRef = useRef<Array<{
     x: number;
     z: number;
@@ -1687,7 +1808,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       pitchDeg: 90,
       rollDeg: 0,
       stage: 1,
-      timeRemaining: (mission.params as LaunchParams).timeWindowSec || 120,
+      timeRemaining: Math.max(360, ((mission.params as LaunchParams).timeWindowSec || 60) * 6),
       statusText:
         mission.gameType === 'telescope'
           ? 'TELESCOPE DEPLOYED · ALIGN MIRRORS WITH [W]/[S] TO 90%+ THEN PRESS [SPACE] TO CAPTURE'
@@ -1766,9 +1887,23 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       scene.background = new THREE.Color(marsSkyColor);
       scene.fog = new THREE.FogExp2(0x9a3412, 0.0016);
     } else if (mission.gameType === 'launch') {
-      // Photorealistic Florida Daytime Sky on Pad
-      scene.background = daySkyColor;
-      scene.fog = new THREE.FogExp2(0x38bdf8, 0.00015); // Crisp daytime coastal atmosphere
+      // Photorealistic Florida Daytime Sky Dome & Atmospheric Rayleigh Scattering
+      scene.background = new THREE.Color(0x020617);
+      const skyGeo = new THREE.SphereGeometry(15000, 32, 24);
+      const skyTex = createAtmosphericSkyTexture();
+      const skyMat = new THREE.MeshBasicMaterial({
+        map: skyTex,
+        side: THREE.BackSide,
+        depthWrite: false,
+        transparent: true,
+        opacity: 1.0,
+        fog: false,
+      });
+      const skyDome = new THREE.Mesh(skyGeo, skyMat);
+      skyDome.renderOrder = -1000; // Always render first in the background
+      scene.add(skyDome);
+      skyDomeRef.current = skyDome;
+      scene.fog = new THREE.FogExp2(0x38bdf8, 0.00012); // Crisp maritime haze
     } else {
       scene.background = new THREE.Color(spaceVoidColor);
       scene.fog = new THREE.FogExp2(spaceVoidColor, 0.0002);
@@ -1953,27 +2088,44 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     plumePointLight.position.set(0, -6, 0);
     scene.add(plumePointLight);
 
-    // 3. Earth Curve & Atmosphere (Visible from space with authentic high-res NASA texture)
-    const earthRadius = 6371;
+    // 3. Earth Curve & Atmosphere (Visible from space with authentic high-res NASA 2K texture)
+    const earthRadius = 2200;
     const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
-    const orbitalEarthTex = mainTextureLoader.load('/assets/earth_orbit.jpg');
+    const orbitalEarthTex = mainTextureLoader.load('/assets/planets/2k_earth_daymap.jpg');
     orbitalEarthTex.wrapS = THREE.RepeatWrapping;
     orbitalEarthTex.wrapT = THREE.ClampToEdgeWrapping;
     const earthMat = new THREE.MeshStandardMaterial({
       map: orbitalEarthTex,
       roughness: 0.72,
       metalness: 0.08,
-      emissive: 0x031024,
-      emissiveIntensity: 0.2,
+      emissive: 0x000612,
+      emissiveIntensity: 0.05,
     });
     const earthMesh = new THREE.Mesh(earthGeo, earthMat);
-    const atmoGeo = new THREE.SphereGeometry(earthRadius + 65, 64, 64);
+
+    // Realistic Cloud Layer (NASA 2K Cloud Deck)
+    const cloudsTex = mainTextureLoader.load('/assets/planets/2k_earth_clouds.jpg');
+    cloudsTex.wrapS = THREE.RepeatWrapping;
+    cloudsTex.wrapT = THREE.ClampToEdgeWrapping;
+    const cloudsGeo = new THREE.SphereGeometry(earthRadius + 6, 64, 64);
+    const cloudsMat = new THREE.MeshStandardMaterial({
+      map: cloudsTex,
+      transparent: true,
+      opacity: 0.42,
+      blending: THREE.NormalBlending,
+      depthWrite: false,
+    });
+    const cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMat);
+    earthMesh.add(cloudsMesh);
+
+    const atmoGeo = new THREE.SphereGeometry(earthRadius + 28, 64, 64);
     const atmoMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
+      color: 0x0284c7,
       side: THREE.BackSide,
       transparent: true,
-      opacity: visualTone === 'CINEMATIC_GRADE' ? 0.35 : 0.24,
+      opacity: 0.32,
       blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
     const atmoMesh = new THREE.Mesh(atmoGeo, atmoMat);
 
@@ -1981,11 +2133,11 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     atmoMeshRef.current = atmoMesh;
 
     if (mission.gameType === 'launch') {
-      // In launch, Earth is positioned as a curved globe 320 units below.
-      // Initially hidden on the pad (so Cape Canaveral flat coastal pad terrain is visible without any polygon distortion).
-      // Made visible as rocket ascends into the stratosphere & space (> 32 km)!
-      earthMesh.position.set(0, -earthRadius - 320, 0);
-      atmoMesh.position.set(0, -earthRadius - 320, 0);
+      // In launch, Earth is positioned as a curved globe well below the pad.
+      // Hidden on the pad and in the lower atmosphere (so Cape Canaveral flat coastal pad terrain is visible without any polygon distortion).
+      // Only made visible as rocket ascends into the upper stratosphere & space (> 28 km)!
+      earthMesh.position.set(0, -earthRadius - 380, 0);
+      atmoMesh.position.set(0, -earthRadius - 380, 0);
       earthMesh.visible = false;
       atmoMesh.visible = false;
       earthMesh.receiveShadow = true;
@@ -2883,64 +3035,117 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       loxVentMeshRef.current = loxVent;
       playerVehicle.add(loxVent);
 
-      // Rocket Exhaust Plume with Mach Shock Diamonds & Incandescent Jet Mantle
+      // Rocket Exhaust Plume with Photorealistic Supersonic Plume Texture, Crossed Quads & Mach Diamonds
       machDiamondGroup = new THREE.Group();
       machDiamondGroupRef.current = machDiamondGroup;
-      machDiamondGroup.position.set(0, -1.8, 0); // Attached directly at rocket engine nozzle exit plane
+      machDiamondGroup.position.set(0, -1.8, 0); // Directly at rocket engine nozzle exit plane
 
-      // 1. Outer Incandescent Fire Mantle (Volumetric Orange/Amber Plasma)
-      const mantleGeo = new THREE.ConeGeometry(4.8, 42, 32);
-      const mantleMat = new THREE.MeshBasicMaterial({
-        color: 0xff6b00,
+      const plumeTex = createSupersonicRocketPlumeTexture();
+
+      // 1. Four crossed billboard planes for 360-degree volumetric viewing
+      // Outer fiery envelope uses NormalBlending so flame remains vividly saturated and never washes out in daylight
+      const quadGeo = new THREE.PlaneGeometry(13.5, 48);
+      const quadMat = new THREE.MeshBasicMaterial({
+        map: plumeTex,
         transparent: true,
-        opacity: 0.65,
-        blending: THREE.AdditiveBlending,
+        opacity: 0.98,
+        blending: THREE.NormalBlending,
+        side: THREE.DoubleSide,
+        depthWrite: false,
       });
-      const mantleMesh = new THREE.Mesh(mantleGeo, mantleMat);
-      mantleMesh.rotation.x = Math.PI;
-      mantleMesh.position.y = -21;
-      machDiamondGroup.add(mantleMesh);
 
-      // 2. High-Temperature Supersonic Flame Body
-      const flameGeo = new THREE.ConeGeometry(3.2, 30, 32);
-      const flameMat = new THREE.MeshBasicMaterial({
-        color: 0xffb703,
+      const quad1 = new THREE.Mesh(quadGeo, quadMat);
+      quad1.position.y = -24;
+      machDiamondGroup.add(quad1);
+
+      const quad2 = new THREE.Mesh(quadGeo, quadMat);
+      quad2.rotation.y = Math.PI / 2;
+      quad2.position.y = -24;
+      machDiamondGroup.add(quad2);
+
+      const quad3 = new THREE.Mesh(quadGeo, quadMat);
+      quad3.rotation.y = Math.PI / 4;
+      quad3.position.y = -24;
+      machDiamondGroup.add(quad3);
+
+      const quad4 = new THREE.Mesh(quadGeo, quadMat);
+      quad4.rotation.y = -Math.PI / 4;
+      quad4.position.y = -24;
+      machDiamondGroup.add(quad4);
+
+      // 2. High-heat inner core luminescence with AdditiveBlending
+      const addCoreMat = new THREE.MeshBasicMaterial({
+        map: plumeTex,
         transparent: true,
-        opacity: 0.88,
+        opacity: 0.85,
         blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        depthWrite: false,
       });
-      const flameMesh = new THREE.Mesh(flameGeo, flameMat);
-      flameMesh.rotation.x = Math.PI;
-      flameMesh.position.y = -15;
-      machDiamondGroup.add(flameMesh);
+      const coreQuad1 = new THREE.Mesh(quadGeo, addCoreMat);
+      coreQuad1.position.y = -24;
+      coreQuad1.scale.set(0.65, 0.92, 0.65);
+      machDiamondGroup.add(coreQuad1);
 
-      // 3. Incandescent Blue/White Supersonic Core Jet
-      const coreGeo = new THREE.ConeGeometry(1.6, 20, 24);
-      const coreMat = new THREE.MeshBasicMaterial({
-        color: 0xe0f2fe,
+      const coreQuad2 = new THREE.Mesh(quadGeo, addCoreMat);
+      coreQuad2.rotation.y = Math.PI / 2;
+      coreQuad2.position.y = -24;
+      coreQuad2.scale.set(0.65, 0.92, 0.65);
+      machDiamondGroup.add(coreQuad2);
+
+      // 3. High-intensity incandescent engine throat disc (blinding white/cyan light right at nozzle exit)
+      const throatGeo = new THREE.CircleGeometry(2.2, 24);
+      const throatMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
         transparent: true,
-        opacity: 0.95,
-        blending: THREE.AdditiveBlending,
+        opacity: 0.98,
       });
-      const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-      coreMesh.rotation.x = Math.PI;
-      coreMesh.position.y = -10;
-      machDiamondGroup.add(coreMesh);
+      const throatMesh = new THREE.Mesh(throatGeo, throatMat);
+      throatMesh.rotation.x = Math.PI / 2;
+      throatMesh.position.y = -0.1;
+      machDiamondGroup.add(throatMesh);
 
-      // 4. Authentic Mach Shock Diamonds (Expanding/Contracting Supersonic Discs)
+      // 4. Volumetric outer cylinder sheath mapped with plume texture
+      const sheathGeo = new THREE.CylinderGeometry(1.6, 5.5, 46, 24, 1, true);
+      const sheathMat = new THREE.MeshBasicMaterial({
+        map: plumeTex,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.60,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const sheathMesh = new THREE.Mesh(sheathGeo, sheathMat);
+      sheathMesh.position.y = -23;
+      machDiamondGroup.add(sheathMesh);
+
+      // 5. Authentic Mach Shock Diamond Discs (pulsating supersonic shockwaves)
       for (let d = 0; d < 5; d++) {
-        const shockGeo = new THREE.TorusGeometry(1.3 - d * 0.18, 0.22, 16, 32);
+        const shockGeo = new THREE.TorusGeometry(1.4 - d * 0.18, 0.26, 16, 32);
         const shockMat = new THREE.MeshBasicMaterial({
           color: 0x38bdf8,
           transparent: true,
-          opacity: 0.9,
+          opacity: 0.92,
           blending: THREE.AdditiveBlending,
         });
         const shock = new THREE.Mesh(shockGeo, shockMat);
         shock.rotation.x = Math.PI / 2;
-        shock.position.y = -3.5 - d * 4.2;
+        shock.position.y = -3.2 - d * 4.6;
+        shock.renderOrder = 52;
         machDiamondGroup.add(shock);
       }
+
+      machDiamondGroup.renderOrder = 50;
+      quad1.renderOrder = 50;
+      quad2.renderOrder = 50;
+      quad3.renderOrder = 50;
+      quad4.renderOrder = 50;
+      coreQuad1.renderOrder = 51;
+      coreQuad2.renderOrder = 51;
+      sheathMesh.renderOrder = 50;
+      throatMesh.renderOrder = 52;
 
       machDiamondGroup.visible = false;
       playerVehicle.add(machDiamondGroup);
@@ -4994,54 +5199,33 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
           vaporConeMat.opacity = 0.35 + Math.random() * 0.25;
         }
 
-        // Dynamic Atmospheric Sky & Fog Transition (Florida Coast Azure -> Deep Space Void)
-        if (scene) {
+        // Dynamic Sky Dome centered on camera so it stays at infinity without frustum clipping
+        if (skyDomeRef.current) {
+          skyDomeRef.current.position.copy(camera.position);
           const alt = state.altitudeKm;
-          if (alt < 15) {
-            // Troposphere (0 - 15 km): Florida Azure Daylight to Deep Blue
-            const t = Math.max(0, alt / 15);
-            daySkyColor.setRGB(
-              THREE.MathUtils.lerp(0.22, 0.06, t),
-              THREE.MathUtils.lerp(0.74, 0.20, t),
-              THREE.MathUtils.lerp(0.97, 0.50, t)
-            );
+          if (alt < 35) {
+            (skyDomeRef.current.material as THREE.MeshBasicMaterial).opacity = 1.0;
             if (scene.fog) {
-              scene.fog.color.copy(daySkyColor);
-              (scene.fog as THREE.FogExp2).density = THREE.MathUtils.lerp(0.00015, 0.00005, t);
+              const t = Math.max(0, alt / 20);
+              (scene.fog as THREE.FogExp2).density = THREE.MathUtils.lerp(0.00012, 0.00001, t);
             }
             if (starMat) starMat.opacity = 0;
-          } else if (alt < 55) {
-            // Stratosphere (15 - 55 km): Deep Royal Blue to Twilight Inky Indigo
-            const t = (alt - 15) / 40;
-            daySkyColor.setRGB(
-              THREE.MathUtils.lerp(0.06, 0.02, t),
-              THREE.MathUtils.lerp(0.20, 0.04, t),
-              THREE.MathUtils.lerp(0.50, 0.12, t)
-            );
-            if (scene.fog) {
-              scene.fog.color.copy(daySkyColor);
-              (scene.fog as THREE.FogExp2).density = THREE.MathUtils.lerp(0.00005, 0.00001, t);
-            }
-            if (starMat) starMat.opacity = t * 0.55;
-          } else if (alt < 90) {
-            // Mesosphere: Twilight Indigo to Pitch Black Space
-            const t = (alt - 55) / 35;
-            daySkyColor.setRGB(
-              THREE.MathUtils.lerp(0.02, 0.008, t),
-              THREE.MathUtils.lerp(0.04, 0.012, t),
-              THREE.MathUtils.lerp(0.12, 0.024, t)
-            );
+            if (starPoints) starPoints.visible = false;
+          } else if (alt < 80) {
+            const t = (alt - 35) / 45;
+            (skyDomeRef.current.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 1.0 - t);
             if (scene.fog) {
               (scene.fog as THREE.FogExp2).density = 0;
             }
-            if (starMat) starMat.opacity = 0.55 + t * 0.45;
+            if (starMat) starMat.opacity = Math.min(1.0, t * 1.25);
+            if (starPoints) starPoints.visible = true;
           } else {
-            // Space Vacuum: Deep cosmic void with high-contrast stars & Earth curvature
-            daySkyColor.setRGB(0.008, 0.012, 0.024);
+            (skyDomeRef.current.material as THREE.MeshBasicMaterial).opacity = 0;
             if (scene.fog) {
               (scene.fog as THREE.FogExp2).density = 0;
             }
             if (starMat) starMat.opacity = 1.0;
+            if (starPoints) starPoints.visible = true;
           }
 
           // Kármán Line Crossing Milestone (100 km)
@@ -5051,25 +5235,39 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
           }
         }
 
-        // Photorealistic Curved Earth Globe rising smoothly beneath the spacecraft
+        // Photorealistic Curved Earth Globe rising smoothly beneath the spacecraft in upper stratosphere & space
         if (earthMeshRef.current && atmoMeshRef.current) {
-          if (state.altitudeKm > 8) {
+          if (state.altitudeKm > 22) {
             earthMeshRef.current.visible = true;
             atmoMeshRef.current.visible = true;
-            const targetY = -earthRadius - 120 + Math.min(state.altitudeKm * 1.8, 160);
-            earthMeshRef.current.position.y = targetY;
-            atmoMeshRef.current.position.y = targetY;
+            // Center the Earth globe so its majestic curved horizon frames the lower portion of the screen
+            const t = Math.min(1.0, (state.altitudeKm - 22) / 45); // 0 at 22km, 1 at 67km
+            const horizonYOffset = THREE.MathUtils.lerp(460, 220, t);
+            const earthY = playerVehicle.position.y + 6.0 - horizonYOffset - earthRadius;
+            const earthZ = playerVehicle.position.z - 950;
+            const earthX = playerVehicle.position.x;
+
+            earthMeshRef.current.position.set(earthX, earthY, earthZ);
+            atmoMeshRef.current.position.set(earthX, earthY, earthZ);
             earthMeshRef.current.rotation.y = time * 0.00003;
             atmoMeshRef.current.rotation.y = time * 0.00003;
+
+            // Fade in atmospheric glow with altitude
+            if (atmoMeshRef.current.material) {
+              (atmoMeshRef.current.material as THREE.MeshBasicMaterial).opacity = 0.45 * t;
+            }
           } else {
             earthMeshRef.current.visible = false;
             atmoMeshRef.current.visible = false;
           }
         }
 
-        // Hide flat launch pad once high above Cape Canaveral to prevent clipping
+        // Hide flat launch pad once vehicle clears the low troposphere (> 1.2 km) to prevent any edge clipping
         if (groundPadGroup) {
-          groundPadGroup.visible = state.altitudeKm < 45;
+          groundPadGroup.visible = state.altitudeKm < 1.2;
+        }
+        if (cloudDeckGroup) {
+          cloudDeckGroup.visible = state.altitudeKm < 15.0;
         }
 
         if (canControl) {
@@ -5191,14 +5389,15 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
         if (machDiamondGroup) {
           if (state.throttle > 0.01) {
             machDiamondGroup.visible = true;
-            const flicker = 1.0 + Math.random() * 0.12;
-            const vacuumExpansion = 1.0 + Math.min(2.8, Math.max(0, (state.altitudeKm - 15) / 18));
+            const flicker = 0.96 + Math.random() * 0.08;
+            // Physical vacuum expansion: atmospheric back-pressure drops, allowing plume to bloom
+            const vacuumExpansion = 1.0 + Math.min(2.4, Math.max(0, (state.altitudeKm - 10) / 22));
             machDiamondGroup.scale.set(
               vacuumExpansion * flicker,
-              state.throttle * 1.5 * flicker * effectiveThrustMult,
+              Math.max(0.2, state.throttle * (1.1 + Math.random() * 0.06)),
               vacuumExpansion * flicker
             );
-            plumePointLight.intensity = state.throttle * (22 + Math.random() * 6);
+            plumePointLight.intensity = state.throttle * (26 + Math.random() * 6);
             plumePointLight.position.set(0, playerVehicle.position.y - 6, 0);
           } else {
             machDiamondGroup.visible = false;
@@ -5286,9 +5485,23 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
         }
 
         const effectiveTargetAlt = p.targetAltitudeKm > 0 ? p.targetAltitudeKm : 185;
+        (state as any).maxAltitudeReached = Math.max((state as any).maxAltitudeReached || 0, state.altitudeKm);
+
         const reachedSpaceOrOrbit = isMercury
-          ? (state.altitudeKm >= 100 || state.altitudeKm >= effectiveTargetAlt * 0.85)
+          ? (state.altitudeKm >= 100 || (state as any).maxAltitudeReached >= 100 || state.altitudeKm >= effectiveTargetAlt * 0.85)
           : ((state.altitudeKm >= effectiveTargetAlt * 0.85 && state.velocityKms >= 6.8) || state.altitudeKm >= 185);
+
+        // When propellant depletes during ascent, initiate MECO & allow upward ballistic coasting
+        if (state.propellant <= 0 && state.stage === 1 && state.altitudeKm > 15) {
+          if (!simStateRef.current.towerJettisoned) {
+            handleFairingSeparation();
+          }
+          handleStage1Separation();
+          state.statusText = isMercury
+            ? '⚡ REDSTONE MECO · FREEDOM 7 COASTING ON MOMENTUM TO APOGEE (187 KM)'
+            : '⚡ STAGE 1 MECO · UPPER STAGE PREPARED';
+          state.statusColor = '#38bdf8';
+        }
 
         if (state.tliComplete) {
           state.isFinished = true;
@@ -5303,17 +5516,21 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
             soundFx.playVictory();
             confetti({ particleCount: 220, spread: 90 });
             state.statusText = isMercury
-              ? '🌌 REACHED SPACE! KÁRMÁN LINE (100 KM) PASSED · SUBORBITAL MISSION ACCOMPLISHED!'
+              ? '🌌 REACHED SPACE! KÁRMÁN LINE (100 KM) PASSED · FREEDOM 7 SUBORBITAL TRIUMPH!'
               : '🌍 ORBITAL INSERTION ACHIEVED · WELCOME TO SPACE · MISSION ACCOMPLISHED!';
             state.statusColor = '#22c55e';
             if (moonMeshRef.current) moonMeshRef.current.visible = false;
             if (trajectoryLineRef.current) trajectoryLineRef.current.visible = true;
             setTimeout(() => onSuccess(1000), 2500);
           }
-        } else if (state.timeRemaining <= 0 || (state.propellant <= 0 && state.altitudeKm < 60 && !state.tliActive)) {
+        } else if (state.timeRemaining <= 0) {
           state.isFinished = true;
           soundFx.playAlarm();
-          onFailure(`Trajectory profile missed. Final Altitude: ${state.altitudeKm.toFixed(1)} km`);
+          onFailure(`Launch window expired: orbital insertion deadline reached (${effectiveTargetAlt} km target).`);
+        } else if (state.altitudeKm <= 0.05 && ((state as any).realVy || 0) < -12 && ((state as any).maxAltitudeReached || 0) > 1.0) {
+          state.isFinished = true;
+          soundFx.playAlarm();
+          onFailure(`Vehicle lost on ocean impact. Apogee reached: ${((state as any).maxAltitudeReached || state.altitudeKm).toFixed(1)} km`);
         }
       }
 
