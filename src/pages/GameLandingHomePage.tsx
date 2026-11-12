@@ -319,7 +319,7 @@ export const GameLandingHomePage: React.FC<GameLandingHomePageProps> = ({
           title={currentUser ? "Enter 4 Learning Stacks (Space Place Dossier & OR-Graph)" : "Sign In or Register to Start Learning"}
         >
           <Rocket size={26} />
-          <span>🚀 START LEARNING</span>
+          <span>START LEARNING</span>
         </button>
 
         {/* Secondary Action Buttons */}

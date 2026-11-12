@@ -45,6 +45,7 @@ interface NasaMissionAssistantChatbotProps {
   floatingMode?: boolean;
   initialMode?: 'mentor' | 'copilot';
   mentorContext?: StudentMentorContext;
+  floatingOffsetBottom?: number;
 }
 
 // Preset Quick Inquiry Prompts for middle school cadets (Student Mentor Persona)
@@ -187,6 +188,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
   floatingMode = true,
   initialMode = 'mentor',
   mentorContext,
+  floatingOffsetBottom = 24,
 }) => {
   const [internalIsOpen, setInternalIsOpen] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
@@ -318,7 +320,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
           className="copilot-floating-trigger-btn mentor-floating-widget"
           style={{
             position: 'fixed',
-            bottom: '24px',
+            bottom: `${floatingOffsetBottom}px`,
             right: '24px',
             zIndex: 9990,
             display: 'flex',
@@ -326,6 +328,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
             alignItems: 'flex-end',
             gap: '8px',
             pointerEvents: 'auto',
+            transition: 'bottom 0.25s ease',
           }}
         >
           {/* Supportive Speech Bubble */}
@@ -394,7 +397,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
           aria-label="Mission Mentor"
           style={{
             position: 'fixed',
-            bottom: floatingMode ? '24px' : '50%',
+            bottom: floatingMode ? `${floatingOffsetBottom}px` : '50%',
             right: floatingMode ? '24px' : '50%',
             transform: floatingMode ? 'none' : 'translate(50%, 50%)',
             width: isExpanded ? 'min(780px, calc(100vw - 32px))' : 'min(460px, calc(100vw - 32px))',

@@ -992,6 +992,7 @@ export const App: React.FC = () => {
           onClose={() => setIsChatbotOpen(false)}
           floatingMode={true}
           initialMode="mentor"
+          floatingOffsetBottom={route === 'mission' ? 96 : 24}
           mentorContext={{
             activeEvent: gameState.activeEvent,
             destination: gameState.destination,

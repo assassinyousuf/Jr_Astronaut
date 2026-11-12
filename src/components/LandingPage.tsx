@@ -2569,36 +2569,38 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               )}
             </div>
 
-            {/* Right: Flagship Quick Trigger Button */}
-            <div className="ne-flagship-cta-bar nasa-eyes-interactive">
-              <button
-                onClick={() => {
-                  setIsDestModalOpen(true);
-                  soundFx.playReactorStart();
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #f97316, #ea580c)',
-                  color: '#ffffff',
-                  border: '1.5px solid rgba(255, 255, 255, 0.65)',
-                  borderRadius: '8px',
-                  padding: '8px 16px',
-                  fontSize: '12.5px',
-                  fontWeight: 900,
-                  letterSpacing: '0.04em',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 0 16px rgba(249, 115, 22, 0.6), 0 4px 12px rgba(0,0,0,0.5)',
-                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                  whiteSpace: 'nowrap',
-                }}
-                title="Start Outpost Mission (No login required - 100% Guest Mode)"
-              >
-                <Rocket size={15} />
-                <span>START LEARNING</span>
-              </button>
-            </div>
+            {/* Right: Flagship Quick Trigger Button (Shown on home/briefing, hidden on explore canvas to avoid toolbar overlap) */}
+            {mode !== 'explore' && (
+              <div className="ne-flagship-cta-bar nasa-eyes-interactive">
+                <button
+                  onClick={() => {
+                    setIsDestModalOpen(true);
+                    soundFx.playReactorStart();
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #f97316, #ea580c)',
+                    color: '#ffffff',
+                    border: '1.5px solid rgba(255, 255, 255, 0.65)',
+                    borderRadius: '8px',
+                    padding: '8px 16px',
+                    fontSize: '12.5px',
+                    fontWeight: 900,
+                    letterSpacing: '0.04em',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 0 16px rgba(249, 115, 22, 0.6), 0 4px 12px rgba(0,0,0,0.5)',
+                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Start Outpost Mission (No login required - 100% Guest Mode)"
+                >
+                  <Rocket size={15} />
+                  <span>START LEARNING</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ═══ FLAGSHIP HOME HERO OVERLAY (Visible on first load in home mode, dismissible) ═══ */}
