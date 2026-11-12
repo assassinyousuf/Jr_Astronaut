@@ -55,6 +55,7 @@ const AudioTeachingFlashcard = lazy(() => import('./components/AudioTeachingFlas
 const LeaderboardModal = lazy(() => import('./components/LeaderboardModal').then(m => ({ default: m.LeaderboardModal })));
 const OuterSpaceDiscoveryModal = lazy(() => import('./components/learning/OuterSpaceDiscoveryModal').then(m => ({ default: m.OuterSpaceDiscoveryModal })));
 const MoonquakeMapModal = lazy(() => import('./components/MoonquakeMapModal').then(m => ({ default: m.MoonquakeMapModal })));
+const NasaMissionAssistantChatbot = lazy(() => import('./components/NasaMissionAssistantChatbot').then(m => ({ default: m.NasaMissionAssistantChatbot })));
 
 export const ARTEMIS_LUNAR_BASE_MISSION: NasaMission =
   NASA_MISSIONS.find((m) => m.id === 'NASA-M049') || NASA_MISSIONS[48];
@@ -191,6 +192,7 @@ export const App: React.FC = () => {
   const [isMoonquakeMapOpen, setIsMoonquakeMapOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isLearningDiscoveryOpen, setIsLearningDiscoveryOpen] = useState(false);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [isCoopActive, setIsCoopActive] = useState(false);
   const [coopRole, setCoopRole] = useState<import('./utils/multiplayerMissionService').CrewRole>('CDR');
 
@@ -209,6 +211,7 @@ export const App: React.FC = () => {
     setIsLeaderboardOpen(false);
     setIsLearningDiscoveryOpen(false);
     setIsMoonquakeMapOpen(false);
+    setIsChatbotOpen(false);
     setIsBriefingModalOpen(false);
     setIsConstructionModalOpen(false);
     setIsFlashcardOpen(false);
@@ -789,6 +792,7 @@ export const App: React.FC = () => {
           onOpenAbout={() => setIsAboutOpen(true)}
           onOpenMultiplayerLobby={() => setIsMultiplayerLobbyOpen(true)}
           onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+          onOpenChatbot={() => setIsChatbotOpen(true)}
         />
       )}
 
@@ -978,6 +982,15 @@ export const App: React.FC = () => {
         <MoonquakeMapModal
           isOpen={isMoonquakeMapOpen}
           onClose={() => setIsMoonquakeMapOpen(false)}
+        />
+
+        {/* NASA Mission Assistant AI Copilot Chatbot */}
+        <NasaMissionAssistantChatbot
+          currentUser={currentUser}
+          isOpen={isChatbotOpen}
+          onOpen={() => setIsChatbotOpen(true)}
+          onClose={() => setIsChatbotOpen(false)}
+          floatingMode={true}
         />
       </Suspense>
 

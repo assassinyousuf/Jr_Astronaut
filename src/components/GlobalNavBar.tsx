@@ -20,6 +20,7 @@ import {
   X,
   Globe,
   Trophy,
+  Bot,
 } from 'lucide-react';
 
 export interface GlobalNavBarProps {
@@ -40,6 +41,7 @@ export interface GlobalNavBarProps {
   onOpenAbout?: () => void;
   onOpenMultiplayerLobby?: () => void;
   onOpenLeaderboard?: () => void;
+  onOpenChatbot?: () => void;
 }
 
 export const GlobalNavBar: React.FC<GlobalNavBarProps> = ({
@@ -51,6 +53,7 @@ export const GlobalNavBar: React.FC<GlobalNavBarProps> = ({
   onOpenHowToPlay,
   onOpenCertificate,
   onOpenLeaderboard,
+  onOpenChatbot,
 }) => {
   const [isAudioMuted, setIsAudioMuted] = useState(() => spaceMusicEngine.getIsMuted());
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -350,6 +353,27 @@ export const GlobalNavBar: React.FC<GlobalNavBarProps> = ({
                 <div style={{ height: '1px', background: '#1e293b', margin: '4px 0' }} />
 
                 <button
+                  onClick={() => { setIsMoreOpen(false); onOpenChatbot?.(); soundFx.playRadioChirp(); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#38bdf8',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                  }}
+                >
+                  <Bot size={15} />
+                  <span>NASA AI Copilot</span>
+                </button>
+
+                <button
                   onClick={() => { setIsMoreOpen(false); onOpenSettings(); soundFx.playClick(700); }}
                   style={{
                     display: 'flex',
@@ -488,6 +512,31 @@ export const GlobalNavBar: React.FC<GlobalNavBarProps> = ({
         >
           <Trophy size={15} />
           <span className="hidden sm:inline">Leaderboard</span>
+        </button>
+
+        {/* 🤖 NASA AI Copilot Chatbot Button */}
+        <button
+          onClick={() => { onOpenChatbot?.(); soundFx.playRadioChirp(); }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            padding: '6px 12px',
+            borderRadius: '9999px',
+            background: 'rgba(56, 189, 248, 0.15)',
+            border: '1px solid rgba(56, 189, 248, 0.5)',
+            color: '#38bdf8',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 700,
+            transition: 'all 0.15s ease',
+          }}
+          title="NASA Mission Assistant Copilot"
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(56,189,248,0.25)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(56,189,248,0.15)'; }}
+        >
+          <Bot size={15} />
+          <span className="hidden sm:inline">AI Copilot</span>
         </button>
 
         {/* Mobile Hamburger */}
