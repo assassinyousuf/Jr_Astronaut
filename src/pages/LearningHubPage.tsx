@@ -1,11 +1,11 @@
 import React from 'react';
 import type { AppRoute } from '../router/useAppRouter';
-import { LearningHubModal } from '../components/LearningHubModal';
+import { LearningHubModal, type HubTab } from '../components/LearningHubModal';
 import type { MissionEvent } from '../types/game';
 import type { TeachingFlashcard } from '../data/teachingFlashcards';
 
 export interface LearningHubPageProps {
-  initialTab?: 'NOTEBOOK' | 'MODELS_3D' | 'VIDEO' | 'AUDIO' | 'COMIC' | 'BRIEFINGS' | 'CATALOG';
+  initialTab?: HubTab;
   initialIssueId?: string;
   activeEvent: MissionEvent | null;
   collectedFlashcards?: TeachingFlashcard[];
@@ -14,10 +14,13 @@ export interface LearningHubPageProps {
   completedMissions?: string[];
   onOpenComicReader?: (issueId?: string) => void;
   onNavigate: (route: AppRoute, params?: Record<string, string>) => void;
+  currentUser?: any;
+  onOpenCertificate?: (milestoneTitle?: string) => void;
+  onOpenLeaderboard?: () => void;
 }
 
 export const LearningHubPage: React.FC<LearningHubPageProps> = ({
-  initialTab = 'NOTEBOOK',
+  initialTab = 'OR_GRAPH',
   initialIssueId,
   activeEvent,
   collectedFlashcards,
@@ -26,6 +29,9 @@ export const LearningHubPage: React.FC<LearningHubPageProps> = ({
   completedMissions,
   onOpenComicReader,
   onNavigate,
+  currentUser,
+  onOpenCertificate,
+  onOpenLeaderboard,
 }) => {
   return (
     <LearningHubModal
@@ -40,6 +46,9 @@ export const LearningHubPage: React.FC<LearningHubPageProps> = ({
       onLaunchMission={onLaunchMission}
       completedMissions={completedMissions}
       onOpenComicReader={onOpenComicReader}
+      currentUser={currentUser}
+      onOpenCertificate={onOpenCertificate}
+      onOpenLeaderboard={onOpenLeaderboard}
     />
   );
 };

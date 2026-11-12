@@ -16,6 +16,10 @@ export interface User {
   avatar: string;
   cadetRank: string; // e.g., 'Flight Candidate', 'Mission Specialist', 'Commander'
   coins: number; // In-game currency earned from missions
+  academicPoints?: number; // Academic score earned from quizzes & lessons
+  passedQuizzes?: string[]; // IDs of passed quizzes
+  completedMilestones?: string[]; // IDs of completed curriculum milestones
+  completedLessonIds?: string[]; // IDs of completed video/audio/comic lessons
   selectedCharacterId?: string; // e.g., 'neil_armstrong'
   unlockedCharacterIds?: string[]; // IDs of unlocked historic astronaut characters
   completedMissions?: string[]; // IDs of completed missions

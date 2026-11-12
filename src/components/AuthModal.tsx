@@ -109,7 +109,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         username,
         password,
         role,
-        email: role === 'teacher' ? email : undefined,
+        email: email ? email.trim() : undefined,
         fullName,
         schoolOrOrg: role === 'teacher' ? schoolOrOrg : undefined,
         avatar: selectedAvatar,
@@ -512,7 +512,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <span>Junior Astronaut</span>
                     </div>
                     <span style={{ fontSize: '10.5px', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
-                      Username & Password only (No email needed!)
+                      Username, Email & Password supported
                     </span>
                   </div>
 
@@ -548,25 +548,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               {/* Form */}
               <form onSubmit={tab === 'login' ? handleLogin : handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {/* Email (Shown for Teachers) */}
-                {role === 'teacher' && (
+                {/* Username or Email (In Login Tab) */}
+                {tab === 'login' && (
                   <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#c084fc', marginBottom: '6px' }}>
-                      <Mail size={13} />
-                      <span>TEACHER EMAIL ADDRESS * (REQUIRED FOR TEACHERS)</span>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#38bdf8', marginBottom: '6px' }}>
+                      <UserIcon size={13} />
+                      <span>USERNAME OR EMAIL ADDRESS *</span>
                     </label>
                     <input
-                      type="email"
-                      required={role === 'teacher' && tab === 'register'}
-                      placeholder="e.g. teacher@school.edu"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      type="text"
+                      required
+                      placeholder="e.g. CadetArtemis or cadet@school.edu"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       style={{
                         width: '100%',
                         padding: '10px 14px',
                         borderRadius: '8px',
                         background: 'rgba(15, 23, 42, 0.85)',
-                        border: '1px solid rgba(168, 85, 247, 0.4)',
+                        border: '1px solid rgba(56, 189, 248, 0.4)',
                         color: '#f8fafc',
                         fontFamily: 'var(--font-mono)',
                         fontSize: '12.5px',
@@ -577,32 +577,64 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                 )}
 
-                {/* Username */}
-                <div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#38bdf8', marginBottom: '6px' }}>
-                    <UserIcon size={13} />
-                    <span>{role === 'teacher' ? 'TEACHER USERNAME / CALLSIGN *' : 'ASTRONAUT CALLSIGN / USERNAME *'}</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder={role === 'teacher' ? 'e.g. TeacherSarah' : 'e.g. CadetApollo'}
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      background: 'rgba(15, 23, 42, 0.85)',
-                      border: '1px solid rgba(56, 189, 248, 0.4)',
-                      color: '#f8fafc',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '12.5px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
+                {/* Registration Fields */}
+                {tab === 'register' && (
+                  <>
+                    {/* Username */}
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#38bdf8', marginBottom: '6px' }}>
+                        <UserIcon size={13} />
+                        <span>{role === 'teacher' ? 'TEACHER USERNAME / CALLSIGN *' : 'ASTRONAUT CALLSIGN / USERNAME *'}</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder={role === 'teacher' ? 'e.g. TeacherSarah' : 'e.g. CadetApollo'}
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          background: 'rgba(15, 23, 42, 0.85)',
+                          border: '1px solid rgba(56, 189, 248, 0.4)',
+                          color: '#f8fafc',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '12.5px',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontFamily: 'var(--font-mono)', color: role === 'teacher' ? '#c084fc' : '#38bdf8', marginBottom: '6px' }}>
+                        <Mail size={13} />
+                        <span>{role === 'teacher' ? 'TEACHER EMAIL ADDRESS * (REQUIRED)' : 'CADET EMAIL ADDRESS (FOR EMAIL LOGIN)'}</span>
+                      </label>
+                      <input
+                        type="email"
+                        required={role === 'teacher'}
+                        placeholder={role === 'teacher' ? 'e.g. teacher@school.edu' : 'e.g. cadet@school.edu'}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          background: 'rgba(15, 23, 42, 0.85)',
+                          border: role === 'teacher' ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid rgba(56, 189, 248, 0.4)',
+                          color: '#f8fafc',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '12.5px',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
 
                 {/* Password */}
                 <div>

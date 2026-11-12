@@ -19,6 +19,10 @@ const DEFAULT_USERS: User[] = [
     cadetRank: 'Flight Candidate',
     fullName: 'Artemis Junior',
     coins: 1420,
+    academicPoints: 480,
+    passedQuizzes: ['quiz-earth-01', 'quiz-moon-01', 'quiz-mars-01'],
+    completedMilestones: ['milestone-01', 'milestone-02'],
+    completedLessonIds: ['lesson-video-earth', 'lesson-audio-moon', 'lesson-comic-mars'],
     selectedCharacterId: 'neil_armstrong',
     unlockedCharacterIds: ['neil_armstrong', 'kalpana_chawla'],
     completedMissions: ['nasa-artemis-3', 'apollo-11', 'mars-edl-2020'],
@@ -34,6 +38,10 @@ const DEFAULT_USERS: User[] = [
     cadetRank: 'Rover Pilot',
     fullName: 'Leo Vance',
     coins: 1150,
+    academicPoints: 340,
+    passedQuizzes: ['quiz-earth-01', 'quiz-mars-01'],
+    completedMilestones: ['milestone-01'],
+    completedLessonIds: ['lesson-video-mars', 'lesson-comic-earth'],
     selectedCharacterId: 'buzz_aldrin',
     unlockedCharacterIds: ['neil_armstrong', 'buzz_aldrin'],
     completedMissions: ['apollo-11', 'curiosity-gale-crater'],
@@ -49,6 +57,10 @@ const DEFAULT_USERS: User[] = [
     cadetRank: 'Flight Engineer',
     fullName: 'Maya Lin',
     coins: 980,
+    academicPoints: 560,
+    passedQuizzes: ['quiz-earth-01', 'quiz-moon-01', 'quiz-deep-space-01'],
+    completedMilestones: ['milestone-01', 'milestone-02', 'milestone-03'],
+    completedLessonIds: ['lesson-video-earth', 'lesson-audio-moon', 'lesson-video-deep-space'],
     selectedCharacterId: 'kalpana_chawla',
     unlockedCharacterIds: ['kalpana_chawla', 'sunita_williams'],
     completedMissions: ['earth-orbital-exam-100', 'iss-eclss-loop'],
@@ -64,6 +76,10 @@ const DEFAULT_USERS: User[] = [
     cadetRank: 'Cadet Trainee',
     fullName: 'Zayn Tariq',
     coins: 780,
+    academicPoints: 210,
+    passedQuizzes: ['quiz-moon-01'],
+    completedMilestones: ['milestone-01'],
+    completedLessonIds: ['lesson-audio-moon'],
     selectedCharacterId: 'yuri_gagarin',
     unlockedCharacterIds: ['neil_armstrong', 'yuri_gagarin'],
     completedMissions: ['shackleton-sol-1-base'],
@@ -79,6 +95,10 @@ const DEFAULT_USERS: User[] = [
     cadetRank: 'Junior Stargazer',
     fullName: 'Nova Chen',
     coins: 640,
+    academicPoints: 150,
+    passedQuizzes: ['quiz-earth-01'],
+    completedMilestones: [],
+    completedLessonIds: ['lesson-comic-earth'],
     selectedCharacterId: 'kalpana_chawla',
     unlockedCharacterIds: ['kalpana_chawla'],
     completedMissions: ['artemis-1-uncrewed'],
@@ -94,6 +114,10 @@ const DEFAULT_USERS: User[] = [
     cadetRank: 'Junior Stargazer',
     fullName: 'Tara Sharma',
     coins: 575,
+    academicPoints: 120,
+    passedQuizzes: ['quiz-earth-01'],
+    completedMilestones: [],
+    completedLessonIds: ['lesson-audio-earth'],
     selectedCharacterId: 'sunita_williams',
     unlockedCharacterIds: ['neil_armstrong', 'sunita_williams'],
     completedMissions: ['ground-school-astronomy-101'],
@@ -247,9 +271,8 @@ export const authService = {
       return { success: false, error: 'Password must be at least 4 characters long.' };
     }
 
-    let trimmedEmail: string | undefined = undefined;
+    let trimmedEmail: string | undefined = (email || '').trim().toLowerCase() || undefined;
     if (role === 'teacher') {
-      trimmedEmail = (email || '').trim().toLowerCase();
       if (!trimmedEmail) {
         return {
           success: false,
@@ -261,6 +284,14 @@ export const authService = {
         return {
           success: false,
           error: 'Please enter a valid email address format (e.g., teacher@school.edu).'
+        };
+      }
+    } else if (trimmedEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        return {
+          success: false,
+          error: 'Please enter a valid email address format (e.g., cadet@example.com).'
         };
       }
     }
@@ -276,7 +307,7 @@ export const authService = {
       };
     }
 
-    if (role === 'teacher' && trimmedEmail) {
+    if (trimmedEmail) {
       const emailTaken = users.some(
         (u) => u.email && u.email.toLowerCase() === trimmedEmail!.toLowerCase()
       );
@@ -327,6 +358,10 @@ export const authService = {
       avatar: avatar || (userRole === 'teacher' ? '👩‍🏫' : '👨‍🚀'),
       cadetRank: userRank,
       coins: userCoins,
+      academicPoints: 0,
+      passedQuizzes: [],
+      completedMilestones: [],
+      completedLessonIds: [],
       selectedCharacterId: 'neil_armstrong',
       unlockedCharacterIds: ['neil_armstrong', 'kalpana_chawla'],
       completedMissions: [],
@@ -371,6 +406,10 @@ export const authService = {
         avatar: u.avatar || (u.role === 'teacher' ? '👩‍🏫' : '👨‍🚀'),
         cadetRank: u.cadetRank || (u.role === 'teacher' ? 'Classroom Flight Commander' : 'Junior Stargazer'),
         coins: Number(u.coins) || (u.role === 'teacher' ? 9999 : 500),
+        academicPoints: Number(u.academicPoints) || 0,
+        passedQuizzes: u.passedQuizzes || [],
+        completedMilestones: u.completedMilestones || [],
+        completedLessonIds: u.completedLessonIds || [],
         selectedCharacterId: 'neil_armstrong',
         unlockedCharacterIds: ['neil_armstrong', 'kalpana_chawla'],
         completedMissions: [],
@@ -508,5 +547,55 @@ export const authService = {
     this.saveUsers(users);
     this.setCurrentUser(user);
     return { success: true, user };
+  },
+
+  // Record Quiz completion & award academic points + coins
+  recordQuizCompletion(userId: string, quizId: string, earnedPoints = 50, earnedCoins = 100): User | null {
+    const users = this.getUsers();
+    const user = users.find((u) => u.id === userId);
+    if (!user) return null;
+
+    const quizzes = user.passedQuizzes || [];
+    if (!quizzes.includes(quizId)) {
+      user.passedQuizzes = [...quizzes, quizId];
+      user.academicPoints = (user.academicPoints || 0) + earnedPoints;
+      user.coins = (user.coins || 0) + earnedCoins;
+    }
+    this.saveUsers(users);
+    this.setCurrentUser(user);
+    return user;
+  },
+
+  // Record Lesson Completion (Video, Audio, Comic)
+  recordLessonCompletion(userId: string, lessonId: string, earnedPoints = 25): User | null {
+    const users = this.getUsers();
+    const user = users.find((u) => u.id === userId);
+    if (!user) return null;
+
+    const lessons = user.completedLessonIds || [];
+    if (!lessons.includes(lessonId)) {
+      user.completedLessonIds = [...lessons, lessonId];
+      user.academicPoints = (user.academicPoints || 0) + earnedPoints;
+    }
+    this.saveUsers(users);
+    this.setCurrentUser(user);
+    return user;
+  },
+
+  // Record Milestone completion
+  recordMilestoneCompletion(userId: string, milestoneId: string): User | null {
+    const users = this.getUsers();
+    const user = users.find((u) => u.id === userId);
+    if (!user) return null;
+
+    const milestones = user.completedMilestones || [];
+    if (!milestones.includes(milestoneId)) {
+      user.completedMilestones = [...milestones, milestoneId];
+      user.coins = (user.coins || 0) + 250;
+      user.academicPoints = (user.academicPoints || 0) + 150;
+    }
+    this.saveUsers(users);
+    this.setCurrentUser(user);
+    return user;
   },
 };

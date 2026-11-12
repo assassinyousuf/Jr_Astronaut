@@ -38,6 +38,7 @@ export interface GameLandingHomePageProps {
   onOpenCharacterLocker?: () => void;
   onOpenLiveActivity?: () => void;
   onOpenMultiplayerLobby?: () => void;
+  onOpenLearningDiscovery?: () => void;
   onStartMission?: () => void;
   hasSavedGame?: boolean;
   savedGameSol?: number;
@@ -138,6 +139,9 @@ export const GameLandingHomePage: React.FC<GameLandingHomePageProps> = ({
   onNavigate,
   onBuildOutpost,
   onStartMission,
+  currentUser,
+  onOpenAuth,
+  onOpenLearningDiscovery,
   ...landingProps
 }) => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -279,7 +283,19 @@ export const GameLandingHomePage: React.FC<GameLandingHomePageProps> = ({
 
         {/* Big pulsing orange START LEARNING button */}
         <button
-          onClick={() => handleOpenWizard('MOON')}
+          onClick={() => {
+            if (!currentUser) {
+              soundFx.playClick(750);
+              onOpenAuth?.();
+            } else {
+              soundFx.playReactorStart();
+              if (onOpenLearningDiscovery) {
+                onOpenLearningDiscovery();
+              } else {
+                onNavigate('learning');
+              }
+            }
+          }}
           className="game-hero-start-btn"
           data-testid="start-mission-btn"
           style={{
@@ -300,10 +316,10 @@ export const GameLandingHomePage: React.FC<GameLandingHomePageProps> = ({
             transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
             marginBottom: '20px',
           }}
-          title="Start Learning (No login required)"
+          title={currentUser ? "Enter 4 Learning Stacks (Space Place Dossier & OR-Graph)" : "Sign In or Register to Start Learning"}
         >
           <Rocket size={26} />
-          <span>⚡ TAKE COMMAND</span>
+          <span>🚀 START LEARNING</span>
         </button>
 
         {/* Secondary Action Buttons */}

@@ -53,6 +53,8 @@ const MissionGameModal = lazy(() => import('./components/MissionGameModal').then
 const MultiplayerLobbyModal = lazy(() => import('./components/MultiplayerLobbyModal').then(m => ({ default: m.MultiplayerLobbyModal })));
 const AudioTeachingFlashcard = lazy(() => import('./components/AudioTeachingFlashcard').then(m => ({ default: m.AudioTeachingFlashcard })));
 const LeaderboardModal = lazy(() => import('./components/LeaderboardModal').then(m => ({ default: m.LeaderboardModal })));
+const OuterSpaceDiscoveryModal = lazy(() => import('./components/learning/OuterSpaceDiscoveryModal').then(m => ({ default: m.OuterSpaceDiscoveryModal })));
+const MoonquakeMapModal = lazy(() => import('./components/MoonquakeMapModal').then(m => ({ default: m.MoonquakeMapModal })));
 
 export const ARTEMIS_LUNAR_BASE_MISSION: NasaMission =
   NASA_MISSIONS.find((m) => m.id === 'NASA-M049') || NASA_MISSIONS[48];
@@ -185,7 +187,10 @@ export const App: React.FC = () => {
   // Active Mini-Game / Multiplayer Lobby State
   const [activeMissionGameId, setActiveMissionGameId] = useState<string | null>(null);
   const [isMultiplayerLobbyOpen, setIsMultiplayerLobbyOpen] = useState(false);
+  const [initialRoomCode, setInitialRoomCode] = useState<string | undefined>(undefined);
+  const [isMoonquakeMapOpen, setIsMoonquakeMapOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [isLearningDiscoveryOpen, setIsLearningDiscoveryOpen] = useState(false);
   const [isCoopActive, setIsCoopActive] = useState(false);
   const [coopRole, setCoopRole] = useState<import('./utils/multiplayerMissionService').CrewRole>('CDR');
 
@@ -202,6 +207,8 @@ export const App: React.FC = () => {
     setActiveMissionGameId(null);
     setIsMultiplayerLobbyOpen(false);
     setIsLeaderboardOpen(false);
+    setIsLearningDiscoveryOpen(false);
+    setIsMoonquakeMapOpen(false);
     setIsBriefingModalOpen(false);
     setIsConstructionModalOpen(false);
     setIsFlashcardOpen(false);
@@ -699,7 +706,7 @@ export const App: React.FC = () => {
       case 'learning':
         return (
           <LearningHubPage
-            initialTab={(params.tab as any) || 'NOTEBOOK'}
+            initialTab={(params.tab as any) || 'OR_GRAPH'}
             initialIssueId={params.issue}
             activeEvent={gameState.activeEvent}
             collectedFlashcards={collectedFlashcards}
@@ -708,6 +715,9 @@ export const App: React.FC = () => {
             completedMissions={completedMissions}
             onOpenComicReader={(issueId) => navigate('learning', { tab: 'COMIC', issue: issueId || '' })}
             onNavigate={navigate}
+            currentUser={currentUser}
+            onOpenCertificate={() => setIsCertificateOpen(true)}
+            onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
           />
         );
 
@@ -806,73 +816,17 @@ export const App: React.FC = () => {
             setIsLiveActivityModalOpen(true);
           }}
         />
-
-        <SettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          is3DView={is3DView}
-          onToggle3DView={setIs3DView}
-          onResetAllData={() => {
-            setGameState(INITIAL_GAME_STATE);
-            setSavedGameInfo(null);
-          }}
-        />
-
-        <HowToPlayModal
-          isOpen={isHowToPlayOpen}
-          onClose={() => setIsHowToPlayOpen(false)}
-        />
-
-        <FlightCertificateModal
-          isOpen={isCertificateOpen}
-          onClose={() => setIsCertificateOpen(false)}
-          cadetName={currentUser?.username || 'Junior Astronaut'}
-          completedMissions={completedMissions}
-          currentMissionName={currentMission.name}
-        />
-
-        <JudgePreviewBadge isActive={isJudgeMode} onActivate={handleActivateJudgeMode} />
-        <JudgePreviewModal
-          isOpen={isJudgeModalOpen}
-          onClose={() => setIsJudgeModalOpen(false)}
-          onActivate={handleActivateJudgeMode}
-          isJudgeMode={isJudgeMode}
-          onDeactivate={handleDeactivateJudgeMode}
-        />
-
-        <NasaTelemetryPanel
-          isOpen={isTelemetryOpen}
-          onClose={() => setIsTelemetryOpen(false)}
-        />
-
-        <AboutModal
-          isOpen={isAboutOpen}
-          onClose={() => setIsAboutOpen(false)}
-        />
-
-        <AIDisclosureModal
-          isOpen={isAIModalOpen}
-          onClose={() => setIsAIModalOpen(false)}
-        />
-
-        <NasaDataModal
-          isOpen={isNasaDataOpen}
-          onClose={() => setIsNasaDataOpen(false)}
-        />
-
         <AstronautCharacterModal
           isOpen={isCharacterModalOpen}
           onClose={() => setIsCharacterModalOpen(false)}
           currentUser={currentUser}
-          onUserUpdate={setCurrentUser}
+          onUserUpdate={(u) => setCurrentUser(u)}
         />
-
         <LiveMissionActivityModal
           isOpen={isLiveActivityModalOpen}
           onClose={() => setIsLiveActivityModalOpen(false)}
           currentUsername={currentUser?.username}
         />
-
         <OutpostConstructionModal
           isOpen={isConstructionModalOpen}
           destination={currentMission.destination === 'MARS' ? 'MARS' : 'MOON'}
@@ -880,50 +834,17 @@ export const App: React.FC = () => {
           onConfirm={handleConfirmConstruction}
           onCancel={() => setIsConstructionModalOpen(false)}
         />
-
-        <PlanetaryCommandMap
-          isOpen={isPlanetaryMapOpen}
-          onClose={() => setIsPlanetaryMapOpen(false)}
-          onSelectMission={(m) => {
-            setSelectedBriefingMission(m);
-            setIsBriefingModalOpen(true);
-            setIsPlanetaryMapOpen(false);
-          }}
-          activeMissionId={currentMission.id}
-        />
-
-        {selectedBriefingMission && (
-          <AstronautBriefingModal
-            isOpen={isBriefingModalOpen}
-            onClose={() => setIsBriefingModalOpen(false)}
-            mission={selectedBriefingMission}
-            onLaunchMission={(m) => {
-              setIsBriefingModalOpen(false);
-              if (m.id === 'NASA-M049' || (m.destination === 'MOON' && m.era === 'ARTEMIS_ERA')) {
-                handleSwitchOutpostDestination('MOON');
-                navigate('simulators', { sim: 'moonbase' });
-              } else if (m.id === 'NASA-M057' || m.id === 'NASA-M075' || (m.destination === 'MARS' && m.era === 'MARS_FLEET')) {
-                handleSwitchOutpostDestination('MARS');
-                navigate('simulators', { sim: 'mars-edl' });
-              } else {
-                handleLaunchMissionGame(m.id);
-              }
-            }}
-          />
-        )}
-
         <MultiplayerLobbyModal
           isOpen={isMultiplayerLobbyOpen}
           onClose={() => setIsMultiplayerLobbyOpen(false)}
           onLaunchMission={(missionId, role) => {
             setIsMultiplayerLobbyOpen(false);
-    setIsLeaderboardOpen(false);
             setIsCoopActive(true);
             setCoopRole(role);
             setActiveMissionGameId(missionId);
           }}
+          initialRoomCode={initialRoomCode}
         />
-
         {activeMissionGameId && (
           <MissionGameModal
             missionId={activeMissionGameId}
@@ -936,7 +857,7 @@ export const App: React.FC = () => {
             completedMissions={completedMissions}
             isCoopMode={isCoopActive}
             coopRole={coopRole}
-            onOpenMoonquakeMap={() => navigate('simulators', { sim: 'moonquake' })}
+            onOpenMoonquakeMap={() => setIsMoonquakeMapOpen(true)}
             onOpenLobby={() => {
               setActiveMissionGameId(null);
               setIsMultiplayerLobbyOpen(true);
@@ -963,10 +884,100 @@ export const App: React.FC = () => {
           />
         )}
 
+        {/* Outer Space Discovery Modal (NASA Space Place Advanced Dossier) */}
+        <OuterSpaceDiscoveryModal
+          isOpen={isLearningDiscoveryOpen}
+          onClose={() => setIsLearningDiscoveryOpen(false)}
+          onProceedToStacks={() => {
+            setIsLearningDiscoveryOpen(false);
+            navigate('learning', { tab: 'OR_GRAPH' });
+          }}
+        />
+
+        {/* Dual-Segment Leaderboard Modal */}
         <LeaderboardModal
           isOpen={isLeaderboardOpen}
           onClose={() => setIsLeaderboardOpen(false)}
           currentUser={currentUser}
+        />
+
+        {/* Verifiable Flight Certificate & Social Sharing Modal */}
+        <FlightCertificateModal
+          isOpen={isCertificateOpen}
+          onClose={() => setIsCertificateOpen(false)}
+          cadetName={currentUser?.username || 'Cadet Artemis'}
+          completedMissions={currentUser?.completedMissions || completedMissions}
+          currentMissionName={currentMission.name}
+        />
+
+        <HowToPlayModal
+          isOpen={isHowToPlayOpen}
+          onClose={() => setIsHowToPlayOpen(false)}
+        />
+
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          is3DView={is3DView}
+          onToggle3DView={setIs3DView}
+          onResetAllData={() => {
+            setGameState(INITIAL_GAME_STATE);
+            setSavedGameInfo(null);
+          }}
+        />
+
+        <AboutModal
+          isOpen={isAboutOpen}
+          onClose={() => setIsAboutOpen(false)}
+        />
+
+        <NasaDataModal
+          isOpen={isNasaDataOpen}
+          onClose={() => setIsNasaDataOpen(false)}
+        />
+
+        <NasaTelemetryPanel
+          isOpen={isTelemetryOpen}
+          onClose={() => setIsTelemetryOpen(false)}
+        />
+
+        <AIDisclosureModal
+          isOpen={isAIModalOpen}
+          onClose={() => setIsAIModalOpen(false)}
+        />
+
+        <PlanetaryCommandMap
+          isOpen={isPlanetaryMapOpen}
+          onClose={() => setIsPlanetaryMapOpen(false)}
+          onSelectMission={(m) => {
+            setCurrentMission(m);
+            setIsPlanetaryMapOpen(false);
+          }}
+        />
+
+        <AstronautBriefingModal
+          isOpen={isBriefingModalOpen}
+          onClose={() => setIsBriefingModalOpen(false)}
+          mission={selectedBriefingMission || currentMission}
+          onLaunchMission={(m) => {
+            setCurrentMission(m);
+            setIsBriefingModalOpen(false);
+            navigate('mission');
+          }}
+        />
+
+        <JudgePreviewBadge isActive={isJudgeMode} onActivate={handleActivateJudgeMode} />
+        <JudgePreviewModal
+          isOpen={isJudgeModalOpen}
+          onClose={() => setIsJudgeModalOpen(false)}
+          onActivate={handleActivateJudgeMode}
+          isJudgeMode={isJudgeMode}
+          onDeactivate={handleDeactivateJudgeMode}
+        />
+
+        <MoonquakeMapModal
+          isOpen={isMoonquakeMapOpen}
+          onClose={() => setIsMoonquakeMapOpen(false)}
         />
       </Suspense>
 

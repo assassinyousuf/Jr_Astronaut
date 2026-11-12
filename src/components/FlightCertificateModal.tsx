@@ -26,6 +26,7 @@ interface FlightCertificateModalProps {
   cadetName: string;
   completedMissions: string[];
   currentMissionName?: string;
+  initialMilestone?: string;
 }
 
 export const FlightCertificateModal: React.FC<FlightCertificateModalProps> = ({
@@ -34,11 +35,49 @@ export const FlightCertificateModal: React.FC<FlightCertificateModalProps> = ({
   cadetName,
   completedMissions,
   currentMissionName,
+  initialMilestone = 'Grand Aerospace Scholar Certification',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [certificateReady, setCertificateReady] = useState(false);
   const [customName, setCustomName] = useState(cadetName || 'Junior Astronaut');
+  const [selectedMilestone, setSelectedMilestone] = useState(initialMilestone);
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
+
+  const MILESTONE_OPTIONS = [
+    'Cadet Orientation Certificate',
+    'Earth Systems & LEO Specialist',
+    'Lunar Pioneer Certification',
+    'Mars Expeditionary Diploma',
+    'Grand Aerospace Scholar Certification',
+  ];
+
+  const shareText = `🚀 Proud to share that I just earned the NASA Jr. AstroCamp "${selectedMilestone}"! Certified in orbital mechanics, life-support stoichiometry, and aerospace simulations. 🌌 #NASASpaceApps #JrAstroCamp #SpaceEducation`;
+  const shareUrl = typeof window !== 'undefined' ? window.location.origin : 'https://spaceapps.nasa.gov';
+
+  const handleShareLinkedIn = () => {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank');
+  };
+
+  const handleShareFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`, '_blank');
+  };
+
+  const handleShareTwitter = () => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+  };
+
+  const handleShareWhatsApp = () => {
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank');
+  };
+
+  const handleCopyLink = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+      setCopiedShareLink(true);
+      setTimeout(() => setCopiedShareLink(false), 2000);
+    }
+  };
 
   const getRank = (missions: number): string => {
     if (missions >= 70) return '⭐ Gold Wings Commander';
@@ -224,14 +263,16 @@ export const FlightCertificateModal: React.FC<FlightCertificateModalProps> = ({
       ctx.fillText(stat.value, x + statWidth / 2, statsY + 55);
     });
 
-    // Active Mission
+    // Active Mission / Milestone
     ctx.textAlign = 'center';
-    ctx.font = '500 13px "Inter", sans-serif';
+    ctx.font = '600 12px "Inter", sans-serif';
     ctx.fillStyle = '#64748b';
-    ctx.fillText('Last Active Mission:', W / 2, statsY + 115);
-    ctx.font = 'bold 18px "Inter", sans-serif';
-    ctx.fillStyle = '#e2e8f0';
-    ctx.fillText(cert.missionName, W / 2, statsY + 140);
+    ctx.letterSpacing = '2px';
+    ctx.fillText('AEROSPACE MILESTONE CERTIFIED:', W / 2, statsY + 115);
+    ctx.font = 'bold 22px "Inter", sans-serif';
+    ctx.fillStyle = '#38bdf8';
+    ctx.letterSpacing = '0px';
+    ctx.fillText(selectedMilestone.toUpperCase(), W / 2, statsY + 142);
 
     // Stamp area
     const stampY = statsY + 180;
@@ -358,47 +399,77 @@ export const FlightCertificateModal: React.FC<FlightCertificateModalProps> = ({
           </p>
         </div>
 
-        {/* Name Input */}
+        {/* Name & Milestone Input */}
         <div style={{
           display: 'flex',
-          gap: '10px',
+          gap: '12px',
           marginBottom: '16px',
           alignItems: 'center',
           flexWrap: 'wrap',
         }}>
-          <label style={{ color: 'var(--color-ink-muted)', fontSize: '0.8rem', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
-            CADET NAME:
-          </label>
-          <input
-            type="text"
-            value={customName}
-            onChange={(e) => { setCustomName(e.target.value); setCertificateReady(false); }}
-            placeholder="Enter cadet callsign"
-            style={{
-              flex: 1,
-              minWidth: '220px',
-              padding: '10px 14px',
-              background: 'var(--color-paper-2)',
-              border: '1px solid var(--rule-subtle)',
-              borderRadius: 0,
-              color: 'var(--color-ink)',
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              fontFamily: 'var(--font-sans)',
-              outline: 'none',
-            }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '220px' }}>
+            <label style={{ color: 'var(--color-ink-muted)', fontSize: '0.8rem', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
+              CADET CALLSIGN:
+            </label>
+            <input
+              type="text"
+              value={customName}
+              onChange={(e) => { setCustomName(e.target.value); setCertificateReady(false); }}
+              placeholder="Enter cadet callsign"
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                background: 'var(--color-paper-2)',
+                border: '1px solid var(--rule-subtle)',
+                borderRadius: '6px',
+                color: 'var(--color-ink)',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                fontFamily: 'var(--font-sans)',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '260px' }}>
+            <label style={{ color: 'var(--color-ink-muted)', fontSize: '0.8rem', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
+              MILESTONE:
+            </label>
+            <select
+              value={selectedMilestone}
+              onChange={(e) => { setSelectedMilestone(e.target.value); setCertificateReady(false); }}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                background: 'var(--color-paper-2)',
+                border: '1px solid var(--rule-subtle)',
+                borderRadius: '6px',
+                color: 'var(--color-ink)',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                fontFamily: 'var(--font-sans)',
+                outline: 'none',
+              }}
+            >
+              {MILESTONE_OPTIONS.map((opt) => (
+                <option key={opt} value={opt} style={{ background: '#0a0f1d', color: '#ffffff' }}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button
             onClick={generateCertificate}
             disabled={isGenerating || !customName.trim()}
             style={{
-              padding: '10px 20px',
+              padding: '9px 20px',
               background: isGenerating ? 'var(--color-paper-3)' : 'var(--color-accent)',
               border: '1px solid var(--color-accent)',
-              borderRadius: 0,
+              borderRadius: '6px',
               color: '#000000',
               fontSize: '0.8rem',
-              fontWeight: 700,
+              fontWeight: 800,
               fontFamily: 'var(--font-mono)',
               letterSpacing: '0.04em',
               textTransform: 'uppercase',
@@ -406,7 +477,7 @@ export const FlightCertificateModal: React.FC<FlightCertificateModalProps> = ({
               flexShrink: 0,
             }}
           >
-            {isGenerating ? 'Compiling Credentials…' : 'Generate Certificate'}
+            {isGenerating ? 'Compiling…' : 'Generate Certificate'}
           </button>
         </div>
 
@@ -439,50 +510,153 @@ export const FlightCertificateModal: React.FC<FlightCertificateModalProps> = ({
           )}
         </div>
 
-        {/* Download */}
+        {/* Download & Social Share */}
         {certificateReady && (
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-            <button
-              onClick={downloadCertificate}
-              style={{
-                padding: '10px 24px',
-                background: 'var(--color-accent)',
-                border: '1px solid var(--color-accent)',
-                borderRadius: 0,
-                color: '#000000',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                fontFamily: 'var(--font-mono)',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <Download size={14} /> Download Certificate (PNG)
-            </button>
-            <button
-              onClick={generateCertificate}
-              style={{
-                padding: '10px 20px',
-                background: 'transparent',
-                border: '1px solid var(--rule-subtle)',
-                borderRadius: 0,
-                color: 'var(--color-ink-muted)',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                fontFamily: 'var(--font-mono)',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <RefreshCw size={14} /> Regenerate
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                onClick={downloadCertificate}
+                style={{
+                  padding: '10px 24px',
+                  background: 'var(--color-accent)',
+                  border: '1px solid var(--color-accent)',
+                  borderRadius: '6px',
+                  color: '#000000',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <Download size={14} /> Download Certificate (PNG)
+              </button>
+              <button
+                onClick={generateCertificate}
+                style={{
+                  padding: '10px 20px',
+                  background: 'transparent',
+                  border: '1px solid var(--rule-subtle)',
+                  borderRadius: '6px',
+                  color: 'var(--color-ink-muted)',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-mono)',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <RefreshCw size={14} /> Regenerate
+              </button>
+            </div>
+
+            {/* Social Sharing Bar */}
+            <div style={{
+              width: '100%',
+              padding: '14px 18px',
+              borderRadius: '10px',
+              background: 'rgba(15, 23, 42, 0.85)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              alignItems: 'center',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#94a3b8' }}>
+                <span style={{ color: '#4ade80', fontWeight: 700 }}>✓ Added to Cadet Record</span>
+                <span>•</span>
+                <span>Share your Aerospace Milestone on Social Media:</span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  onClick={handleShareLinkedIn}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    background: '#0a66c2',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Share on LinkedIn
+                </button>
+
+                <button
+                  onClick={handleShareFacebook}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    background: '#1877f2',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Share on Meta
+                </button>
+
+                <button
+                  onClick={handleShareTwitter}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    background: '#000000',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Post on 𝕏
+                </button>
+
+                <button
+                  onClick={handleShareWhatsApp}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    background: '#25d366',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  WhatsApp
+                </button>
+
+                <button
+                  onClick={handleCopyLink}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#e2e8f0',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {copiedShareLink ? '✓ Copied!' : 'Copy Share Text'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

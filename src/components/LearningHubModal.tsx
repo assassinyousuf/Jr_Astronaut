@@ -37,6 +37,9 @@ import { HandwrittenNotebookView } from './HandwrittenNotebookView';
 import { AudioLessonPlayerView } from './AudioLessonPlayerView';
 import { VideoLessonPlayerView } from './VideoLessonPlayerView';
 import { Interactive3DSpacecraftViewer } from './Interactive3DSpacecraftViewer';
+import { LearningPathGraph, MILESTONES, type MilestoneNode } from './learning/LearningPathGraph';
+import { OuterSpaceDiscoveryModal } from './learning/OuterSpaceDiscoveryModal';
+import { LearningQuizModal } from './learning/LearningQuizModal';
 
 interface LearningHubModalProps {
   isOpen: boolean;
@@ -50,9 +53,12 @@ interface LearningHubModalProps {
   initialTab?: HubTab;
   initialIssueId?: string;
   isFullPage?: boolean;
+  currentUser?: any;
+  onOpenCertificate?: (milestoneTitle?: string) => void;
+  onOpenLeaderboard?: () => void;
 }
 
-type HubTab = 'NOTEBOOK' | 'MODELS_3D' | 'VIDEO' | 'AUDIO' | 'COMIC' | 'BRIEFINGS' | 'CATALOG';
+export type HubTab = 'OR_GRAPH' | 'NOTEBOOK' | 'MODELS_3D' | 'VIDEO' | 'AUDIO' | 'COMIC' | 'BRIEFINGS' | 'CATALOG';
 
 const SPEAKER_META: Record<string, { emoji: string; name: string; color: string }> = {
   CADET_MAYA:      { emoji: '👩‍🚀', name: 'Cadet Maya',        color: '#38bdf8' },
@@ -74,16 +80,25 @@ export const LearningHubModal: React.FC<LearningHubModalProps> = ({
   initialTab,
   initialIssueId,
   isFullPage = false,
+  currentUser,
+  onOpenCertificate,
+  onOpenLeaderboard,
 }) => {
   if (!isOpen && !isFullPage) return null;
 
-  const [activeTab, setActiveTab] = useState<HubTab>(initialTab || 'NOTEBOOK');
+  const [activeTab, setActiveTab] = useState<HubTab>(initialTab || 'OR_GRAPH');
   const [comicMode, setComicMode] = useState<'ISSUES' | 'DILEMMAS'>('ISSUES');
   const [isComicModalOpen, setIsComicModalOpen] = useState<boolean>(false);
   const [isGoogleFlowModalOpen, setIsGoogleFlowModalOpen] = useState<boolean>(false);
   const [allComicIssues, setAllComicIssues] = useState<ComicIssue[]>(() => getMergedComicIssues());
   const [activeComicIssueId, setActiveComicIssueId] = useState<string>(initialIssueId || 'issue-01-friendship-7');
   const [comicModalMode, setComicModalMode] = useState<'reader' | 'video'>('reader');
+
+  // Outer Space Discovery Dossier & Quiz modal triggers
+  const [isDossierOpen, setIsDossierOpen] = useState<boolean>(false);
+  const [activeDossierModuleId, setActiveDossierModuleId] = useState<string>('earth-systems');
+  const [isQuizOpen, setIsQuizOpen] = useState<boolean>(false);
+  const [activeQuizId, setActiveQuizId] = useState<string>('quiz-earth-01');
 
   React.useEffect(() => {
     setAllComicIssues(getMergedComicIssues());
@@ -165,6 +180,7 @@ export const LearningHubModal: React.FC<LearningHubModalProps> = ({
   });
 
   const TABS: { id: HubTab; label: string; icon: React.ElementType }[] = [
+    { id: 'OR_GRAPH',  label: '🚀 4-Stack OR-Graph & Milestones', icon: Sparkles },
     { id: 'NOTEBOOK',  label: 'Student Notebook',          icon: FileText },
     { id: 'MODELS_3D', label: '3D Spacecraft Models',      icon: Box },
     { id: 'VIDEO',     label: 'NASA Video Modules & 3D',   icon: Video },
@@ -216,6 +232,48 @@ export const LearningHubModal: React.FC<LearningHubModalProps> = ({
 
         {/* Tab Content */}
         <div className="hub-tab-content">
+
+          {/* ── 4-STACK OR-GRAPH & MILESTONES ───────────────────────────── */}
+          {activeTab === 'OR_GRAPH' && (
+            <div style={{ padding: '8px 0' }}>
+              <LearningPathGraph
+                currentUser={currentUser}
+                onOpenSpaceDossier={(moduleId) => {
+                  setActiveDossierModuleId(moduleId);
+                  setIsDossierOpen(true);
+                }}
+                onSelectStack={(stackType, milestone) => {
+                  soundFx.playClick(800);
+                  if (stackType === 'video') {
+                    setActiveTab('VIDEO');
+                  } else if (stackType === 'audio') {
+                    setActiveTab('AUDIO');
+                  } else if (stackType === 'comic') {
+                    if (milestone.comicIssueId) {
+                      setActiveComicIssueId(milestone.comicIssueId);
+                      setComicModalMode('reader');
+                      setIsComicModalOpen(true);
+                    } else {
+                      setActiveTab('COMIC');
+                    }
+                  } else if (stackType === 'game') {
+                    if (onLaunchMission) {
+                      onLaunchMission(milestone.gameMissionId || 'NASA-M001');
+                    }
+                  }
+                }}
+                onOpenQuiz={(quizId) => {
+                  setActiveQuizId(quizId);
+                  setIsQuizOpen(true);
+                }}
+                onOpenCertificate={(milestoneTitle) => {
+                  if (onOpenCertificate) {
+                    onOpenCertificate(milestoneTitle);
+                  }
+                }}
+              />
+            </div>
+          )}
 
           {/* ── COMIC READER ─────────────────────────────────────────────── */}
           {activeTab === 'COMIC' && (() => {
@@ -816,6 +874,26 @@ export const LearningHubModal: React.FC<LearningHubModalProps> = ({
           {hubBody}
         </div>
       )}
+
+      {/* Outer Space Discovery Modal (NASA Space Place Advanced Dossier) */}
+      <OuterSpaceDiscoveryModal
+        isOpen={isDossierOpen}
+        onClose={() => setIsDossierOpen(false)}
+        initialModuleId={activeDossierModuleId}
+        onProceedToStacks={() => {
+          setIsDossierOpen(false);
+          setActiveTab('OR_GRAPH');
+        }}
+      />
+
+      {/* Learning Quiz Modal */}
+      <LearningQuizModal
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        quizId={activeQuizId}
+        currentUser={currentUser}
+        onOpenLeaderboard={onOpenLeaderboard}
+      />
 
       {/* Embedded High-Fidelity Comic Book Reader & Archival Video Player */}
       <ComicBookModal

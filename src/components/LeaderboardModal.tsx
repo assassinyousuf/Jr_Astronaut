@@ -1,20 +1,23 @@
 // ============================================================
-// Jr. AstroCamp — Leaderboard Modal
-// Ranks all cadets by: missions completed → coins → join date
+// Jr. AstroCamp — Dual-Segment Leaderboard Modal
+// 🎮 Segment 1: Flight Simulation & 76-Mission Progress
+// 🎓 Segment 2: Academic STEM Knowledge & Flight Readiness Quizzes
 // ============================================================
 
 import React, { useState, useMemo } from 'react';
 import { authService } from '../utils/authService';
 import type { User } from '../types/auth';
-import { Trophy, Star, Rocket, Medal, X, Zap, Target, ChevronUp } from 'lucide-react';
+import { Trophy, Star, Rocket, Medal, X, Zap, Target, ChevronUp, GraduationCap, Gamepad2, BookOpen } from 'lucide-react';
 
 interface LeaderboardModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: User | null;
+  initialSegment?: 'flight' | 'academic';
 }
 
-type SortKey = 'missions' | 'coins' | 'rank';
+type LeaderboardSegment = 'flight' | 'academic';
+type SortKey = 'missions' | 'coins' | 'rank' | 'points' | 'quizzes';
 
 // Rank ladder based on missions completed
 const RANK_LADDER = [
@@ -48,7 +51,9 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   isOpen,
   onClose,
   currentUser,
+  initialSegment = 'flight',
 }) => {
+  const [segment, setSegment] = useState<LeaderboardSegment>(initialSegment);
   const [sortKey, setSortKey] = useState<SortKey>('missions');
 
   const leaderboardData = useMemo(() => {
@@ -56,26 +61,45 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
     // Only show cadets on leaderboard
     const cadets = allUsers.filter((u) => u.role === 'cadet');
 
-    const withStats = cadets.map((u) => ({
-      ...u,
-      missionsCount: (u.completedMissions || []).length,
-      rankInfo: getRankForMissions((u.completedMissions || []).length),
-    }));
+    const withStats = cadets.map((u) => {
+      const missionsCount = (u.completedMissions || []).length;
+      const quizzesCount = (u.passedQuizzes || []).length;
+      const academicPts = u.academicPoints || 0;
+      const milestonesCount = (u.completedMilestones || []).length;
 
-    // Sort
-    return withStats.sort((a, b) => {
-      if (sortKey === 'missions') {
+      return {
+        ...u,
+        missionsCount,
+        quizzesCount,
+        academicPts,
+        milestonesCount,
+        rankInfo: getRankForMissions(missionsCount),
+      };
+    });
+
+    if (segment === 'flight') {
+      return withStats.sort((a, b) => {
+        if (sortKey === 'coins') {
+          if (b.coins !== a.coins) return b.coins - a.coins;
+          return b.missionsCount - a.missionsCount;
+        }
+        // default missions
         if (b.missionsCount !== a.missionsCount) return b.missionsCount - a.missionsCount;
         return b.coins - a.coins;
-      }
-      if (sortKey === 'coins') {
-        if (b.coins !== a.coins) return b.coins - a.coins;
-        return b.missionsCount - a.missionsCount;
-      }
-      // rank sort
-      return b.missionsCount - a.missionsCount;
-    });
-  }, [sortKey]);
+      });
+    } else {
+      // Academic segment
+      return withStats.sort((a, b) => {
+        if (sortKey === 'quizzes') {
+          if (b.quizzesCount !== a.quizzesCount) return b.quizzesCount - a.quizzesCount;
+          return b.academicPts - a.academicPts;
+        }
+        // default points
+        if (b.academicPts !== a.academicPts) return b.academicPts - a.academicPts;
+        return b.quizzesCount - a.quizzesCount;
+      });
+    }
+  }, [segment, sortKey]);
 
   const currentUserPosition = currentUser
     ? leaderboardData.findIndex((u) => u.username.toLowerCase() === currentUser.username.toLowerCase()) + 1
@@ -91,12 +115,69 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           <div className="lb-title-row">
             <Trophy size={28} color="#FFD700" />
             <div>
-              <h2 className="lb-title">Mission Leaderboard</h2>
-              <p className="lb-subtitle">Top Jr. AstroCamp Cadets — Ranked by Achievement</p>
+              <h2 className="lb-title">
+                {segment === 'flight' ? 'Flight & Simulation Leaderboard' : 'Academic & STEM Knowledge Leaderboard'}
+              </h2>
+              <p className="lb-subtitle">
+                {segment === 'flight'
+                  ? '76 Historical NASA Missions & Flight Simulator Ranks'
+                  : 'Flight Readiness Quizzes, Lesson Stacks & Academic Points'}
+              </p>
             </div>
           </div>
           <button className="lb-close-btn" onClick={onClose}>
             <X size={20} />
+          </button>
+        </div>
+
+        {/* Dual-Segment Switcher */}
+        <div style={{ display: 'flex', gap: '10px', padding: '14px 20px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(15, 23, 42, 0.5)' }}>
+          <button
+            onClick={() => {
+              setSegment('flight');
+              setSortKey('missions');
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              border: 'none',
+              borderBottom: segment === 'flight' ? '2.5px solid #f97316' : '2.5px solid transparent',
+              background: 'transparent',
+              color: segment === 'flight' ? '#f97316' : '#94a3b8',
+              fontSize: '13px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Gamepad2 size={16} />
+            <span>🎮 Flight Simulation Leaderboard</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSegment('academic');
+              setSortKey('points');
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              border: 'none',
+              borderBottom: segment === 'academic' ? '2.5px solid #38bdf8' : '2.5px solid transparent',
+              background: 'transparent',
+              color: segment === 'academic' ? '#38bdf8' : '#94a3b8',
+              fontSize: '13px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <GraduationCap size={16} />
+            <span>🎓 Academic & Quiz Leaderboard</span>
           </button>
         </div>
 
@@ -116,38 +197,66 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               </span>
             </div>
             <div className="lb-you-stats">
-              <div className="lb-you-stat">
-                <Rocket size={14} />
-                <span>{(currentUser.completedMissions || []).length} missions</span>
-              </div>
-              <div className="lb-you-stat">
-                <Zap size={14} color="#fbbf24" />
-                <span>{currentUser.coins.toLocaleString()} coins</span>
-              </div>
+              {segment === 'flight' ? (
+                <>
+                  <div className="lb-you-stat">
+                    <Rocket size={14} />
+                    <span>{(currentUser.completedMissions || []).length} / 76 missions</span>
+                  </div>
+                  <div className="lb-you-stat">
+                    <Zap size={14} color="#fbbf24" />
+                    <span>{(currentUser.coins || 0).toLocaleString()} coins</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="lb-you-stat">
+                    <GraduationCap size={14} color="#38bdf8" />
+                    <span>{currentUser.academicPoints || 0} Academic Pts</span>
+                  </div>
+                  <div className="lb-you-stat">
+                    <BookOpen size={14} color="#4ade80" />
+                    <span>{(currentUser.passedQuizzes || []).length} Quizzes Passed</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
 
         {/* Sort tabs */}
         <div className="lb-sort-tabs">
-          <button
-            className={`lb-sort-tab ${sortKey === 'missions' ? 'active' : ''}`}
-            onClick={() => setSortKey('missions')}
-          >
-            <Target size={14} /> Missions
-          </button>
-          <button
-            className={`lb-sort-tab ${sortKey === 'coins' ? 'active' : ''}`}
-            onClick={() => setSortKey('coins')}
-          >
-            <Zap size={14} /> Coins
-          </button>
-          <button
-            className={`lb-sort-tab ${sortKey === 'rank' ? 'active' : ''}`}
-            onClick={() => setSortKey('rank')}
-          >
-            <Star size={14} /> Rank
-          </button>
+          {segment === 'flight' ? (
+            <>
+              <button
+                className={`lb-sort-tab ${sortKey === 'missions' ? 'active' : ''}`}
+                onClick={() => setSortKey('missions')}
+              >
+                <Target size={14} /> Missions (76)
+              </button>
+              <button
+                className={`lb-sort-tab ${sortKey === 'coins' ? 'active' : ''}`}
+                onClick={() => setSortKey('coins')}
+              >
+                <Zap size={14} /> Coins
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className={`lb-sort-tab ${sortKey === 'points' ? 'active' : ''}`}
+                onClick={() => setSortKey('points')}
+              >
+                <Zap size={14} /> Academic Points
+              </button>
+              <button
+                className={`lb-sort-tab ${sortKey === 'quizzes' ? 'active' : ''}`}
+                onClick={() => setSortKey('quizzes')}
+              >
+                <GraduationCap size={14} /> Quizzes Passed
+              </button>
+            </>
+          )}
         </div>
 
         {/* Table */}
@@ -156,8 +265,12 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             <span className="lb-col-pos">#</span>
             <span className="lb-col-cadet">Cadet</span>
             <span className="lb-col-rank">Rank</span>
-            <span className="lb-col-missions">Missions</span>
-            <span className="lb-col-coins">Coins</span>
+            <span className="lb-col-missions">
+              {segment === 'flight' ? 'Missions' : 'Quizzes'}
+            </span>
+            <span className="lb-col-coins">
+              {segment === 'flight' ? 'Coins' : 'Acad Pts'}
+            </span>
             <span className="lb-col-progress">Progress</span>
           </div>
 
@@ -172,7 +285,10 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               const pos = idx + 1;
               const medal = getMedalIcon(pos);
               const isMe = currentUser?.username.toLowerCase() === cadet.username.toLowerCase();
-              const progressPct = Math.min(100, Math.round((cadet.missionsCount / 76) * 100));
+              const progressPct =
+                segment === 'flight'
+                  ? Math.min(100, Math.round((cadet.missionsCount / 76) * 100))
+                  : Math.min(100, Math.round((cadet.quizzesCount / 4) * 100));
 
               return (
                 <div
@@ -185,7 +301,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                       className="lb-medal"
                       style={{ color: medal.color, fontWeight: pos <= 3 ? 700 : 400 }}
                     >
-                      {pos <= 3 ? medal.emoji : medal.emoji}
+                      {medal.emoji}
                     </span>
                   </div>
 
@@ -205,16 +321,24 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     </span>
                   </div>
 
-                  {/* Missions */}
+                  {/* Metric 1 */}
                   <div className="lb-col-missions">
-                    <span className="lb-missions-num">{cadet.missionsCount}</span>
-                    <span className="lb-missions-denom">/76</span>
+                    <span className="lb-missions-num">
+                      {segment === 'flight' ? cadet.missionsCount : cadet.quizzesCount}
+                    </span>
+                    <span className="lb-missions-denom">
+                      {segment === 'flight' ? '/76' : '/4'}
+                    </span>
                   </div>
 
-                  {/* Coins */}
+                  {/* Metric 2 */}
                   <div className="lb-col-coins">
-                    <Zap size={12} color="#fbbf24" />
-                    <span>{cadet.coins.toLocaleString()}</span>
+                    <Zap size={12} color={segment === 'flight' ? '#fbbf24' : '#38bdf8'} />
+                    <span>
+                      {segment === 'flight'
+                        ? cadet.coins.toLocaleString()
+                        : cadet.academicPts.toLocaleString()}
+                    </span>
                   </div>
 
                   {/* Progress bar */}
@@ -224,7 +348,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         className="lb-progress-fill"
                         style={{
                           width: `${progressPct}%`,
-                          background: cadet.rankInfo.color,
+                          background: segment === 'flight' ? cadet.rankInfo.color : '#38bdf8',
                         }}
                       />
                     </div>
@@ -239,10 +363,14 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
         {/* Footer */}
         <div className="lb-footer">
           <Medal size={14} color="#64748b" />
-          <span>Leaderboard updates live as cadets complete missions</span>
+          <span>
+            {segment === 'flight'
+              ? 'Flight leaderboard updates as missions are beaten'
+              : 'Academic leaderboard updates as quizzes & lessons are passed'}
+          </span>
           {currentUserPosition > 3 && (
             <span className="lb-climb-tip">
-              <ChevronUp size={12} /> Complete more missions to climb the ranks!
+              <ChevronUp size={12} /> Complete more modules to climb the rankings!
             </span>
           )}
         </div>
@@ -252,4 +380,3 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 };
 
 export default LeaderboardModal;
-
