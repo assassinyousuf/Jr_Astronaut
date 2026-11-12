@@ -1,0 +1,207 @@
+========================================
+JR_ASTROCAMP DOM TREE & CROSS-PLATFORM AUDIT
+========================================
+
+1. Cross-Platform Responsive Viewport Audit:
+  - Desktop (1440x900): Width=1440px, ScrollWidth=1440px -> PASSED (Clean, No Horizontal Overflow)
+  - Tablet (768x1024): Width=768px, ScrollWidth=768px -> PASSED (Clean, No Horizontal Overflow)
+  - Mobile (375x812): Width=375px, ScrollWidth=375px -> PASSED (Clean, No Horizontal Overflow)
+
+2. Interactive Checkpoints:
+  - Inspect Hero CTA: "🚀 START LEARNING"
+  - Inspect Auth Modal Inputs: [{"placeholder":"e.g. CadetArtemis or cadet@school.edu","type":"text","name":""},{"placeholder":"••••••••","type":"password","name":""}]
+  - Check 4 Stacks in DOM: {"milestoneCount":0,"hasVideoStack":true,"hasAudioStack":true,"hasComicStack":true,"hasGameStack":false}
+  - Check Leaderboard Segments: {"flightTab":true,"academicTab":true}
+
+3. Captured DOM Trees:
+
+--- DOM TREE: HOMEPAGE ---
+<div id="root">
+  <div class="app-root-shell">
+    <header class="global-aerospace-nav">
+      <div>
+        <button>
+          <div>
+          <div>
+            <div> "Jr. AstroCamp"
+            <div> "NASA Space Apps 2026"
+        <nav class="global-nav-links">
+          <button>
+            <span> "Play"
+          <button>
+            <span> "Learn"
+          <button>
+            <span> "Explore Space"
+          <div>
+            <button>
+              <span> "More"
+      <div>
+        <button>
+          <span class="hidden sm:inline"> "Sound ON"
+        <button>
+          <span class="hidden sm:inline"> "Leaderboard"
+        <button class="global-nav-hamburger">
+    <main>
+      <div class="game-start-menu-root">
+        <div class="cinematic-scene-zoom">
+          <canvas>
+          <div>
+            <img class="earth-orbit-spin">
+          <div>
+          <div>
+            <div>
+              <img>
+            <div>
+              <img>
+            <div>
+            <div>
+          <div>
+            <div>
+          <div>
+            <div>
+          <div>
+          <canvas>
+          <div>
+        <div>
+        <div>
+          <div>
+            <span> "NASA SPACE APPS 2026"
+          <h1>
+            <span> "AstroCamp"
+          <p> "You are the Captain. Command your crew. Survive th"
+          <button class="game-hero-start-btn">
+            <span> "🚀 START LEARNING"
+          <div>
+            <button>
+              <span> "Captain's Briefing"
+            <button>
+              <span> "Chart the Galaxy"
+            <button>
+              <span> "Credits"
+          <div>
+            <div class="resource-circle-item">
+            <div class="resource-circle-item">
+            <div class="resource-circle-item">
+            <div class="resource-circle-item">
+            <div class="resource-circle-item">
+            <div class="resource-circle-item">
+            <div class="resource-circle-item">
+        <div class="cinematic-fact-pill">
+          <div>
+            <div> "DID YOU KNOW? · NASA STMD & Artemis"
+            <div> "On the Moon, night lasts ~14 Earth days and temper"
+        <div>
+          <div>
+            <button class="destination-chip-btn">
+              <span> "🌙"
+              <span> "🌙 MOON — Captain's Post"
+            <button class="destination-chip-btn">
+              <span> "🔴"
+              <span> "🔴 MARS — Captain's Post"
+    <footer class="main-footer">
+      <div>
+        <span>
+          <strong> "NASA International Space Apps Challenge 2026"
+      <div class="footer-credits">
+        <span>
+          <strong> "Team Mysterio"
+
+--- DOM TREE: AUTHMODAL ---
+
+--- DOM TREE: SPACEDISCOVERYDOSSIER ---
+
+--- DOM TREE: LEARNINGPATHORGRAPH ---
+<div class="hub-fullpage-container">
+  <div class="hub-modal-header">
+    <div>
+      <span class="hub-modal-title"> "Astro Camp / Learning Archive"
+  <div class="hub-tabs">
+    <button class="hub-tab-btn hub-tab-active">
+      <span> "🚀 4-Stack OR-Graph & Milestones"
+    <button class="hub-tab-btn">
+      <span> "Student Notebook"
+    <button class="hub-tab-btn">
+      <span> "3D Spacecraft Models"
+    <button class="hub-tab-btn">
+      <span> "NASA Video Modules & 3D"
+    <button class="hub-tab-btn">
+      <span> "Audio Lessons"
+    <button class="hub-tab-btn">
+      <span> "Comic Reader"
+    <button class="hub-tab-btn">
+      <span> "Outpost Briefs"
+    <button class="hub-tab-btn">
+      <span> "NASA Missions (76)"
+  <div class="hub-tab-content">
+    <div>
+      <div>
+        <div>
+          <div>
+            <div>
+            <div>
+              <div> "STEP 1: PREREQUISITE SPACE BRIEFING"
+              <div> "Read the Outer Space Knowledge Dossier before choo"
+          <button>
+            <span> "Read Space Place Dossier ➔"
+        <div>
+          <button>
+            <div>
+              <span> "MILESTONE #1"
+            <div> "Earth Systems & Low Earth Orbit (LEO)"
+          <button>
+            <div>
+              <span> "MILESTONE #2"
+            <div> "Artemis Lunar Base & South Pole Cryo-Ice"
+          <button>
+            <div>
+              <span> "MILESTONE #3"
+            <div> "Martian Entry (EDL) & Jezero Crater Expedition"
+          <button>
+            <div>
+              <span> "MILESTONE #4"
+            <div> "Cosmic Frontier: Ocean Worlds & Deep Space Slingsh"
+        <div>
+          <div>
+            <div>
+              <span> "STEP 2: MULTI-MODAL LEARNING OR-GRAPH"
+            <h3> "Choose Any 1 of the 4 Stacks to Complete Milestone"
+            <p> "Master orbital velocities (7.8 km/s), atmospheric "
+          <div>
+            <div>
+              <div>
+                <div>
+                  <div>
+                  <span> "STACK A (OR)"
+                <h4> "Video Stack"
+                <p> "Interactive cinematic video masterclass with aeros"
+              <div>
+                <span> "Launch Video Player"
+            <div>
+              <div>
+                <div>
+                  <div>
+                  <span> "STACK B (OR)"
+                <h4> "Audio Stack"
+                <p> "Authentic NASA Quindar radio communications, CapCo"
+              <div>
+                <span> "Launch Audio Player"
+            <div>
+              <div>
+                <div>
+                  <div>
+                  <span> "STACK C (OR)"
+                <h4> "Comic Stack"
+                <p> "Full-color illustrated NASA graphic novel explorin"
+              <div>
+                <span> "Open Graphic Novel"
+            <div>
+              <div>
+                <div>
+                  <div>
+                  <span> "STACK D (OR)"
+                <h4> "Flight Sim Game"
+                <p> "Hands-on 60 FPS flight dynamics simulation: Ascent"
+
+--- DOM TREE: LEADERBOARDMODAL ---
+
+--- DOM TREE: CERTIFICATEMODAL ---

@@ -1,0 +1,1059 @@
+{
+  "crossPlatform": {
+    "Desktop (1440x900)": {
+      "viewport": {
+        "name": "Desktop (1440x900)",
+        "width": 1440,
+        "height": 900
+      },
+      "overflowCheck": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasHorizontalScroll": false
+      },
+      "screenshot": "C:\\Users\\User\\Desktop\\nasa-new\\Jr_Astronaut\\dom_inspection_output\\screenshot_desktop.png",
+      "passed": true
+    },
+    "Tablet (768x1024)": {
+      "viewport": {
+        "name": "Tablet (768x1024)",
+        "width": 768,
+        "height": 1024
+      },
+      "overflowCheck": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasHorizontalScroll": false
+      },
+      "screenshot": "C:\\Users\\User\\Desktop\\nasa-new\\Jr_Astronaut\\dom_inspection_output\\screenshot_tablet.png",
+      "passed": true
+    },
+    "Mobile (375x812)": {
+      "viewport": {
+        "name": "Mobile (375x812)",
+        "width": 375,
+        "height": 812
+      },
+      "overflowCheck": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "hasHorizontalScroll": false
+      },
+      "screenshot": "C:\\Users\\User\\Desktop\\nasa-new\\Jr_Astronaut\\dom_inspection_output\\screenshot_mobile.png",
+      "passed": true
+    }
+  },
+  "domTrees": {
+    "homepage": {
+      "tag": "div",
+      "id": "root",
+      "children": [
+        {
+          "tag": "div",
+          "className": "app-root-shell",
+          "children": [
+            {
+              "tag": "header",
+              "className": "global-aerospace-nav",
+              "children": [
+                {
+                  "tag": "div",
+                  "children": [
+                    {
+                      "tag": "button",
+                      "children": [
+                        {
+                          "tag": "div",
+                          "children": []
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "text": "Jr. AstroCamp",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "text": "NASA Space Apps 2026",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "nav",
+                      "className": "global-nav-links",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "text": "Play",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "text": "Learn",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "text": "Explore Space",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "More",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "children": [
+                    {
+                      "tag": "button",
+                      "children": [
+                        {
+                          "tag": "span",
+                          "className": "hidden sm:inline",
+                          "text": "Sound ON",
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "button",
+                      "children": [
+                        {
+                          "tag": "span",
+                          "className": "hidden sm:inline",
+                          "text": "Leaderboard",
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "button",
+                      "className": "global-nav-hamburger",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "main",
+              "children": [
+                {
+                  "tag": "div",
+                  "className": "game-start-menu-root",
+                  "children": [
+                    {
+                      "tag": "div",
+                      "className": "cinematic-scene-zoom",
+                      "children": [
+                        {
+                          "tag": "canvas",
+                          "text": "",
+                          "children": []
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "img",
+                              "className": "earth-orbit-spin",
+                              "text": "",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "children": []
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "img",
+                                  "text": "",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "img",
+                                  "text": "",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "text": "",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "text": "",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "text": "",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "text": "",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "children": []
+                        },
+                        {
+                          "tag": "canvas",
+                          "text": "",
+                          "children": []
+                        },
+                        {
+                          "tag": "div",
+                          "text": "",
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "text": "",
+                      "children": []
+                    },
+                    {
+                      "tag": "div",
+                      "children": [
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "text": "NASA SPACE APPS 2026",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h1",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "text": "AstroCamp",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "text": "You are the Captain. Command your crew. Survive the cosmos.",
+                          "children": []
+                        },
+                        {
+                          "tag": "button",
+                          "className": "game-hero-start-btn",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "text": "🚀 START LEARNING",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "Captain's Briefing",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "Chart the Galaxy",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "Credits",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "className": "resource-circle-item",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "className": "resource-circle-item",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "className": "resource-circle-item",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "className": "resource-circle-item",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "className": "resource-circle-item",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "className": "resource-circle-item",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "className": "resource-circle-item",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "className": "cinematic-fact-pill",
+                      "children": [
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "text": "DID YOU KNOW? · NASA STMD & Artemis",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "text": "On the Moon, night lasts ~14 Earth days and temperatures plunge to -130°C! Kilopower reactors keep outposts warm.",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "children": [
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "className": "destination-chip-btn",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "🌙",
+                                  "children": []
+                                },
+                                {
+                                  "tag": "span",
+                                  "text": "🌙 MOON — Captain's Post",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "className": "destination-chip-btn",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "🔴",
+                                  "children": []
+                                },
+                                {
+                                  "tag": "span",
+                                  "text": "🔴 MARS — Captain's Post",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "footer",
+              "className": "main-footer",
+              "children": [
+                {
+                  "tag": "div",
+                  "children": [
+                    {
+                      "tag": "span",
+                      "children": [
+                        {
+                          "tag": "strong",
+                          "text": "NASA International Space Apps Challenge 2026",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "className": "footer-credits",
+                  "children": [
+                    {
+                      "tag": "span",
+                      "children": [
+                        {
+                          "tag": "strong",
+                          "text": "Team Mysterio",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "authModal": null,
+    "spaceDiscoveryDossier": null,
+    "learningPathOrGraph": {
+      "tag": "div",
+      "className": "hub-fullpage-container",
+      "children": [
+        {
+          "tag": "div",
+          "className": "hub-modal-header",
+          "children": [
+            {
+              "tag": "div",
+              "children": [
+                {
+                  "tag": "span",
+                  "className": "hub-modal-title",
+                  "text": "Astro Camp / Learning Archive",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "className": "hub-tabs",
+          "children": [
+            {
+              "tag": "button",
+              "className": "hub-tab-btn hub-tab-active",
+              "children": [
+                {
+                  "tag": "span",
+                  "text": "🚀 4-Stack OR-Graph & Milestones",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "className": "hub-tab-btn ",
+              "children": [
+                {
+                  "tag": "span",
+                  "text": "Student Notebook",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "className": "hub-tab-btn ",
+              "children": [
+                {
+                  "tag": "span",
+                  "text": "3D Spacecraft Models",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "className": "hub-tab-btn ",
+              "children": [
+                {
+                  "tag": "span",
+                  "text": "NASA Video Modules & 3D",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "className": "hub-tab-btn ",
+              "children": [
+                {
+                  "tag": "span",
+                  "text": "Audio Lessons",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "className": "hub-tab-btn ",
+              "children": [
+                {
+                  "tag": "span",
+                  "text": "Comic Reader",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "className": "hub-tab-btn ",
+              "children": [
+                {
+                  "tag": "span",
+                  "text": "Outpost Briefs",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "className": "hub-tab-btn ",
+              "children": [
+                {
+                  "tag": "span",
+                  "text": "NASA Missions (76)",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "className": "hub-tab-content",
+          "children": [
+            {
+              "tag": "div",
+              "children": [
+                {
+                  "tag": "div",
+                  "children": [
+                    {
+                      "tag": "div",
+                      "children": [
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "text": "STEP 1: PREREQUISITE SPACE BRIEFING",
+                                  "children": []
+                                },
+                                {
+                                  "tag": "div",
+                                  "text": "Read the Outer Space Knowledge Dossier before choosing your stack",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "text": "Read Space Place Dossier ➔",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "MILESTONE #1",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "text": "Earth Systems & Low Earth Orbit (LEO)",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "MILESTONE #2",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "text": "Artemis Lunar Base & South Pole Cryo-Ice",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "MILESTONE #3",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "text": "Martian Entry (EDL) & Jezero Crater Expedition",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "MILESTONE #4",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "text": "Cosmic Frontier: Ocean Worlds & Deep Space Slingshots",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "children": [
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "text": "STEP 2: MULTI-MODAL LEARNING OR-GRAPH",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "h3",
+                              "text": "Choose Any 1 of the 4 Stacks to Complete Milestone #1",
+                              "children": []
+                            },
+                            {
+                              "tag": "p",
+                              "text": "Master orbital velocities (7.8 km/s), atmospheric Max-Q drag, and closed-loop ECLSS life support.",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "children": [
+                                    {
+                                      "tag": "div",
+                                      "children": [
+                                        {
+                                          "tag": "div",
+                                          "children": []
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "text": "STACK A (OR)",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "h4",
+                                      "text": "Video Stack",
+                                      "children": []
+                                    },
+                                    {
+                                      "tag": "p",
+                                      "text": "Interactive cinematic video masterclass with aerospace graphics & lecture transcript.",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "div",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "text": "Launch Video Player",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "children": [
+                                    {
+                                      "tag": "div",
+                                      "children": [
+                                        {
+                                          "tag": "div",
+                                          "children": []
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "text": "STACK B (OR)",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "h4",
+                                      "text": "Audio Stack",
+                                      "children": []
+                                    },
+                                    {
+                                      "tag": "p",
+                                      "text": "Authentic NASA Quindar radio communications, CapCom briefings & telemetry audio.",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "div",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "text": "Launch Audio Player",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "children": [
+                                    {
+                                      "tag": "div",
+                                      "children": [
+                                        {
+                                          "tag": "div",
+                                          "children": []
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "text": "STACK C (OR)",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "h4",
+                                      "text": "Comic Stack",
+                                      "children": []
+                                    },
+                                    {
+                                      "tag": "p",
+                                      "text": "Full-color illustrated NASA graphic novel exploring real astronaut dilemmas & engineering pivots.",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "div",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "text": "Open Graphic Novel",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "children": [
+                                    {
+                                      "tag": "div",
+                                      "children": [
+                                        {
+                                          "tag": "div",
+                                          "children": []
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "text": "STACK D (OR)",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "h4",
+                                      "text": "Flight Sim Game",
+                                      "children": []
+                                    },
+                                    {
+                                      "tag": "p",
+                                      "text": "Hands-on 60 FPS flight dynamics simulation: Ascent, RCS Docking, or Surface Rover sortie.",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "div",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "text": "Launch Simulator",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "children": []
+                                },
+                                {
+                                  "tag": "div",
+                                  "children": [
+                                    {
+                                      "tag": "div",
+                                      "text": "STEP 3: COMPREHENSION QUIZ & CERTIFICATE",
+                                      "children": []
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "text": "Attempt the Flight Readiness Quiz for Milestone #1",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "children": [
+                                {
+                                  "tag": "button",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "text": "Start Milestone Quiz",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "leaderboardModal": null,
+    "certificateModal": null
+  },
+  "interactiveChecks": [
+    {
+      "action": "Inspect Hero CTA",
+      "result": "🚀 START LEARNING"
+    },
+    {
+      "action": "Inspect Auth Modal Inputs",
+      "result": [
+        {
+          "placeholder": "e.g. CadetArtemis or cadet@school.edu",
+          "type": "text",
+          "name": ""
+        },
+        {
+          "placeholder": "••••••••",
+          "type": "password",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "action": "Check 4 Stacks in DOM",
+      "result": {
+        "milestoneCount": 0,
+        "hasVideoStack": true,
+        "hasAudioStack": true,
+        "hasComicStack": true,
+        "hasGameStack": false
+      }
+    },
+    {
+      "action": "Check Leaderboard Segments",
+      "result": {
+        "flightTab": true,
+        "academicTab": true
+      }
+    }
+  ]
+}
