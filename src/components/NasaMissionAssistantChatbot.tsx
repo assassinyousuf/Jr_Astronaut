@@ -49,12 +49,12 @@ interface NasaMissionAssistantChatbotProps {
 
 // Preset Quick Inquiry Prompts for middle school cadets (Student Mentor Persona)
 const SUGGESTED_MENTOR_PROMPTS = [
-  '🤝 Can you help me choose?',
-  '❤️ I feel worried and stuck',
-  '☢️ What about radiation?',
-  '🔬 Where does this data come from?',
-  '🌙 Surviving the 14-day lunar night',
-  '🔴 How does MOXIE create oxygen on Mars?',
+  'Can you help me with this mission?',
+  'Why do astronauts need power?',
+  'What if I make a mistake?',
+  'Where does this data come from?',
+  'What about radiation?',
+  'Surviving the 14-day lunar night',
 ];
 
 // Preset Quick Inquiry Prompts for technical aerospace inquiries (CapCom Copilot Persona)
@@ -202,8 +202,8 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
     {
       id: 'msg-init-1',
       sender: 'assistant',
-      senderName: 'NASA Cadet Mentor',
-      text: `Greetings, Cadet ${currentUser?.username || 'Commander'}! I am your NASA Student Mentor. Space exploration is a thrilling journey of learning through experimentation. Whenever you feel stuck, need help deciding on tricky trade-offs, or wonder where our NASA data comes from, I'm right here beside you!`,
+      senderName: 'Mission Mentor',
+      text: "Hi, Cadet! I’m your Mission Mentor. You don’t have to figure everything out alone—we can take one question at a time. What would you like help with?",
       timestamp: '00:00:01',
       citations: ['NASA Space Apps Student Mentor Framework', 'NASA DONKI Space Weather Database', 'NASA BVAD TP-2015-218570']
     }
@@ -386,213 +386,97 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
         </div>
       )}
 
-      {/* Main Chatbot Panel Dialog */}
+      {/* Main Chatbot Panel Dialog (Mission Mentor Interface) */}
       {isOpen && (
         <div
           className="copilot-chatbot-window"
           role="dialog"
-          aria-label="NASA Mission Assistant Copilot & Mentor"
+          aria-label="Mission Mentor"
           style={{
             position: 'fixed',
-            bottom: floatingMode ? '84px' : '50%',
+            bottom: floatingMode ? '24px' : '50%',
             right: floatingMode ? '24px' : '50%',
             transform: floatingMode ? 'none' : 'translate(50%, 50%)',
-            width: isExpanded ? 'min(820px, calc(100vw - 32px))' : 'min(470px, calc(100vw - 32px))',
-            height: isExpanded ? 'min(780px, calc(100vh - 100px))' : 'min(600px, calc(100vh - 100px))',
+            width: isExpanded ? 'min(780px, calc(100vw - 32px))' : 'min(460px, calc(100vw - 32px))',
+            height: isExpanded ? 'min(780px, calc(100vh - 48px))' : 'min(640px, calc(100vh - 48px))',
             zIndex: 9995,
-            background: 'linear-gradient(180deg, #090e1a 0%, #04070f 100%)',
-            border: '2px solid rgba(56, 189, 248, 0.4)',
-            borderRadius: '12px',
-            boxShadow: '0 0 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(56, 189, 248, 0.25)',
+            background: 'linear-gradient(180deg, #091528 0%, #060e1c 100%)',
+            border: '1.5px solid rgba(56, 189, 248, 0.22)',
+            borderRadius: '24px',
+            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(6, 182, 212, 0.15)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            fontFamily: 'var(--font-mono, monospace)',
+            fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
           }}
         >
           {/* Header */}
           <div
             style={{
-              padding: '12px 16px',
-              background: 'rgba(15, 23, 42, 0.92)',
-              borderBottom: '1px solid rgba(56, 189, 248, 0.25)',
+              padding: '18px 22px 14px 22px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '8px',
+              gap: '12px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  background: 'rgba(56, 189, 248, 0.15)',
-                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: 'rgba(6, 182, 212, 0.14)',
+                  border: '1.5px solid rgba(34, 211, 238, 0.45)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#38bdf8',
-                }}
-              >
-                <Radio size={16} />
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
-                    {mentorMode === 'mentor' ? 'NASA CADET MENTOR' : 'NASA CAPCOM COPILOT'}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '9px',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      background: 'rgba(34, 197, 94, 0.2)',
-                      border: '1px solid rgba(34, 197, 94, 0.4)',
-                      color: '#4ade80',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {mentorMode === 'mentor' ? 'MENTOR READY' : 'DSN LIVE'}
-                  </span>
-                </div>
-                <div style={{ fontSize: '10px', color: '#94a3b8' }}>
-                  {mentorMode === 'mentor'
-                    ? 'Empathetic Decision Support · Grounded in NASA DONKI & BVAD'
-                    : 'Artemis Core Flight Assistant · Grounded in NASA Open Data'}
-                </div>
-              </div>
-            </div>
-
-            {/* Persona Switcher Toggle + Header Controls */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', background: 'rgba(2, 6, 23, 0.75)', padding: '2px', borderRadius: '20px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
-                <button
-                  onClick={() => { setMentorMode('mentor'); soundFx.playClick(850); }}
-                  style={{
-                    padding: '3px 8px',
-                    borderRadius: '14px',
-                    border: 'none',
-                    background: mentorMode === 'mentor' ? 'rgba(56, 189, 248, 0.35)' : 'transparent',
-                    color: mentorMode === 'mentor' ? '#38bdf8' : '#94a3b8',
-                    fontSize: '10.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  title="Switch to Student Mentor mode"
-                >
-                  🎓 Mentor
-                </button>
-                <button
-                  onClick={() => { setMentorMode('copilot'); soundFx.playClick(850); }}
-                  style={{
-                    padding: '3px 8px',
-                    borderRadius: '14px',
-                    border: 'none',
-                    background: mentorMode === 'copilot' ? 'rgba(56, 189, 248, 0.35)' : 'transparent',
-                    color: mentorMode === 'copilot' ? '#38bdf8' : '#94a3b8',
-                    fontSize: '10.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  title="Switch to CapCom Copilot mode"
-                >
-                  🚀 Copilot
-                </button>
-              </div>
-
-              <button
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: soundEnabled ? '#38bdf8' : '#64748b',
-                  cursor: 'pointer',
-                  padding: '6px',
-                }}
-                title={soundEnabled ? 'Mute Radio Audio' : 'Unmute Radio Audio'}
-              >
-                {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-              </button>
-
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  padding: '6px',
-                }}
-                title={isExpanded ? 'Collapse Window' : 'Expand Window'}
-              >
-                {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-              </button>
-
-              <button
-                onClick={handleToggleOpen}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  padding: '6px',
-                }}
-                title="Close Chatbot"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Preset Prompts Carousel */}
-          <div
-            style={{
-              padding: '8px 12px',
-              background: 'rgba(2, 6, 23, 0.7)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-              display: 'flex',
-              gap: '6px',
-              overflowX: 'auto',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {activePrompts.map((promptText, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSendMessage(promptText)}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                  background: 'rgba(30, 41, 59, 0.7)',
-                  border: '1px solid rgba(56, 189, 248, 0.25)',
-                  color: '#cbd5e1',
-                  fontSize: '10.5px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
+                  color: '#22d3ee',
+                  boxShadow: '0 0 16px rgba(34, 211, 238, 0.25)',
                   flexShrink: 0,
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#38bdf8';
-                  e.currentTarget.style.color = '#38bdf8';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.25)';
-                  e.currentTarget.style.color = '#cbd5e1';
-                }}
               >
-                {promptText}
-              </button>
-            ))}
+                <Sparkles size={20} style={{ strokeWidth: 2 }} />
+              </div>
+              <div>
+                <div
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    lineHeight: 1.2,
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  Mission Mentor
+                </div>
+                <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '2px' }}>
+                  Your friendly in-app guide
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleToggleOpen}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'color 0.15s ease',
+              }}
+              title="Close Mission Mentor"
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+            >
+              <X size={22} />
+            </button>
           </div>
 
           {/* Messages Stream */}
@@ -600,121 +484,182 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
             style={{
               flex: 1,
               overflowY: 'auto',
-              padding: '16px',
+              padding: '18px 20px',
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
-              background: 'rgba(3, 7, 18, 0.6)',
             }}
           >
             {messages.map((msg) => {
               const isUser = msg.sender === 'user';
+              if (isUser) {
+                return (
+                  <div
+                    key={msg.id}
+                    style={{
+                      alignSelf: 'flex-end',
+                      maxWidth: '85%',
+                      background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.4) 0%, rgba(3, 105, 161, 0.5) 100%)',
+                      border: '1px solid rgba(56, 189, 248, 0.45)',
+                      borderRadius: '16px 16px 4px 16px',
+                      padding: '12px 16px',
+                      color: '#ffffff',
+                      fontSize: '14px',
+                      lineHeight: 1.5,
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                    }}
+                  >
+                    {msg.text}
+                  </div>
+                );
+              }
+
               return (
                 <div
                   key={msg.id}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: isUser ? 'flex-end' : 'flex-start',
-                    maxWidth: '92%',
-                    alignSelf: isUser ? 'flex-end' : 'flex-start',
+                    background: '#0b192e',
+                    border: '1px solid rgba(30, 58, 95, 0.75)',
+                    borderRadius: '16px',
+                    padding: '16px 18px',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
                   }}
                 >
                   <div
-                    className="copilot-msg-bubble"
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      marginBottom: '4px',
-                      fontSize: '10px',
-                      color: isUser ? '#38bdf8' : '#34d399',
-                      fontWeight: 700,
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      letterSpacing: '0.12em',
+                      color: '#38bdf8',
+                      textTransform: 'uppercase',
+                      marginBottom: '8px',
+                      fontFamily: 'var(--font-mono, monospace)',
                     }}
                   >
-                    <span>{isUser ? `🧑‍🚀 ${msg.senderName}` : `🤖 ${msg.senderName}`}</span>
-                    <span style={{ color: '#64748b' }}>{msg.timestamp}</span>
+                    MISSION MENTOR
                   </div>
-
                   <div
-                    className="copilot-msg-bubble"
                     style={{
-                      padding: '12px 14px',
-                      borderRadius: isUser ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
-                      background: isUser
-                        ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.3) 0%, rgba(3, 105, 161, 0.4) 100%)'
-                        : 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                      border: isUser
-                        ? '1px solid rgba(56, 189, 248, 0.4)'
-                        : '1px solid rgba(52, 211, 153, 0.3)',
-                      color: '#f1f5f9',
-                      fontSize: '12px',
+                      color: '#e2e8f0',
+                      fontSize: '14.5px',
                       lineHeight: 1.55,
                       whiteSpace: 'pre-wrap',
-                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)',
                     }}
                   >
                     {msg.text}
-
-                    {/* Citations Tag Strip */}
-                    {!isUser && msg.citations && msg.citations.length > 0 && (
-                      <div
-                        style={{
-                          marginTop: '10px',
-                          paddingTop: '8px',
-                          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '6px',
-                        }}
-                      >
-                        <span style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: 700 }}>
-                          NASA GROUNDING:
-                        </span>
-                        {msg.citations.map((cite, cIdx) => (
-                          <span
-                            key={cIdx}
-                            style={{
-                              fontSize: '9.5px',
-                              padding: '1px 6px',
-                              borderRadius: '4px',
-                              background: 'rgba(56, 189, 248, 0.1)',
-                              color: '#38bdf8',
-                              border: '1px solid rgba(56, 189, 248, 0.25)',
-                            }}
-                          >
-                            {cite}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   {/* Speech Narration Button */}
-                  {!isUser && (
-                    <button
-                      onClick={() => handleSpeakMessage(msg.text)}
-                      style={{
-                        marginTop: '4px',
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#94a3b8',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '10px',
-                        padding: '2px 4px',
-                      }}
-                      title="Listen to CapCom voice synthesis"
-                    >
-                      <Volume2 size={12} className="text-cyan-400" />
-                      <span>Transmit Audio</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleSpeakMessage(msg.text)}
+                    style={{
+                      marginTop: '10px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      padding: '2px 4px',
+                    }}
+                    title="Listen to Mentor Audio"
+                  >
+                    <Volume2 size={13} className="text-cyan-400" />
+                    <span>Read aloud</span>
+                  </button>
                 </div>
               );
             })}
+
+            {/* Quick Prompt Pills matching the screenshot layout */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+              <div>
+                <button
+                  onClick={() => handleSendMessage('Can you help me with this mission?')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '9999px',
+                    background: 'rgba(11, 25, 45, 0.85)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    color: '#e2e8f0',
+                    fontSize: '13.5px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.background = 'rgba(14, 38, 70, 0.95)';
+                    e.currentTarget.style.color = '#ffffff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+                    e.currentTarget.style.background = 'rgba(11, 25, 45, 0.85)';
+                    e.currentTarget.style.color = '#e2e8f0';
+                  }}
+                >
+                  Can you help me with this mission?
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => handleSendMessage('Why do astronauts need power?')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '9999px',
+                    background: 'rgba(11, 25, 45, 0.85)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    color: '#e2e8f0',
+                    fontSize: '13.5px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.background = 'rgba(14, 38, 70, 0.95)';
+                    e.currentTarget.style.color = '#ffffff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+                    e.currentTarget.style.background = 'rgba(11, 25, 45, 0.85)';
+                    e.currentTarget.style.color = '#e2e8f0';
+                  }}
+                >
+                  Why do astronauts need power?
+                </button>
+
+                <button
+                  onClick={() => handleSendMessage('What if I make a mistake?')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '9999px',
+                    background: 'rgba(11, 25, 45, 0.85)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    color: '#e2e8f0',
+                    fontSize: '13.5px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.background = 'rgba(14, 38, 70, 0.95)';
+                    e.currentTarget.style.color = '#ffffff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+                    e.currentTarget.style.background = 'rgba(11, 25, 45, 0.85)';
+                    e.currentTarget.style.color = '#e2e8f0';
+                  }}
+                >
+                  What if I make a mistake?
+                </button>
+              </div>
+            </div>
 
             {/* Thinking / Uplink indicator */}
             {isThinking && (
@@ -724,10 +669,10 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
                   alignItems: 'center',
                   gap: '8px',
                   color: '#38bdf8',
-                  fontSize: '11px',
-                  padding: '8px 12px',
+                  fontSize: '12px',
+                  padding: '8px 14px',
                   background: 'rgba(15, 23, 42, 0.7)',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   width: 'fit-content',
                   border: '1px solid rgba(56, 189, 248, 0.3)',
                 }}
@@ -741,73 +686,101 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
                     animation: 'pulse 1s infinite',
                   }}
                 />
-                <span>QUERYING NASA FLIGHT TELEMETRY ARCHIVE...</span>
+                <span>Consulting mission logs...</span>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Box Form */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
+          {/* Input Box Form & Disclaimer */}
+          <div
             style={{
-              padding: '12px 14px',
-              background: 'rgba(15, 23, 42, 0.95)',
-              borderTop: '1px solid rgba(56, 189, 248, 0.25)',
-              display: 'flex',
-              gap: '8px',
-              alignItems: 'center',
+              padding: '12px 20px 16px 20px',
+              background: 'rgba(8, 16, 28, 0.95)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.05)',
             }}
           >
-            <input
-              type="text"
-              value={inputQuery}
-              onChange={(e) => setInputQuery(e.target.value)}
-              placeholder="Ask NASA Copilot (e.g. MOXIE, lunar night, orbital speed)..."
-              style={{
-                flex: 1,
-                padding: '10px 14px',
-                borderRadius: '6px',
-                background: 'rgba(2, 6, 23, 0.8)',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                color: '#ffffff',
-                fontSize: '12px',
-                fontFamily: 'var(--font-mono, monospace)',
-                outline: 'none',
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage();
               }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = '#38bdf8')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.35)')}
-            />
-
-            <button
-              type="submit"
-              disabled={!inputQuery.trim() || isThinking}
               style={{
-                padding: '10px 18px',
-                borderRadius: '6px',
-                background: inputQuery.trim()
-                  ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
-                  : 'rgba(30, 41, 59, 0.5)',
-                border: 'none',
-                color: '#ffffff',
-                cursor: inputQuery.trim() ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontWeight: 700,
-                fontSize: '12px',
-                fontFamily: 'var(--font-mono, monospace)',
-                letterSpacing: '0.04em',
-                transition: 'all 0.15s ease',
+                gap: '10px',
               }}
             >
-              <Send size={14} />
-              <span>TRANSMIT</span>
-            </button>
-          </form>
+              <div
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(7, 18, 34, 0.95)',
+                  border: '2px solid rgba(251, 146, 60, 0.85)',
+                  borderRadius: '16px',
+                  padding: '10px 14px',
+                  boxShadow: '0 0 14px rgba(251, 146, 60, 0.25)',
+                  transition: 'border-color 0.2s ease',
+                }}
+              >
+                <input
+                  type="text"
+                  value={inputQuery}
+                  onChange={(e) => setInputQuery(e.target.value)}
+                  placeholder="It's okay to ask for help..."
+                  style={{
+                    flex: 1,
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#f8fafc',
+                    fontSize: '14px',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    caretColor: '#fb923c',
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={!inputQuery.trim() || isThinking}
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '14px',
+                  background: inputQuery.trim()
+                    ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
+                    : 'rgba(15, 26, 44, 0.65)',
+                  border: inputQuery.trim()
+                    ? '1px solid #38bdf8'
+                    : '1px solid rgba(255, 255, 255, 0.08)',
+                  color: inputQuery.trim() ? '#ffffff' : '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: inputQuery.trim() ? 'pointer' : 'default',
+                  transition: 'all 0.18s ease',
+                  flexShrink: 0,
+                }}
+                title="Send question to Mission Mentor"
+              >
+                <Send size={18} />
+              </button>
+            </form>
+
+            <div
+              style={{
+                fontSize: '11px',
+                color: '#64748b',
+                textAlign: 'center',
+                marginTop: '10px',
+                lineHeight: 1.4,
+              }}
+            >
+              A learning guide, not a live person. Answers use prepared learning content.
+            </div>
+          </div>
         </div>
       )}
     </>

@@ -33,6 +33,39 @@ export function getStudentMentorReply(query: string, context?: StudentMentorCont
   const sol = context?.currentSol ?? 1;
   const dest = context?.destination ?? 'MOON';
 
+  // ── 0. CORE CADET ONBOARDING & FOUNDATIONAL QUESTIONS ──────────────
+  if (q.includes('why do astronauts need power') || (q.includes('why') && q.includes('power'))) {
+    return (
+      `In space, electrical power is literally life!\n\n` +
+      `Here is why power is so critical for astronauts on the Moon and Mars:\n` +
+      `1. **Life Support (ECLSS)**: Powers air scrubbers to remove toxic CO2, water recycling distillation, and oxygen pumps.\n` +
+      `2. **Thermal Control**: Space swings from boiling +120°C in sunlight down to -130°C during the lunar night. Continuous electrical heaters keep habitats and spacesuits from freezing solid.\n` +
+      `3. **Communications & Telemetry**: High-gain antenna dishes need continuous electricity to transmit radio signals back to Earth.\n` +
+      `4. **Science & Rovers**: Battery charging powers scientific drills, rovers, and experiments.\n\n` +
+      `NASA uses high-efficiency solar arrays paired with Kilopower nuclear Stirling reactors to guarantee power day and night!`
+    );
+  }
+
+  if (q.includes('what if i make a mistake') || q.includes('mistake') || q.includes('what if i fail') || q.includes('make mistake')) {
+    return (
+      `Mistakes are an essential part of becoming a great astronaut and aerospace engineer!\n\n` +
+      `At NASA, flight teams run hundreds of simulation tests before any real launch. In these simulations, engines intentionally glitch, dust storms hit, and solar panels get covered in dust. ` +
+      `Every single error gives engineers valuable telemetry to improve their design.\n\n` +
+      `In this mission simulator, you can never truly fail—each choice teaches you how real life-support stoichiometry and orbital mechanics work. ` +
+      `If a resource runs low, just pause, adjust your plan, and try again. You've got this, Cadet!`
+    );
+  }
+
+  if (q.includes('can you help me with this mission') || q.includes('help me with this mission') || q.includes('how do i play') || q.includes('help with mission')) {
+    return (
+      `You bet! You don't have to tackle this alone—we can break it down step-by-step:\n\n` +
+      `1. **Monitor the Big Three**: Always watch your Oxygen, Power, and Water gauges. As long as those are in the green, your outpost is secure.\n` +
+      `2. **Review the Trade-Offs**: When an event occurs on Sol ${sol}, read each option carefully. Look at what resources it costs versus the science points it yields.\n` +
+      `3. **Safety First**: Prioritizing your crew's life support over risky experiments is the hallmark of a great flight commander.\n\n` +
+      `What specific system or event on Sol ${sol} would you like to review together?`
+    );
+  }
+
   // ── 1. SCIENCE / DATA ORIGIN INQUIRIES ─────────────────────────────
   if (
     q.includes('where does this data come from') ||
