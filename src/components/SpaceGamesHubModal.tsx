@@ -78,6 +78,23 @@ const createProceduralStarTexture = (): THREE.Texture => {
   return tex;
 };
 
+const createCircularSmokeTexture = (): THREE.Texture => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d')!;
+  const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+  grad.addColorStop(0.25, 'rgba(230, 240, 255, 0.7)');
+  grad.addColorStop(0.65, 'rgba(200, 220, 240, 0.2)');
+  grad.addColorStop(1, 'rgba(200, 220, 240, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 64, 64);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  return tex;
+};
+
 const sharedTextureLoader = new THREE.TextureLoader();
 
 const loadNasaPlanetTexture = (type: string): THREE.Texture => {
@@ -1474,126 +1491,303 @@ const JuniorCadetNmsGame: React.FC<CadetGameProps> = ({ isMuted, onBack, onUpdat
     terrain.receiveShadow = true;
     scene.add(terrain);
 
-    // ─── Alien Bioluminescent Flora & Giant Mushrooms (Surface Clamped) ───
+    // ─── Authentic Lunar & Martian Surface Boulders & Regolith Outcrops ───
     const decorGroup = new THREE.Group();
-    for (let m = 0; m < 55; m++) {
-      const mx = (Math.random() - 0.5) * 450;
-      const mz = (Math.random() - 0.5) * 450;
-      if (Math.hypot(mx, mz) < 18) continue;
-      const my = getTerrainHeight(mx, mz);
-
-      // Stem anchored into terrain
-      const stemGeo = new THREE.CylinderGeometry(0.6, 1.1, 5.5, 8);
-      const stemMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
-      const stem = new THREE.Mesh(stemGeo, stemMat);
-      stem.position.set(mx, my + 2.75, mz);
-      decorGroup.add(stem);
-
-      // Glowing Cap
-      const capGeo = new THREE.ConeGeometry(3.6, 2.0, 14);
-      const capMat = new THREE.MeshStandardMaterial({
-        color: m % 2 === 0 ? 0x06b6d4 : 0xa855f7,
-        emissive: m % 2 === 0 ? 0x06b6d4 : 0xa855f7,
-        emissiveIntensity: 0.8,
-        roughness: 0.2,
-      });
-      const cap = new THREE.Mesh(capGeo, capMat);
-      cap.position.set(mx, my + 5.5, mz);
-      decorGroup.add(cap);
-    }
-
-    // ─── Realistic Martian Surface Boulders & Crags ───
     const boulderMat = new THREE.MeshStandardMaterial({
-      color: 0x475569,
-      roughness: 0.92,
-      metalness: 0.15,
+      color: activeMap.name === 'MARS' ? 0x78350f : 0x334155,
+      roughness: 0.94,
+      metalness: 0.12,
     });
-    for (let b = 0; b < 65; b++) {
-      const bx = (Math.random() - 0.5) * 500;
-      const bz = (Math.random() - 0.5) * 500;
-      if (Math.hypot(bx, bz) < 12) continue;
+    for (let b = 0; b < 110; b++) {
+      const bx = (Math.random() - 0.5) * 480;
+      const bz = (Math.random() - 0.5) * 480;
+      if (Math.hypot(bx, bz) < 14) continue;
       const by = getTerrainHeight(bx, bz);
-      const bScale = 0.8 + Math.random() * 2.5;
+      const bScale = 0.6 + Math.random() * 3.2;
       const bGeo = new THREE.DodecahedronGeometry(bScale, 1);
       const boulder = new THREE.Mesh(bGeo, boulderMat);
-      boulder.position.set(bx, by + bScale * 0.5, bz);
+      boulder.position.set(bx, by + bScale * 0.45, bz);
       boulder.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
       decorGroup.add(boulder);
     }
     scene.add(decorGroup);
 
-    // ─── Harvestable Glowing Mineral Crystals (Surface Clamped) ───
+    // ─── Drillable Regolith Core Samples & Titanium Specimen Tubes ───
     const crystalGroup = new THREE.Group();
     const crystals: THREE.Mesh[] = [];
-    const crystalColors = [0x38bdf8, 0xa855f7, 0x34d399, 0xfbbf24, 0xf43f5e];
 
-    for (let c = 0; c < 50; c++) {
-      const cGeo = new THREE.OctahedronGeometry(1.8 + Math.random() * 0.9, 0);
-      const col = crystalColors[c % crystalColors.length];
-      const cMat = new THREE.MeshStandardMaterial({
-        color: col,
-        emissive: col,
-        emissiveIntensity: 0.9,
-        roughness: 0.1,
-        metalness: 0.9,
+    for (let c = 0; c < 45; c++) {
+      const isTitanium = c % 2 === 0;
+      let meshObj: THREE.Mesh;
+      if (isTitanium) {
+        const cGeo = new THREE.CylinderGeometry(0.25, 0.25, 1.4, 16);
+        const cMat = new THREE.MeshStandardMaterial({
+          color: 0xe2e8f0,
+          metalness: 0.95,
+          roughness: 0.15,
+          emissive: 0x38bdf8,
+          emissiveIntensity: 0.35,
+        });
+        meshObj = new THREE.Mesh(cGeo, cMat);
+        meshObj.rotation.z = Math.PI / 2;
+      } else {
+        const cGeo = new THREE.OctahedronGeometry(0.85, 0);
+        const cMat = new THREE.MeshStandardMaterial({
+          color: 0x38bdf8,
+          emissive: 0x0284c7,
+          emissiveIntensity: 0.75,
+          roughness: 0.25,
+          metalness: 0.8,
+        });
+        meshObj = new THREE.Mesh(cGeo, cMat);
+      }
+
+      // Subtle ground locator beacon ring
+      const ringGeo = new THREE.RingGeometry(0.6, 0.9, 16);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.6,
       });
-      const crystal = new THREE.Mesh(cGeo, cMat);
-      const cx = (Math.random() - 0.5) * 200;
-      const cz = (Math.random() - 0.5) * 200;
+      const groundRing = new THREE.Mesh(ringGeo, ringMat);
+      groundRing.rotation.x = -Math.PI / 2;
+      groundRing.position.y = -0.3;
+      meshObj.add(groundRing);
+
+      const cx = (Math.random() - 0.5) * 220;
+      const cz = (Math.random() - 0.5) * 220;
       const cy = getTerrainHeight(cx, cz);
-      crystal.position.set(cx, cy + 1.2, cz);
-      crystal.rotation.set(Math.random(), Math.random(), Math.random());
-      crystalGroup.add(crystal);
-      crystals.push(crystal);
+      meshObj.position.set(cx, cy + 0.45, cz);
+
+      crystalGroup.add(meshObj);
+      crystals.push(meshObj);
     }
     scene.add(crystalGroup);
 
-    // ─── Wandering Alien Fauna (Surface Clamped) ───
-    const creatures: { mesh: THREE.Group; dir: THREE.Vector3; speed: number }[] = [];
-    for (let k = 0; k < 8; k++) {
-      const creature = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.DodecahedronGeometry(1.4, 0),
-        new THREE.MeshStandardMaterial({ color: 0xec4899, roughness: 0.2, emissive: 0xdb2777, emissiveIntensity: 0.6 })
-      );
-      body.position.y = 1.4;
-      creature.add(body);
+    // ─── Authentic NASA ALSEP & Artemis Surface Science Stations ───
+    const nasaStationsConfig = [
+      {
+        name: 'ALSEP LRRR (Laser Ranging Retroreflector)',
+        desc: 'Corner-cube prism array measuring Earth-Moon distance (384,400 km) with pulsed Nd:YAG laser telemetry.',
+        color: 0x10b981,
+        type: 'retroreflector',
+        pos: { x: 35, z: -40 },
+      },
+      {
+        name: 'ALSEP RTG (Radioisotope Thermoelectric Generator)',
+        desc: 'Plutonium-238 decay heat converter generating 110W electrical power with circumferential cooling fins.',
+        color: 0xef4444,
+        type: 'rtg',
+        pos: { x: -45, z: -30 },
+      },
+      {
+        name: 'ALSEP PSE (Passive Seismic Experiment)',
+        desc: 'Detects deep moonquakes at 800 km depth and meteoroid impacts to map the interior mantle.',
+        color: 0xf59e0b,
+        type: 'seismic',
+        pos: { x: 20, z: 50 },
+      },
+      {
+        name: 'VIPER Volatiles Drill Rig',
+        desc: '1-meter percussion core drill searching for subsurface regolith water-ice in permanently shadowed polar craters.',
+        color: 0x06b6d4,
+        type: 'drill',
+        pos: { x: -55, z: 45 },
+      },
+      {
+        name: 'Apollo 16 Genesis Rock Megalith (Sample 60025)',
+        desc: '4.36-billion-year-old ferroan anorthosite specimen crystallized from the early Lunar Magma Ocean.',
+        color: 0xe0e7ff,
+        type: 'monolith',
+        pos: { x: 65, z: 15 },
+      },
+      {
+        name: 'Perseverance Sample Return Depository',
+        desc: 'Hermetically sealed titanium sample tubes containing core specimens for the Mars Sample Return campaign.',
+        color: 0xd946ef,
+        type: 'sample_rack',
+        pos: { x: -25, z: -70 },
+      },
+      {
+        name: 'Artemis Surface PNT Navigation Beacon',
+        desc: 'Autonomous Positioning, Navigation, and Timing surface beacon broadcasting L1/E1 signals.',
+        color: 0x3b82f6,
+        type: 'pnt_beacon',
+        pos: { x: 50, z: -80 },
+      },
+      {
+        name: 'Basaltic Volcanic Vent & Ilmenite Deposit',
+        desc: 'High-titanium basalt exposure (FeTiO₃) rich in iron and extractable oxygen resources.',
+        color: 0xf97316,
+        type: 'volcanic',
+        pos: { x: -70, z: -10 },
+      },
+    ];
 
-      // Scanning Visor Eye
-      const eye = new THREE.Mesh(
-        new THREE.SphereGeometry(0.4, 14, 14),
-        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
-      );
-      eye.position.set(0, 1.6, -1.1);
-      creature.add(eye);
-
-      const kx = (Math.random() - 0.5) * 160;
-      const kz = (Math.random() - 0.5) * 160;
+    const creatures: { mesh: THREE.Group; dir: THREE.Vector3; speed: number; name: string; desc: string }[] = [];
+    nasaStationsConfig.forEach((cfg) => {
+      const station = new THREE.Group();
+      const kx = cfg.pos.x;
+      const kz = cfg.pos.z;
       const ky = getTerrainHeight(kx, kz);
-      creature.position.set(kx, ky, kz);
-      scene.add(creature);
-      creatures.push({
-        mesh: creature,
-        dir: new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5).normalize(),
-        speed: 2.2 + Math.random() * 2.8,
-      });
-    }
 
-    // ─── Guidance Torus Gates Corridor (Terrain Following) ───
+      // Gold MLI foil insulation base
+      const basePlate = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.4, 2.7, 0.45, 16),
+        new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.85, roughness: 0.25 })
+      );
+      basePlate.position.y = 0.22;
+      station.add(basePlate);
+
+      // Station specific science equipment
+      if (cfg.type === 'retroreflector') {
+        const panel = new THREE.Mesh(
+          new THREE.BoxGeometry(1.6, 0.3, 1.6),
+          new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.1 })
+        );
+        panel.position.set(0, 0.9, 0);
+        panel.rotation.x = -Math.PI / 5;
+        station.add(panel);
+        for (let px = -0.5; px <= 0.5; px += 0.5) {
+          for (let pz = -0.5; pz <= 0.5; pz += 0.5) {
+            const prism = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.12, 0.12, 0.1, 8),
+              new THREE.MeshBasicMaterial({ color: 0x34d399 })
+            );
+            prism.position.set(px, 1.0, pz);
+            station.add(prism);
+          }
+        }
+        // Collimated Green Laser Beam into space
+        const laserMat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.85 });
+        const laserGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 1.0, 0),
+          new THREE.Vector3(0, 180, 0),
+        ]);
+        const laserLine = new THREE.Line(laserGeo, laserMat);
+        station.add(laserLine);
+      } else if (cfg.type === 'rtg') {
+        const rtgBody = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.65, 0.65, 1.8, 16),
+          new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.88, roughness: 0.3 })
+        );
+        rtgBody.position.y = 1.35;
+        station.add(rtgBody);
+        for (let f = 0; f < 8; f++) {
+          const fin = new THREE.Mesh(
+            new THREE.BoxGeometry(0.04, 1.7, 1.7),
+            new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9 })
+          );
+          fin.rotation.y = (f * Math.PI) / 4;
+          fin.position.y = 1.35;
+          station.add(fin);
+        }
+        const thermalGlow = new THREE.PointLight(0xef4444, 1.8, 12);
+        thermalGlow.position.y = 1.35;
+        station.add(thermalGlow);
+      } else if (cfg.type === 'seismic') {
+        const dome = new THREE.Mesh(
+          new THREE.SphereGeometry(1.1, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+          new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 })
+        );
+        dome.position.y = 0.45;
+        station.add(dome);
+        const sensorMast = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8),
+          new THREE.MeshStandardMaterial({ color: 0x94a3b8 })
+        );
+        sensorMast.position.y = 1.4;
+        station.add(sensorMast);
+      } else if (cfg.type === 'drill') {
+        const mast = new THREE.Mesh(
+          new THREE.BoxGeometry(0.8, 3.4, 0.8),
+          new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8, wireframe: true })
+        );
+        mast.position.y = 2.1;
+        station.add(mast);
+        const drillBit = new THREE.Mesh(
+          new THREE.ConeGeometry(0.2, 1.2, 12),
+          new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.95 })
+        );
+        drillBit.position.y = 0.8;
+        drillBit.rotation.x = Math.PI;
+        station.add(drillBit);
+      } else if (cfg.type === 'monolith') {
+        const rock = new THREE.Mesh(
+          new THREE.DodecahedronGeometry(2.4, 1),
+          new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.65, metalness: 0.35 })
+        );
+        rock.position.y = 2.2;
+        station.add(rock);
+      } else if (cfg.type === 'sample_rack') {
+        const rack = new THREE.Mesh(
+          new THREE.BoxGeometry(1.8, 0.8, 1.2),
+          new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8 })
+        );
+        rack.position.y = 0.85;
+        station.add(rack);
+        for (let t = -0.6; t <= 0.6; t += 0.4) {
+          const tube = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.08, 0.08, 0.7, 10),
+            new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.95 })
+          );
+          tube.position.set(t, 1.4, 0);
+          station.add(tube);
+        }
+      } else {
+        const pole = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.1, 0.16, 4.5, 10),
+          new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.85 })
+        );
+        pole.position.y = 2.45;
+        station.add(pole);
+        const beaconLight = new THREE.Mesh(
+          new THREE.SphereGeometry(0.28, 12, 12),
+          new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+        );
+        beaconLight.position.y = 4.8;
+        station.add(beaconLight);
+      }
+
+      station.position.set(kx, ky, kz);
+      scene.add(station);
+      creatures.push({
+        mesh: station,
+        dir: new THREE.Vector3(0, 0, 0),
+        speed: 0,
+        name: cfg.name,
+        desc: cfg.desc,
+      });
+    });
+
+    // ─── Artemis Navigational Waypoint Pylons (Replacing Arcade Gates) ───
     const gateGroup = new THREE.Group();
     for (let g = 0; g < 10; g++) {
-      const gGeo = new THREE.TorusGeometry(5.2, 0.32, 16, 32);
-      const gMat = new THREE.MeshStandardMaterial({
+      const pylon = new THREE.Group();
+      const mastGeo = new THREE.CylinderGeometry(0.12, 0.22, 6.0, 8);
+      const mastMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85 });
+      const mast = new THREE.Mesh(mastGeo, mastMat);
+      mast.position.y = 3.0;
+      pylon.add(mast);
+
+      // Flashing navigation ring
+      const ringGeo = new THREE.TorusGeometry(1.4, 0.12, 12, 24);
+      const ringMat = new THREE.MeshStandardMaterial({
         color: 0x38bdf8,
         emissive: 0x0284c7,
-        emissiveIntensity: 0.9,
+        emissiveIntensity: 1.2,
       });
-      const gate = new THREE.Mesh(gGeo, gMat);
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.y = 5.6;
+      ring.rotation.x = Math.PI / 2;
+      pylon.add(ring);
+
       const gx = Math.sin(g * 0.7) * 22;
       const gz = -22 - g * 30;
-      const gy = getTerrainHeight(gx, gz) + 5.5;
-      gate.position.set(gx, gy, gz);
-      gateGroup.add(gate);
+      const gy = getTerrainHeight(gx, gz);
+      pylon.position.set(gx, gy, gz);
+      gateGroup.add(pylon);
     }
     scene.add(gateGroup);
 
@@ -2218,11 +2412,11 @@ const JuniorCadetNmsGame: React.FC<CadetGameProps> = ({ isMuted, onBack, onUpdat
       creatures.forEach((creature, idx) => {
         if (scanOrigin.distanceTo(creature.mesh.position) < 42) {
           localScans += 1;
-          const name = `Alien Fauna Specimen #0${idx + 1} (Cristata Sporepod)`;
+          const name = creature.name || `NASA Surface Experiment Station #${idx + 1}`;
           setScannedArtifacts((prev) => [...prev, name]);
           onUpdateScores(localCrystals, localScans);
-          setDiscoveryPopup(`🔍 [${isEva ? 'EVA SCAN' : 'ROVER SCAN'}]: ${name} · 100% DISCOVERY!`);
-          setTimeout(() => setDiscoveryPopup(null), 3000);
+          setDiscoveryPopup(`🔍 [${isEva ? 'EVA RAMAN SCAN' : 'ROVER RAMAN SCAN'}]: ${name} · ${creature.desc || '100% TELEMETRY DISCOVERY'}`);
+          setTimeout(() => setDiscoveryPopup(null), 3500);
         }
       });
     };
@@ -2416,19 +2610,19 @@ const JuniorCadetNmsGame: React.FC<CadetGameProps> = ({ isMuted, onBack, onUpdat
         if (!isMuted) soundFx.playVictory();
       }
 
-      // Rotate gates
-      gateGroup.children.forEach((g, idx) => {
-        g.rotation.z += dt * (0.6 + idx * 0.1);
+      // Rotate waypoint beacon rings
+      gateGroup.children.forEach((pylon, idx) => {
+        const ring = pylon.children[1];
+        if (ring) {
+          ring.rotation.z += dt * (0.8 + idx * 0.1);
+        }
       });
 
-      // Wander creatures on terrain surface
+      // Subtle rotation for science station equipment sensors
       creatures.forEach((c) => {
-        c.mesh.position.addScaledVector(c.dir, c.speed * dt);
-        if (Math.hypot(c.mesh.position.x, c.mesh.position.z) > 100) {
-          c.dir.negate();
+        if (c.mesh.children[1]) {
+          c.mesh.children[1].rotation.y += dt * 0.4;
         }
-        c.mesh.position.y = getTerrainHeight(c.mesh.position.x, c.mesh.position.z);
-        c.mesh.rotation.y += dt * 0.8;
       });
 
       // Sonar pulse wave expansion
@@ -3170,6 +3364,20 @@ const FlightOfficerKspGame: React.FC<OfficerGameProps> = ({ isMuted, onBack, onU
     const atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
     earth.add(atmosphere);
 
+    // Photorealistic 2K Cloud Layer over Earth
+    const cloudGeo = new THREE.SphereGeometry(earthRadius + 2.5, 64, 64);
+    const cloudTex = sharedTextureLoader.load('/assets/planets/2k_earth_clouds.jpg');
+    cloudTex.wrapS = THREE.RepeatWrapping;
+    const cloudMat = new THREE.MeshStandardMaterial({
+      map: cloudTex,
+      transparent: true,
+      opacity: 0.65,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const clouds = new THREE.Mesh(cloudGeo, cloudMat);
+    earth.add(clouds);
+
     // ─── Launch Complex 39B Lattice Truss Tower & Floodlights ───
     const padGroup = new THREE.Group();
     const padBase = new THREE.Mesh(
@@ -3255,7 +3463,8 @@ const FlightOfficerKspGame: React.FC<OfficerGameProps> = ({ isMuted, onBack, onU
     padSmokeGeo.setAttribute('position', new THREE.BufferAttribute(padSmokePos, 3));
     const padSmokeMat = new THREE.PointsMaterial({
       color: 0xcbd5e1,
-      size: 5.5,
+      size: 6.5,
+      map: createCircularSmokeTexture(),
       transparent: true,
       opacity: 0,
       blending: THREE.NormalBlending,
@@ -3515,7 +3724,8 @@ const FlightOfficerKspGame: React.FC<OfficerGameProps> = ({ isMuted, onBack, onU
     rocketSparkGeo.setAttribute('position', new THREE.BufferAttribute(rocketSparkPositions, 3));
     const rocketSparkMat = new THREE.PointsMaterial({
       color: 0xfbbf24,
-      size: 2.8,
+      size: 3.2,
+      map: createProceduralStarTexture(),
       transparent: true,
       opacity: 0.9,
       blending: THREE.AdditiveBlending,
@@ -3849,8 +4059,9 @@ const FlightOfficerKspGame: React.FC<OfficerGameProps> = ({ isMuted, onBack, onU
         if (padSmokeMat.opacity > 0) padSmokeMat.opacity = Math.max(0, padSmokeMat.opacity - dt * 0.9);
       }
 
-      // Rotate Earth slowly
+      // Rotate Earth slowly and rotate dynamic atmospheric clouds
       earth.rotation.y += dt * 0.02;
+      clouds.rotation.y += dt * 0.006;
 
       // Dynamic 360° Orbital Camera Chasing with Throttle Vibration
       if (!mapMode) {

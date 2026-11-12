@@ -159,33 +159,56 @@ export const MarsEDLSimulatorModal: React.FC<MarsEDLSimulatorModalProps> = ({
 
     resetSimulation();
 
-    // 1. Scene, Camera, Renderer
+
+    // 1. Scene & Photorealistic Martian Atmosphere
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a0804);
-    scene.fog = new THREE.FogExp2(0x9a3412, 0.0035);
+    scene.background = new THREE.Color(0xb45309); // Authentic Martian Butterscotch/Salmon Sky
+    scene.fog = new THREE.FogExp2(0x9a3412, 0.0014);
 
-    const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 1000);
-    camera.position.set(0, 8, 26);
+    const camera = new THREE.PerspectiveCamera(48, width / height, 0.1, 2000);
+    camera.position.set(0, 18, 42);
+    camera.lookAt(0, 12, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.35;
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // 2. Lighting
-    const sunLight = new THREE.DirectionalLight(0xffedd5, 2.8);
-    sunLight.position.set(60, 90, 60);
+    const textureLoader = new THREE.TextureLoader();
+
+    // 2. Multi-Directional Lighting
+    const sunLight = new THREE.DirectionalLight(0xffedd5, 3.2);
+    sunLight.position.set(80, 120, 60);
     scene.add(sunLight);
 
-    const ambientLight = new THREE.AmbientLight(0xc2410c, 0.7);
+    const ambientLight = new THREE.AmbientLight(0xc2410c, 0.85);
     scene.add(ambientLight);
 
-    // 3. Mars Ground Plane & Crater Terrain
-    const groundGeo = new THREE.PlaneGeometry(1000, 1000, 48, 48);
+    // 3. Jezero Crater Displaced Terrain with Real NASA Mars Texture
+    const marsTex = textureLoader.load('/assets/planets/2k_mars.jpg');
+    marsTex.wrapS = THREE.RepeatWrapping;
+    marsTex.wrapT = THREE.RepeatWrapping;
+    marsTex.repeat.set(16, 16);
+
+    const groundGeo = new THREE.PlaneGeometry(1600, 1600, 64, 64);
+    const gPos = groundGeo.attributes.position;
+    for (let i = 0; i < gPos.count; i++) {
+      const gx = gPos.getX(i);
+      const gy = gPos.getY(i);
+      const dist = Math.hypot(gx, gy);
+      // Realistic Jezero Delta crater rims and sedimentary terraces
+      const craterElevation = Math.sin(dist * 0.012) * 9.0 + Math.cos(gx * 0.025 + gy * 0.018) * 4.0;
+      gPos.setZ(i, craterElevation);
+    }
+    gPos.needsUpdate = true;
+    groundGeo.computeVertexNormals();
+
     const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x9a3412,
-      roughness: 0.9,
+      map: marsTex,
+      roughness: 0.85,
       metalness: 0.1,
     });
     const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -193,14 +216,21 @@ export const MarsEDLSimulatorModal: React.FC<MarsEDLSimulatorModalProps> = ({
     ground.position.y = -2;
     scene.add(ground);
 
-    // Jezero Crater Rim Rocks
-    for (let i = 0; i < 40; i++) {
-      const rockGeo = new THREE.DodecahedronGeometry(2 + Math.random() * 5);
-      const rockMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.95 });
+    // Jezero Crater Rim Rocks & Basalt Boulders
+    const rockMat = new THREE.MeshStandardMaterial({
+      map: marsTex,
+      roughness: 0.95,
+      metalness: 0.2,
+      color: 0x7f1d1d,
+    });
+    for (let i = 0; i < 60; i++) {
+      const rScale = 2.5 + Math.random() * 6.5;
+      const rockGeo = new THREE.DodecahedronGeometry(rScale, 1);
       const rock = new THREE.Mesh(rockGeo, rockMat);
-      const angle = (i / 40) * Math.PI * 2;
-      const r = 40 + Math.random() * 80;
-      rock.position.set(Math.cos(angle) * r, 0, Math.sin(angle) * r);
+      const angle = (i / 60) * Math.PI * 2;
+      const r = 35 + Math.random() * 140;
+      rock.position.set(Math.cos(angle) * r, -1 + rScale * 0.4, Math.sin(angle) * r);
+      rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
       scene.add(rock);
     }
 
@@ -210,72 +240,163 @@ export const MarsEDLSimulatorModal: React.FC<MarsEDLSimulatorModalProps> = ({
     scene.add(landerGroup);
 
     // Heat Shield (Bottom gold/ablative ceramic)
-    const heatShieldGeo = new THREE.ConeGeometry(3.8, 1.3, 32);
+    const heatShieldGeo = new THREE.ConeGeometry(3.8, 1.4, 32);
     const heatShieldMat = new THREE.MeshStandardMaterial({
       color: 0x1f2937,
-      roughness: 0.8,
+      roughness: 0.7,
+      metalness: 0.4,
       emissive: 0xef4444,
-      emissiveIntensity: 0.8,
+      emissiveIntensity: 0.85,
     });
     const heatShield = new THREE.Mesh(heatShieldGeo, heatShieldMat);
     heatShield.rotation.x = Math.PI;
     heatShield.position.y = -1;
     landerGroup.add(heatShield);
 
-    // Backshell
+    // Backshell with Ceramic Thermal Protection System Tiles
     const backshellGeo = new THREE.CylinderGeometry(0.8, 3.8, 3.2, 32);
-    const backshellMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
+    const backshellMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.35,
+      metalness: 0.3,
+    });
     const backshell = new THREE.Mesh(backshellGeo, backshellMat);
     backshell.position.y = 1;
     landerGroup.add(backshell);
 
-    // Rover chassis inside
+    // Rover chassis inside with Gold Kapton Insulation Foil
     const roverGeo = new THREE.BoxGeometry(2.4, 1.0, 3.2);
-    const roverMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.5, roughness: 0.3 });
+    const roverMat = new THREE.MeshStandardMaterial({
+      color: 0xd97706, // Gold foil
+      metalness: 0.85,
+      roughness: 0.25,
+    });
     const rover = new THREE.Mesh(roverGeo, roverMat);
     rover.position.y = 0.5;
     landerGroup.add(rover);
 
-    // Parachute Mesh
+    // Supersonic Parachute Mesh (Orange & White "Dare Mighty Things" JPL Pattern)
     const chuteGroup = new THREE.Group();
-    const canopyGeo = new THREE.SphereGeometry(8, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2.2);
+    const canopyGeo = new THREE.SphereGeometry(9, 32, 24, 0, Math.PI * 2, 0, Math.PI / 2.1);
     const canopyMat = new THREE.MeshStandardMaterial({
       color: 0xf97316,
       side: THREE.DoubleSide,
-      roughness: 0.6,
+      roughness: 0.5,
     });
     const canopy = new THREE.Mesh(canopyGeo, canopyMat);
-    canopy.position.y = 18;
+    canopy.position.y = 20;
     chuteGroup.add(canopy);
 
-    const lineGeo = new THREE.CylinderGeometry(0.04, 3.8, 16, 8);
+    const lineGeo = new THREE.CylinderGeometry(0.04, 3.8, 18, 8);
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
     const lines = new THREE.Mesh(lineGeo, lineMat);
-    lines.position.y = 9;
+    lines.position.y = 10;
     chuteGroup.add(lines);
 
     chuteGroup.visible = false;
     landerGroup.add(chuteGroup);
 
-    // Sky Crane Retro Engines Flames
-    const engineGlowGeo = new THREE.ConeGeometry(0.6, 3.2, 16);
-    const engineGlowMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-    const retroFlame1 = new THREE.Mesh(engineGlowGeo, engineGlowMat);
-    retroFlame1.position.set(-1.4, -0.8, 0);
-    const retroFlame2 = retroFlame1.clone();
-    retroFlame2.position.set(1.4, -0.8, 0);
-    retroFlame1.visible = false;
-    retroFlame2.visible = false;
-    landerGroup.add(retroFlame1);
-    landerGroup.add(retroFlame2);
+    // Sky Crane Retro Engines Quad Flames
+    const quadFlameGroup = new THREE.Group();
+    const retroOffsets = [
+      { x: -1.6, z: -1.6 },
+      { x: 1.6, z: -1.6 },
+      { x: -1.6, z: 1.6 },
+      { x: 1.6, z: 1.6 },
+    ];
+    retroOffsets.forEach(({ x, z }) => {
+      const flGeo = new THREE.ConeGeometry(0.45, 3.8, 16);
+      const flMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+      });
+      const fl = new THREE.Mesh(flGeo, flMat);
+      fl.rotation.x = Math.PI;
+      fl.position.set(x, -2.4, z);
+      quadFlameGroup.add(fl);
+    });
+    quadFlameGroup.visible = false;
+    landerGroup.add(quadFlameGroup);
 
-    // Plasma Fire Particle Halo
-    const fireGeo = new THREE.TorusGeometry(4.2, 0.45, 16, 32);
-    const fireMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
+    // Multi-Layered Superheated Atmospheric Re-entry Plasma Sheath (1,400°C)
+    const plasmaGroup = new THREE.Group();
+    plasmaGroup.position.y = -1.2;
+
+    const outerPlasmaGeo = new THREE.ConeGeometry(4.8, 3.2, 32);
+    const outerPlasmaMat = new THREE.MeshBasicMaterial({
+      color: 0xff4500,
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.AdditiveBlending,
+    });
+    const outerPlasma = new THREE.Mesh(outerPlasmaGeo, outerPlasmaMat);
+    outerPlasma.rotation.x = Math.PI;
+    plasmaGroup.add(outerPlasma);
+
+    const innerPlasmaGeo = new THREE.ConeGeometry(4.2, 2.4, 32);
+    const innerPlasmaMat = new THREE.MeshBasicMaterial({
+      color: 0xffea00,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+    });
+    const innerPlasma = new THREE.Mesh(innerPlasmaGeo, innerPlasmaMat);
+    innerPlasma.rotation.x = Math.PI;
+    plasmaGroup.add(innerPlasma);
+
+    // Glowing Plasma Ionization Bow Shock Halo
+    const fireGeo = new THREE.TorusGeometry(4.2, 0.22, 16, 48);
+    const fireMat = new THREE.MeshBasicMaterial({
+      color: 0xffedd5,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+    });
     const plasmaHalo = new THREE.Mesh(fireGeo, fireMat);
     plasmaHalo.rotation.x = Math.PI / 2;
-    plasmaHalo.position.y = -1;
-    landerGroup.add(plasmaHalo);
+    plasmaGroup.add(plasmaHalo);
+
+    landerGroup.add(plasmaGroup);
+
+    // Soft Circular Glow Texture for Hypersonic Sparks
+    const emberCanvas = document.createElement('canvas');
+    emberCanvas.width = 32;
+    emberCanvas.height = 32;
+    const eCtx = emberCanvas.getContext('2d');
+    if (eCtx) {
+      const grad = eCtx.createRadialGradient(16, 16, 0, 16, 16, 16);
+      grad.addColorStop(0, 'rgba(255, 255, 200, 1)');
+      grad.addColorStop(0.3, 'rgba(255, 170, 0, 0.8)');
+      grad.addColorStop(0.7, 'rgba(255, 68, 0, 0.3)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      eCtx.fillStyle = grad;
+      eCtx.fillRect(0, 0, 32, 32);
+    }
+    const emberTexture = new THREE.CanvasTexture(emberCanvas);
+
+    // Trailing Hypersonic Sparks / Ablative Embers System
+    const sparkCount = 60;
+    const sparkGeo = new THREE.BufferGeometry();
+    const sparkPos = new Float32Array(sparkCount * 3);
+    for (let s = 0; s < sparkCount; s++) {
+      sparkPos[s * 3] = (Math.random() - 0.5) * 4;
+      sparkPos[s * 3 + 1] = -1 - Math.random() * 12;
+      sparkPos[s * 3 + 2] = (Math.random() - 0.5) * 4;
+    }
+    sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+    const sparkMat = new THREE.PointsMaterial({
+      map: emberTexture,
+      color: 0xffaa00,
+      size: 1.8,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const sparkPoints = new THREE.Points(sparkGeo, sparkMat);
+    landerGroup.add(sparkPoints);
 
     // 5. Main Simulation Loop
     let animId: number;
@@ -306,24 +427,44 @@ export const MarsEDLSimulatorModal: React.FC<MarsEDLSimulatorModalProps> = ({
           s.velocity = Math.max(1.8, s.velocity - 0.3 * dt);
           s.descentRate = 140;
           s.tempC = 1350 + Math.sin(Date.now() * 0.01) * 40;
-          plasmaHalo.visible = true;
+          plasmaGroup.visible = true;
+          sparkPoints.visible = true;
           chuteGroup.visible = false;
+          quadFlameGroup.visible = false;
+
+          // Pulsating superheated plasma envelope & hypersonic sparks
+          const pFlicker = 1.0 + Math.sin(Date.now() * 0.04) * 0.08;
+          plasmaGroup.scale.set(pFlicker, pFlicker, pFlicker);
+          const spArr = sparkGeo.attributes.position.array as Float32Array;
+          for (let sp = 1; sp < sparkCount * 3; sp += 3) {
+            spArr[sp] += 35 * dt;
+            if (spArr[sp] > 14) spArr[sp] = -2 - Math.random() * 12;
+          }
+          sparkGeo.attributes.position.needsUpdate = true;
 
           if (s.altitude <= 11) {
             triggerNextStageAction();
           }
         } else if (s.stage === 'PARACHUTE') {
-          plasmaHalo.visible = false;
+          plasmaGroup.visible = false;
+          sparkPoints.visible = false;
+          quadFlameGroup.visible = false;
           chuteGroup.visible = true;
           s.altitude -= 0.8 * dt;
           s.velocity = Math.max(0.18, s.velocity - 0.25 * dt);
           s.descentRate = 65;
           s.tempC = Math.max(120, s.tempC - dt * 250);
 
+          // Parachute wind flutter
+          canopy.rotation.z = Math.sin(Date.now() * 0.008) * 0.06;
+
           if (s.altitude <= 3.5) {
             triggerNextStageAction();
           }
         } else if (s.stage === 'HEATSHIELD_TRN') {
+          plasmaGroup.visible = false;
+          sparkPoints.visible = false;
+          quadFlameGroup.visible = false;
           heatShield.visible = false;
           chuteGroup.visible = true;
           s.altitude -= 0.5 * dt;
@@ -333,10 +474,14 @@ export const MarsEDLSimulatorModal: React.FC<MarsEDLSimulatorModalProps> = ({
             triggerNextStageAction();
           }
         } else if (s.stage === 'SKYCRANE') {
+          plasmaGroup.visible = false;
+          sparkPoints.visible = false;
           chuteGroup.visible = false;
           backshell.visible = false;
-          retroFlame1.visible = true;
-          retroFlame2.visible = true;
+          quadFlameGroup.visible = true;
+
+          const qScale = s.throttle * (1.2 + Math.random() * 0.35);
+          quadFlameGroup.scale.set(1.0, qScale, 1.0);
 
           // Throttle Control with W/S or touch buttons
           if (s.keys['w'] || s.keys['arrowup'] || s.keys['thrust_up']) {
@@ -355,8 +500,7 @@ export const MarsEDLSimulatorModal: React.FC<MarsEDLSimulatorModalProps> = ({
           if (s.altitude <= 0.05) {
             if (s.descentRate <= 3.2 && Math.abs(s.lateralX) < 20) {
               s.stage = 'TOUCHDOWN';
-              retroFlame1.visible = false;
-              retroFlame2.visible = false;
+              quadFlameGroup.visible = false;
               soundFx.playVictory();
               confetti({ particleCount: 220, spread: 110 });
               setCapcomCallout('TOUCHDOWN CONFIRMED! PERSEVERANCE IS SAFE ON THE SURFACE OF MARS!');

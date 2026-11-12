@@ -537,26 +537,71 @@ export const MissionCinematicIntro: React.FC<MissionCinematicIntroProps> = ({
     const dustParticles = new THREE.Points(dustGeo, dustMat);
     scene.add(dustParticles);
 
-    // ── 3. DESTINATION CELESTIAL PLANET (PHOTOREALISTIC 3D SHADING) ──
+    // ── 3. DESTINATION CELESTIAL PLANET (PHOTOREALISTIC 2K NASA TEXTURE & SHADING) ──
     const planetGroup = new THREE.Group();
     const planetRadius = 36;
+    const textureLoader = new THREE.TextureLoader();
 
-    const planetTex = createRealisticPlanetTexture(map.terrainType, map.accentColor);
+    let planetTexUrl = '/assets/planets/2k_earth_daymap.jpg';
+    const tUpper = (map.terrainType + ' ' + map.id + ' ' + map.name).toUpperCase();
+    if (tUpper.includes('MOON') || tUpper.includes('LUNAR') || tUpper.includes('AITKEN') || tUpper.includes('SHACKLETON')) {
+      planetTexUrl = '/assets/planets/2k_moon.jpg';
+    } else if (tUpper.includes('MARS') || tUpper.includes('JEZERO') || tUpper.includes('RED')) {
+      planetTexUrl = '/assets/planets/2k_mars.jpg';
+    } else if (tUpper.includes('JUPITER') || tUpper.includes('EUROPA')) {
+      planetTexUrl = '/assets/planets/2k_jupiter.jpg';
+    } else if (tUpper.includes('SATURN') || tUpper.includes('TITAN')) {
+      planetTexUrl = '/assets/planets/2k_saturn.jpg';
+    } else if (tUpper.includes('MERCURY')) {
+      planetTexUrl = '/assets/planets/2k_mercury.jpg';
+    } else if (tUpper.includes('VENUS')) {
+      planetTexUrl = '/assets/planets/2k_venus_surface.jpg';
+    } else if (tUpper.includes('NEPTUNE')) {
+      planetTexUrl = '/assets/planets/2k_neptune.jpg';
+    } else if (tUpper.includes('SUN')) {
+      planetTexUrl = '/assets/planets/2k_sun.jpg';
+    }
+
+    const planetTex = textureLoader.load(
+      planetTexUrl,
+      undefined,
+      undefined,
+      () => createRealisticPlanetTexture(map.terrainType, map.accentColor)
+    );
+    planetTex.wrapS = THREE.RepeatWrapping;
+    planetTex.wrapT = THREE.ClampToEdgeWrapping;
+
     const planetGeo = new THREE.SphereGeometry(planetRadius, 64, 64);
     const planetMat = new THREE.MeshStandardMaterial({
       map: planetTex,
-      roughness: 0.75,
-      metalness: 0.15,
+      roughness: 0.65,
+      metalness: 0.1,
     });
     const planetMesh = new THREE.Mesh(planetGeo, planetMat);
     planetGroup.add(planetMesh);
 
-    // Atmospheric Scattering Rim Halo (Realistic Limb Glow)
+    // Realistic Rotating Cloud Deck for Earth
+    let cloudMesh: THREE.Mesh | null = null;
+    if (planetTexUrl.includes('earth')) {
+      const cloudTex = textureLoader.load('/assets/planets/2k_earth_clouds.jpg');
+      cloudTex.wrapS = THREE.RepeatWrapping;
+      const cloudGeo = new THREE.SphereGeometry(planetRadius * 1.015, 64, 64);
+      const cloudMat = new THREE.MeshStandardMaterial({
+        map: cloudTex,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending,
+      });
+      cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
+      planetGroup.add(cloudMesh);
+    }
+
+    // Atmospheric Scattering Rim Halo (Realistic Rayleigh Limb Glow)
     const atmoGeo = new THREE.SphereGeometry(planetRadius * 1.035, 48, 48);
     const atmoMat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(map.accentColor),
+      color: new THREE.Color(map.accentColor || '#38bdf8'),
       transparent: true,
-      opacity: 0.32,
+      opacity: 0.38,
       side: THREE.BackSide,
       blending: THREE.AdditiveBlending,
     });
@@ -746,6 +791,12 @@ export const MissionCinematicIntro: React.FC<MissionCinematicIntroProps> = ({
       diamonds.forEach((d, idx) => {
         d.scale.setScalar((1 + Math.sin(elapsed * 35 + idx) * 0.2) * (isClimax ? 1.75 : 1.0));
       });
+
+      // Planet and dynamic cloud rotation
+      planetMesh.rotation.y += 0.0014;
+      if (cloudMesh) {
+        cloudMesh.rotation.y += 0.0024;
+      }
 
       // Stardust drift & warp speed in climax
       const dustAttr = dustGeo.attributes.position as THREE.BufferAttribute;

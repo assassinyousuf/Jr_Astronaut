@@ -29,3 +29,4 @@ const ARTIFACT_DIR = 'C:/Users/User/.gemini/antigravity/brain/a2124d7b-e612-4dc9
 
   await browser.close();
 })();
+

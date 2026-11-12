@@ -2883,30 +2883,64 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       loxVentMeshRef.current = loxVent;
       playerVehicle.add(loxVent);
 
-      // Rocket Exhaust Plume with Mach Shock Diamonds
+      // Rocket Exhaust Plume with Mach Shock Diamonds & Incandescent Jet Mantle
       machDiamondGroup = new THREE.Group();
       machDiamondGroupRef.current = machDiamondGroup;
-      machDiamondGroup.position.y = -8;
+      machDiamondGroup.position.set(0, -1.8, 0); // Attached directly at rocket engine nozzle exit plane
 
-      const flameGeo = new THREE.ConeGeometry(3.0, 24, 32);
-      const flameMat = new THREE.MeshBasicMaterial({
-        color: 0xffedd5,
+      // 1. Outer Incandescent Fire Mantle (Volumetric Orange/Amber Plasma)
+      const mantleGeo = new THREE.ConeGeometry(4.8, 42, 32);
+      const mantleMat = new THREE.MeshBasicMaterial({
+        color: 0xff6b00,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.65,
+        blending: THREE.AdditiveBlending,
+      });
+      const mantleMesh = new THREE.Mesh(mantleGeo, mantleMat);
+      mantleMesh.rotation.x = Math.PI;
+      mantleMesh.position.y = -21;
+      machDiamondGroup.add(mantleMesh);
+
+      // 2. High-Temperature Supersonic Flame Body
+      const flameGeo = new THREE.ConeGeometry(3.2, 30, 32);
+      const flameMat = new THREE.MeshBasicMaterial({
+        color: 0xffb703,
+        transparent: true,
+        opacity: 0.88,
         blending: THREE.AdditiveBlending,
       });
       const flameMesh = new THREE.Mesh(flameGeo, flameMat);
+      flameMesh.rotation.x = Math.PI;
+      flameMesh.position.y = -15;
       machDiamondGroup.add(flameMesh);
 
-      const coreGeo = new THREE.ConeGeometry(1.5, 16, 24);
+      // 3. Incandescent Blue/White Supersonic Core Jet
+      const coreGeo = new THREE.ConeGeometry(1.6, 20, 24);
       const coreMat = new THREE.MeshBasicMaterial({
-        color: 0x38bdf8,
+        color: 0xe0f2fe,
         transparent: true,
-        opacity: 0.75,
+        opacity: 0.95,
         blending: THREE.AdditiveBlending,
       });
       const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+      coreMesh.rotation.x = Math.PI;
+      coreMesh.position.y = -10;
       machDiamondGroup.add(coreMesh);
+
+      // 4. Authentic Mach Shock Diamonds (Expanding/Contracting Supersonic Discs)
+      for (let d = 0; d < 5; d++) {
+        const shockGeo = new THREE.TorusGeometry(1.3 - d * 0.18, 0.22, 16, 32);
+        const shockMat = new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          transparent: true,
+          opacity: 0.9,
+          blending: THREE.AdditiveBlending,
+        });
+        const shock = new THREE.Mesh(shockGeo, shockMat);
+        shock.rotation.x = Math.PI / 2;
+        shock.position.y = -3.5 - d * 4.2;
+        machDiamondGroup.add(shock);
+      }
 
       machDiamondGroup.visible = false;
       playerVehicle.add(machDiamondGroup);
@@ -5764,15 +5798,26 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
           camera.lookAt(lookAtTarget);
         } else if (mission.gameType === 'launch') {
           controls.enabled = false;
-          // Trailing chase camera following behind and below the ascending rocket with aerodynamic buffeting
-          const shakeMag = (state.throttle * 0.12 + Math.min(0.2, (state.dynamicPressureQ || 0) / 15000)) * (Math.random() - 0.5);
+          // Visceral Dynamic FOV Warp (Hypersonic speed expansion: 52° -> 74° at orbital speed)
+          const targetFov = 52.0 + Math.min(22.0, (state.velocityKms * 1000) / 120);
+          if (Math.abs(camera.fov - targetFov) > 0.05) {
+            camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, dt * 2.5);
+            camera.updateProjectionMatrix();
+          }
+
+          // High-adrenaline cinematic chase camera trailing behind the rocket
+          // Framing both the rocket body and the blazing exhaust plume against the sky/Earth
+          const speedFactor = Math.min(20.0, state.velocityKms * 10.0);
+          const camYOffset = state.altitudeKm < 0.15 ? 7.0 : 6.0 + speedFactor * 0.2;
+          const camZDist = state.altitudeKm < 0.15 ? 42.0 : 44.0 + speedFactor * 0.8;
+          const shakeMag = (state.throttle * 0.25 + Math.min(0.4, (state.dynamicPressureQ || 0) / 10000)) * (Math.random() - 0.5);
           const chaseCamPos = new THREE.Vector3(
-            playerVehicle.position.x + shakeMag,
-            playerVehicle.position.y - 4.2 + shakeMag,
-            playerVehicle.position.z + 30.0 + shakeMag
+            playerVehicle.position.x + shakeMag * 0.8,
+            Math.max(4.5, playerVehicle.position.y + camYOffset + shakeMag * 0.5),
+            playerVehicle.position.z + camZDist + shakeMag * 0.8
           );
-          camera.position.lerp(chaseCamPos, dt * 6.0);
-          const lookAtTarget = playerVehicle.position.clone().add(new THREE.Vector3(0, 14.0, 0));
+          camera.position.lerp(chaseCamPos, dt * 5.0);
+          const lookAtTarget = playerVehicle.position.clone().add(new THREE.Vector3(0, 6.0, 0));
           camera.lookAt(lookAtTarget);
         } else if (mission.gameType === 'rover') {
           controls.enabled = false;

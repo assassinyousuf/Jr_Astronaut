@@ -64,7 +64,8 @@
 /* ── UNIFIED TOP HUD FLEX CONTAINER (Prevents any horizontal collision between card, toolbar & CTA) ── */
 .nasa-eyes-top-hud {
   position: absolute;
-  top: 16px; /* Guaranteed 16px gap below GlobalNavBar */
+  top: 16px;
+  /* Guaranteed 16px gap below GlobalNavBar */
   left: 16px;
   right: 16px;
   display: flex;
@@ -75,7 +76,7 @@
   z-index: 45;
 }
 
-.nasa-eyes-top-hud > * {
+.nasa-eyes-top-hud>* {
   pointer-events: auto;
 }
 
@@ -106,6 +107,7 @@
     left: 12px;
     right: 12px;
   }
+
   .ne-floating-celestial-toolbar {
     max-width: 700px;
   }
@@ -119,6 +121,7 @@
     right: 10px;
     gap: 10px;
   }
+
   .ne-floating-celestial-toolbar {
     position: fixed;
     top: auto;
@@ -256,8 +259,17 @@
 }
 
 @keyframes nePulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.85); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
 }
 
 /* Category Filter Chips */
@@ -529,8 +541,15 @@
 }
 
 @keyframes neSlideIn {
-  from { opacity: 0; transform: translateX(24px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .ne-drawer-header {
@@ -819,12 +838,15 @@
     overflow-x: auto;
     scrollbar-width: none;
   }
+
   .nasa-eyes-bottombar::-webkit-scrollbar {
     display: none;
   }
+
   .ne-time-cluster {
     gap: 4px;
   }
+
   .ne-scrubber-container {
     min-width: 140px;
   }
@@ -1026,8 +1048,15 @@
 }
 
 @keyframes neSlideInLeft {
-  from { opacity: 0; transform: translateX(-24px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .ne-stories-header {
@@ -1108,6 +1137,7 @@
     opacity: 0;
     transform: translate(-50%, -16px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -1249,20 +1279,25 @@
     top: 70px;
     max-width: calc(100vw - 20px);
   }
+
   .ne-home-hero-card {
     padding: 18px 16px;
   }
+
   .ne-home-hero-title {
     font-size: 20px;
   }
+
   .ne-home-hero-tagline {
     font-size: 14px;
   }
+
   .ne-home-hero-primary-btn {
     width: 100%;
     justify-content: center;
     font-size: 13px;
   }
+
   .ne-home-hero-secondary-btn {
     width: 100%;
     justify-content: center;
@@ -1285,6 +1320,7 @@
     opacity: 0;
     transform: translate(-50%, 12px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
