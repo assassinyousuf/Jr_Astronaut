@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { AppRoute } from '../router/useAppRouter';
+import { FullMissionLifecycleModal } from '../components/FullMissionLifecycleModal';
+import { HardcoreSurvivalSimulator } from '../components/HardcoreSurvivalSimulator';
+import { MarsSurvivalModal } from '../components/MarsSurvivalModal';
 import { SpaceGamesHubModal } from '../components/SpaceGamesHubModal';
 import { MarsEDLSimulatorModal } from '../components/MarsEDLSimulatorModal';
 import { MoonbaseAlphaSimulator } from '../components/MoonbaseAlphaSimulator';
@@ -19,9 +22,14 @@ import {
   ChevronRight,
   Maximize2,
   Sliders,
+  ShieldCheck,
+  Footprints,
 } from 'lucide-react';
 
 export type SimulatorTab =
+  | 'LUNAR_VOYAGER'
+  | 'HARDCORE_SURVIVAL'
+  | 'MARS_SURVIVAL'
   | 'SPACE_SUITE'
   | 'MARS_EDL'
   | 'MOONBASE'
@@ -43,13 +51,20 @@ export const SimulatorsHubPage: React.FC<SimulatorsHubPageProps> = ({
 }) => {
   const getInitialTab = (sim?: string): SimulatorTab => {
     switch (sim) {
+      case 'lunar-voyager':
+      case 'vab':
+      case 'full-mission':
+      case 'lunar': return 'LUNAR_VOYAGER';
+      case 'hardcore':
+      case 'hardcore-survival': return 'HARDCORE_SURVIVAL';
+      case 'mars-survival': return 'MARS_SURVIVAL';
       case 'mars-edl': return 'MARS_EDL';
       case 'moonbase': return 'MOONBASE';
       case 'black-hole': return 'BLACK_HOLE';
       case 'expedition': return 'EXPEDITION';
       case 'rover': return 'ROVER';
       case 'moonquake': return 'MOONQUAKE';
-      default: return 'SPACE_SUITE';
+      default: return 'LUNAR_VOYAGER';
     }
   };
 
@@ -63,11 +78,32 @@ export const SimulatorsHubPage: React.FC<SimulatorsHubPageProps> = ({
 
   const tabs: { id: SimulatorTab; label: string; icon: React.ReactNode; desc: string; tag: string }[] = [
     {
+      id: 'LUNAR_VOYAGER',
+      label: '3D Lunar Voyager & VAB',
+      icon: <Rocket size={16} />,
+      desc: 'VAB Rocket Assembly, Pad 39A Rollout, Translunar Flight & Neil Armstrong Moon Walk EVA',
+      tag: 'NEW FLAGSHIP',
+    },
+    {
+      id: 'HARDCORE_SURVIVAL',
+      label: 'Hardcore Orbital Survival',
+      icon: <ShieldCheck size={16} />,
+      desc: 'Newtonian & Keplerian orbital mechanics, orbital debris field evasion & suicide burns',
+      tag: 'KEPLERIAN',
+    },
+    {
+      id: 'MARS_SURVIVAL',
+      label: 'Mars Planetary Survival',
+      icon: <Flame size={16} />,
+      desc: '4 Extreme Martian Survival Missions grounded in Curiosity & Perseverance REMS/PDS data',
+      tag: 'REMS PDS',
+    },
+    {
       id: 'SPACE_SUITE',
       label: '3D Space Flight Suite',
       icon: <Gamepad2 size={16} />,
       desc: 'Cadet NMS Surface, Officer KSP Orbital Burns & Commander SC 6-DOF',
-      tag: 'FLAGSHIP',
+      tag: 'FLIGHT',
     },
     {
       id: 'MARS_EDL',
@@ -242,6 +278,29 @@ export const SimulatorsHubPage: React.FC<SimulatorsHubPageProps> = ({
           border: '1px solid rgba(56, 189, 248, 0.25)',
           position: 'relative',
         }}>
+          {activeTab === 'LUNAR_VOYAGER' && (
+            <FullMissionLifecycleModal
+              isOpen={true}
+              onClose={() => handleSelectTab('SPACE_SUITE')}
+              isEmbedded={true}
+              initialDestination="MOON"
+            />
+          )}
+
+          {activeTab === 'HARDCORE_SURVIVAL' && (
+            <HardcoreSurvivalSimulator
+              onClose={() => handleSelectTab('SPACE_SUITE')}
+              isEmbedded={true}
+            />
+          )}
+
+          {activeTab === 'MARS_SURVIVAL' && (
+            <MarsSurvivalModal
+              isOpen={true}
+              onClose={() => handleSelectTab('SPACE_SUITE')}
+            />
+          )}
+
           {activeTab === 'SPACE_SUITE' && (
             <SpaceGamesHubModal
               isOpen={true}

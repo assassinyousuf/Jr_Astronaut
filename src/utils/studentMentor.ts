@@ -91,11 +91,70 @@ export function getStudentMentorReply(query: string, context?: StudentMentorCont
     const citationTitle = event?.nasaCitation?.title || 'NASA Space Science & Bioastronautics';
     const docNumber = event?.nasaCitation?.docNumber || 'DONKI / BVAD';
     return (
-      `Great scientific inquiry, Cadet! Our mission simulations are derived from verified NASA open data portals, including:\n\n` +
-      `1. NASA DONKI (Space Weather Database of Notifications, Knowledge, Information) for solar flares, coronal mass ejections, and geomagnetic storms.\n` +
-      `2. NASA BVAD (Baseline Values and Assumptions Document TP-2015-218570) for life-support stoichiometry (oxygen, water, and food rates).\n` +
-      `3. Reference: ${citationTitle} (${docNumber}).\n\n` +
-      `Always remember: while based on authentic NASA space telemetry, each gameplay effect is not itself a NASA measurement, but an educational model to teach critical decision-making.`
+      `Great scientific inquiry, Cadet! Our mission simulations are derived from verified NASA open data portals across four platforms:\n\n` +
+      `1. **NASA Open Data** (data.nasa.gov) — Apollo Passive Seismic Experiment (PSE) shallow moonquake catalogs (Nakamura 1979).\n` +
+      `2. **NASA API Portal** (api.nasa.gov) — NASA DONKI space weather API for solar flares, Coronal Mass Ejections (CMEs), and proton flux alerts.\n` +
+      `3. **NASA Earthdata** (earthdata.nasa.gov) — Planetary altimetry grids (MOLA) and atmospheric density models.\n` +
+      `4. **NASA JPL Planetary Data System** (jpl.nasa.gov) — Mars Curiosity & Perseverance REMS/MEDA atmospheric and dust opacity telemetry.\n\n` +
+      `• Reference: ${citationTitle} (${docNumber}).\n\n` +
+      `Always remember: while based on authentic NASA space telemetry, each gameplay effect is not itself a NASA measurement, but an educational physical model to teach critical decision-making!`
+    );
+  }
+
+  // ── 1B. 4 REAL NASA SURVIVAL MISSIONS (2 MOON + 2 MARS) ─────────────
+  if (q.includes('moonquake') || q.includes('seismic') || q.includes('nakamura') || q.includes('resonance') || (q.includes('shake') && q.includes('moon'))) {
+    return (
+      `🌕 **Moon Survival Mission 1: Shallow Moonquake & Regolith Resonance**\n\n` +
+      `• **Target Site**: Mare Tranquillitatis (Apollo 11 PSE Station S11, -1,850m elevation)\n` +
+      `• **NASA Source**: NASA Open Data (data.nasa.gov) & Nakamura et al. (1979) Apollo PSE catalog\n` +
+      `• **The Physical Hazard**: Unlike Earth rocks that attenuate seismic waves in 1–2 minutes due to moisture, the Moon is bone dry. Lunar regolith has an exceptionally high seismic quality factor (Q > 3,500). When a tectonic moonquake strikes, the ground rings like a bronze bell for **60 to 120 minutes**!\n` +
+      `• **Commander Survival Protocol**:\n` +
+      `  1. Deploy hydraulic dampening outriggers to decouple habitat living quarters from high-frequency shear waves.\n` +
+      `  2. Depressurize residual hypergolic propellant lines to prevent slosh resonance ruptures.\n` +
+      `  3. Drive titanium micro-spike anchors into basalt bedrocks to resist sliding.\n\n` +
+      `Would you like to simulate this mission in the 3D Hangar?`
+    );
+  }
+
+  if (q.includes('malapert') || q.includes('solar storm') || q.includes('cme') || q.includes('proton') || q.includes('x7.2') || (q.includes('solar') && q.includes('flare'))) {
+    return (
+      `🌕 **Moon Survival Mission 2: Malapert Mountain Class X7.2 Solar Storm**\n\n` +
+      `• **Target Site**: Malapert Mountain Plateau (Lunar South Pole, +5,000m elevation)\n` +
+      `• **NASA Source**: NASA API Portal (api.nasa.gov/DONKI) & LRO CRaTER instrument\n` +
+      `• **The Physical Hazard**: An extreme Class X7.2 solar flare launches relativistic Solar Energetic Particle (SEP) protons (>100 MeV) directly along Parker Spiral magnetic lines at 2,200 km/s. They strike the unshielded lunar surface in just **18 minutes** with biological doses reaching 1.85 Gray (lethal without shielding)!\n` +
+      `• **Commander Survival Protocol**:\n` +
+      `  1. Issue an immediate 18-minute emergency EVA recall into subterranean storm shelters.\n` +
+      `  2. Ingress the 2.0-meter compacted regolith bunker with surrounding potable water wall jackets (hydrogen stops protons with zero Bremsstrahlung gamma rays).\n` +
+      `  3. Switch sensitive avionics and volatile RAM to rad-hard sleep mode to avoid single-event latchups.\n\n` +
+      `You can test this in the Hardcore Survival Simulator!`
+    );
+  }
+
+  if (q.includes('dust storm') || q.includes('rems') || q.includes('dust') && q.includes('mars') || q.includes('tau') || q.includes('mmrtg')) {
+    return (
+      `🔴 **Mars Survival Mission 1: REMS Extreme Planet-Encircling Dust Storm**\n\n` +
+      `• **Target Site**: Gale Crater (Curiosity) & Jezero Crater (Perseverance)\n` +
+      `• **NASA Source**: NASA JPL PDS (jpl.nasa.gov) Curiosity REMS & Perseverance MEDA sensors\n` +
+      `• **The Physical Hazard**: Massive southern summer convection cells loft micron-sized ferric oxide dust into the stratosphere, spiking atmospheric optical depth (Tau) past 3.5–4.5 and blocking 99% of sunlight! Solar power collapses from 590 W/m² to <15 W/m², surface nights drop to -85°C, and dust generates 20 kV/m electrostatic friction.\n` +
+      `• **Commander Survival Protocol**:\n` +
+      `  1. Switch base electrical power from compromised solar arrays to the nuclear MMRTG Stirling thermal bus.\n` +
+      `  2. Direct waste radioactive decay heat through thermal fluid loops to prevent battery electrolytes from freezing solid at -40°C.\n` +
+      `  3. Deploy electrostatic grounding drag cables to safely dissipate triboelectric charge.\n\n` +
+      `Check out the Mars Survival Simulator to command this scenario!`
+    );
+  }
+
+  if (q.includes('coprates') || q.includes('canyon') || q.includes('chasma') || q.includes('katabatic') || q.includes('permafrost') || q.includes('valles marineris')) {
+    return (
+      `🔴 **Mars Survival Mission 2: Coprates Chasma Hypersonic Canyon Entry & Permafrost**\n\n` +
+      `• **Target Site**: Coprates Chasma, Valles Marineris (-6,800m below datum, 7 km cliff walls)\n` +
+      `• **NASA Source**: NASA Earthdata (earthdata.nasa.gov) MOLA MEGDR laser altimetry & MRO SHARAD\n` +
+      `• **The Physical Hazard**: At -6.8 km depth, atmospheric pressure is 50% denser (1,150 Pa), but extreme nocturnal radiative cooling causes catastrophic **45 m/s (160 km/h) katabatic down-draft winds** cascading down the sheer 7-kilometer cliffs into boulder-strewn 30° scree slopes!\n` +
+      `• **Commander Survival Protocol**:\n` +
+      `  1. Engage LIDAR Terrain-Relative Navigation (TRN) to paint canyon wall contours and counter optical shadows.\n` +
+      `  2. Execute a pulsed high-thrust retro-burn at 500m to cancel turbulent katabatic wind shear vectors.\n` +
+      `  3. Deploy high-torque cryogenic diamond core drills to extract pure sub-surface permafrost ice lenses at 0.8m depth.\n\n` +
+      `Launch this high-speed descent in the Mars EDL & Survival Simulator!`
     );
   }
 
