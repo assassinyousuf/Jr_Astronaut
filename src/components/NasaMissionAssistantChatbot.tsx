@@ -25,6 +25,7 @@ import {
 import { soundFx } from '../utils/audioEffects';
 import { speechEngine } from '../utils/speechEngine';
 import type { User } from '../types/auth';
+import { getStudentMentorReply, type StudentMentorContext } from '../utils/studentMentor';
 
 export interface ChatMessage {
   id: string;
@@ -41,16 +42,28 @@ interface NasaMissionAssistantChatbotProps {
   onOpen?: () => void;
   onClose?: () => void;
   floatingMode?: boolean;
+  initialMode?: 'mentor' | 'copilot';
+  mentorContext?: StudentMentorContext;
 }
 
-// Preset Quick Inquiry Prompts for middle school cadets
-const SUGGESTED_PROMPTS = [
-  '🌙 How do we survive the 14-day lunar night?',
+// Preset Quick Inquiry Prompts for middle school cadets (Student Mentor Persona)
+const SUGGESTED_MENTOR_PROMPTS = [
+  '🤝 Can you help me choose?',
+  '❤️ I feel worried and stuck',
+  '☢️ What about radiation?',
+  '🔬 Where does this data come from?',
+  '🌙 Surviving the 14-day lunar night',
   '🔴 How does MOXIE create oxygen on Mars?',
+];
+
+// Preset Quick Inquiry Prompts for technical aerospace inquiries (CapCom Copilot Persona)
+const SUGGESTED_COPILOT_PROMPTS = [
   '🚀 What is the 7 Minutes of Terror in EDL?',
   '💧 Explain ECLSS closed-loop water & air math',
   '🛰️ What are Quindar tones and orbital velocity?',
   '🪐 Tell me about Europa Clipper & ocean worlds',
+  '🛸 How to perform orbital docking?',
+  '⚛️ Explain Kilopower KRUSTY nuclear reactor',
 ];
 
 // Knowledge base rules & response generator grounded in authentic NASA open science
@@ -171,10 +184,13 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
   onOpen: externalOnOpen,
   onClose: externalOnClose,
   floatingMode = true,
+  initialMode = 'mentor',
+  mentorContext,
 }) => {
   const [internalIsOpen, setInternalIsOpen] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [mentorMode, setMentorMode] = useState<'mentor' | 'copilot'>(initialMode);
   const [inputQuery, setInputQuery] = useState<string>('');
   const [isThinking, setIsThinking] = useState<boolean>(false);
 
@@ -185,10 +201,10 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
     {
       id: 'msg-init-1',
       sender: 'assistant',
-      senderName: 'CapCom AI Copilot',
-      text: `Houston CapCom here, ${currentUser?.username || 'Captain'}. Radio telemetry is 100% locked. I am your aerospace flight and science assistant. Ask me anything about orbital mechanics, life-support math, surviving the lunar night, or mission tips!`,
+      senderName: 'NASA Cadet Mentor',
+      text: `Greetings, Cadet ${currentUser?.username || 'Commander'}! I am your NASA Student Mentor. Space exploration is a thrilling journey of learning through experimentation. Whenever you feel stuck, need help deciding on tricky trade-offs, or wonder where our NASA data comes from, I'm right here beside you!`,
       timestamp: '00:00:01',
-      citations: ['NASA Houston Mission Control Telemetry', 'NASA Space Apps 2026']
+      citations: ['NASA Space Apps Student Mentor Framework', 'NASA DONKI Space Weather Database', 'NASA BVAD TP-2015-218570']
     }
   ]);
 
@@ -222,13 +238,41 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
     setInputQuery('');
     setIsThinking(true);
 
-    // Realistic DSN radio response delay (450ms)
+    // Realistic radio response delay (400ms)
     setTimeout(() => {
-      const { reply, citations } = generateCopilotResponse(query);
+      let reply: string;
+      let citations: string[];
+
+      const q = query.toLowerCase();
+      // If in mentor mode OR the query matches key mentor scenarios (choices, worry, radiation, data origin)
+      if (
+        mentorMode === 'mentor' ||
+        q.includes('choose') ||
+        q.includes('decide') ||
+        q.includes('which option') ||
+        q.includes('help me') ||
+        q.includes('worried') ||
+        q.includes('stuck') ||
+        q.includes('scared') ||
+        q.includes('radiation') ||
+        q.includes('where does this data come from') ||
+        q.includes('attribution')
+      ) {
+        reply = getStudentMentorReply(query, mentorContext);
+        citations = ['NASA DONKI Space Weather Database', 'NASA BVAD TP-2015-218570'];
+        if (mentorContext?.activeEvent?.dataAttribution?.sourceUrl) {
+          citations.push(mentorContext.activeEvent.dataAttribution.sourceUrl);
+        }
+      } else {
+        const copilotRes = generateCopilotResponse(query);
+        reply = copilotRes.reply;
+        citations = copilotRes.citations;
+      }
+
       const assistantMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
         sender: 'assistant',
-        senderName: 'Artemis Core AI',
+        senderName: mentorMode === 'mentor' ? 'NASA Cadet Mentor' : 'CapCom AI Copilot',
         text: reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         citations
@@ -240,7 +284,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
       if (soundEnabled) {
         soundFx.playDsnChirp();
       }
-    }, 450);
+    }, 400);
   };
 
   const handleSpeakMessage = (text: string) => {
@@ -263,6 +307,8 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
     }
   };
 
+  const activePrompts = mentorMode === 'mentor' ? SUGGESTED_MENTOR_PROMPTS : SUGGESTED_COPILOT_PROMPTS;
+
   return (
     <>
       {/* Floating Launcher Button */}
@@ -270,7 +316,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
         <button
           onClick={handleToggleOpen}
           className="copilot-floating-trigger-btn"
-          aria-label="Open NASA Mission Assistant Chatbot"
+          aria-label="Open NASA Mission Assistant & Student Mentor"
           style={{
             position: 'fixed',
             bottom: '24px',
@@ -292,7 +338,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
             fontSize: '13px',
             letterSpacing: '0.04em',
           }}
-          title="Open NASA Mission Copilot AI Assistant"
+          title="Open NASA Cadet Mentor & Copilot AI"
         >
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Bot size={20} className="text-cyan-300" />
@@ -309,7 +355,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
               }}
             />
           </div>
-          <span className="hidden sm:inline">NASA COPILOT AI</span>
+          <span className="hidden sm:inline">NASA MENTOR AI</span>
         </button>
       )}
 
@@ -318,14 +364,14 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
         <div
           className="copilot-chatbot-window"
           role="dialog"
-          aria-label="NASA Mission Assistant Copilot"
+          aria-label="NASA Mission Assistant Copilot & Mentor"
           style={{
             position: 'fixed',
             bottom: floatingMode ? '84px' : '50%',
             right: floatingMode ? '24px' : '50%',
             transform: floatingMode ? 'none' : 'translate(50%, 50%)',
-            width: isExpanded ? 'min(820px, calc(100vw - 32px))' : 'min(450px, calc(100vw - 32px))',
-            height: isExpanded ? 'min(780px, calc(100vh - 100px))' : 'min(580px, calc(100vh - 100px))',
+            width: isExpanded ? 'min(820px, calc(100vw - 32px))' : 'min(470px, calc(100vw - 32px))',
+            height: isExpanded ? 'min(780px, calc(100vh - 100px))' : 'min(600px, calc(100vh - 100px))',
             zIndex: 9995,
             background: 'linear-gradient(180deg, #090e1a 0%, #04070f 100%)',
             border: '2px solid rgba(56, 189, 248, 0.4)',
@@ -341,11 +387,12 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
           <div
             style={{
               padding: '12px 16px',
-              background: 'rgba(15, 23, 42, 0.85)',
+              background: 'rgba(15, 23, 42, 0.92)',
               borderBottom: '1px solid rgba(56, 189, 248, 0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: '8px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -367,7 +414,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
-                    NASA CAPCOM COPILOT
+                    {mentorMode === 'mentor' ? 'NASA CADET MENTOR' : 'NASA CAPCOM COPILOT'}
                   </span>
                   <span
                     style={{
@@ -380,17 +427,62 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
                       fontWeight: 700,
                     }}
                   >
-                    DSN LIVE
+                    {mentorMode === 'mentor' ? 'MENTOR READY' : 'DSN LIVE'}
                   </span>
                 </div>
                 <div style={{ fontSize: '10px', color: '#94a3b8' }}>
-                  Artemis Core Flight Assistant · Grounded in NASA Open Data
+                  {mentorMode === 'mentor'
+                    ? 'Empathetic Decision Support · Grounded in NASA DONKI & BVAD'
+                    : 'Artemis Core Flight Assistant · Grounded in NASA Open Data'}
                 </div>
               </div>
             </div>
 
-            {/* Header Action Controls */}
+            {/* Persona Switcher Toggle + Header Controls */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', background: 'rgba(2, 6, 23, 0.75)', padding: '2px', borderRadius: '20px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                <button
+                  onClick={() => { setMentorMode('mentor'); soundFx.playClick(850); }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '14px',
+                    border: 'none',
+                    background: mentorMode === 'mentor' ? 'rgba(56, 189, 248, 0.35)' : 'transparent',
+                    color: mentorMode === 'mentor' ? '#38bdf8' : '#94a3b8',
+                    fontSize: '10.5px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Switch to Student Mentor mode"
+                >
+                  🎓 Mentor
+                </button>
+                <button
+                  onClick={() => { setMentorMode('copilot'); soundFx.playClick(850); }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '14px',
+                    border: 'none',
+                    background: mentorMode === 'copilot' ? 'rgba(56, 189, 248, 0.35)' : 'transparent',
+                    color: mentorMode === 'copilot' ? '#38bdf8' : '#94a3b8',
+                    fontSize: '10.5px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Switch to CapCom Copilot mode"
+                >
+                  🚀 Copilot
+                </button>
+              </div>
+
               <button
                 onClick={() => setSoundEnabled(!soundEnabled)}
                 style={{
@@ -428,7 +520,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
                   cursor: 'pointer',
                   padding: '6px',
                 }}
-                title="Close Copilot"
+                title="Close Chatbot"
               >
                 <X size={18} />
               </button>
@@ -447,7 +539,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
               whiteSpace: 'nowrap',
             }}
           >
-            {SUGGESTED_PROMPTS.map((promptText, idx) => (
+            {activePrompts.map((promptText, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSendMessage(promptText)}
@@ -502,6 +594,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
                   }}
                 >
                   <div
+                    className="copilot-msg-bubble"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -517,6 +610,7 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
                   </div>
 
                   <div
+                    className="copilot-msg-bubble"
                     style={{
                       padding: '12px 14px',
                       borderRadius: isUser ? '12px 12px 2px 12px' : '12px 12px 12px 2px',

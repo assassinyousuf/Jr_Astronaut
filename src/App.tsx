@@ -984,13 +984,21 @@ export const App: React.FC = () => {
           onClose={() => setIsMoonquakeMapOpen(false)}
         />
 
-        {/* NASA Mission Assistant AI Copilot Chatbot */}
+        {/* NASA Mission Assistant AI Copilot & Student Mentor Chatbot */}
         <NasaMissionAssistantChatbot
           currentUser={currentUser}
           isOpen={isChatbotOpen}
           onOpen={() => setIsChatbotOpen(true)}
           onClose={() => setIsChatbotOpen(false)}
           floatingMode={true}
+          initialMode="mentor"
+          mentorContext={{
+            activeEvent: gameState.activeEvent,
+            destination: gameState.destination,
+            currentSol: gameState.currentSol,
+            isGameOver: gameState.isGameOver,
+            resources: gameState.resources,
+          }}
         />
       </Suspense>
 

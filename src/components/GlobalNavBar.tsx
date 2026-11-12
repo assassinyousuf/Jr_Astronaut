@@ -370,7 +370,7 @@ export const GlobalNavBar: React.FC<GlobalNavBarProps> = ({
                   }}
                 >
                   <Bot size={15} />
-                  <span>NASA AI Copilot</span>
+                  <span>NASA AI Mentor &amp; Copilot</span>
                 </button>
 
                 <button
@@ -536,7 +536,7 @@ export const GlobalNavBar: React.FC<GlobalNavBarProps> = ({
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(56,189,248,0.15)'; }}
         >
           <Bot size={15} />
-          <span className="hidden sm:inline">AI Copilot</span>
+          <span className="hidden sm:inline">AI Mentor</span>
         </button>
 
         {/* Mobile Hamburger */}

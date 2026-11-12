@@ -90,6 +90,11 @@ export interface MissionEvent {
   };
   comicPanels: ComicPanelData[];
   options: ChoiceOption[];
+  dataAttribution?: {
+    label: string;
+    recordId: string;
+    sourceUrl: string;
+  };
 }
 
 export interface SolHistoryEntry {
