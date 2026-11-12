@@ -158,51 +158,22 @@ function createSolarCellTexture(): THREE.CanvasTexture {
   return texture;
 }
 
-function createEarthTexture(): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 512;
-  const ctx = canvas.getContext('2d')!;
-
-  const ocean = ctx.createLinearGradient(0, 0, 0, 512);
-  ocean.addColorStop(0, '#0a192f');
-  ocean.addColorStop(0.5, '#1e3a8a');
-  ocean.addColorStop(1, '#0a192f');
-  ctx.fillStyle = ocean;
-  ctx.fillRect(0, 0, 1024, 512);
-
-  ctx.fillStyle = '#059669';
-  ctx.beginPath();
-  ctx.ellipse(280, 180, 95, 65, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(340, 330, 60, 95, 0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#10b981';
-  ctx.beginPath();
-  ctx.ellipse(680, 160, 160, 80, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#d97706';
-  ctx.beginPath();
-  ctx.ellipse(560, 270, 75, 90, 0.1, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#f8fafc';
-  ctx.fillRect(0, 0, 1024, 32);
-  ctx.fillRect(0, 480, 1024, 32);
-
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-  for (let i = 0; i < 45; i++) {
-    const cx = Math.random() * 1024;
-    const cy = 60 + Math.random() * 390;
-    const rw = 50 + Math.random() * 110;
-    const rh = 12 + Math.random() * 30;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rw, rh, (Math.random() - 0.5) * 0.7, 0, Math.PI * 2);
-    ctx.fill();
+function createEarthTexture(): THREE.Texture {
+  try {
+    const loader = new THREE.TextureLoader();
+    const tex = loader.load('/assets/planets/2k_earth_daymap.jpg');
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    return tex;
+  } catch {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#0a192f';
+    ctx.fillRect(0, 0, 1024, 512);
+    return new THREE.CanvasTexture(canvas);
   }
-
-  return new THREE.CanvasTexture(canvas);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

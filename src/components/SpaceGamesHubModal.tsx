@@ -78,39 +78,47 @@ const createProceduralStarTexture = (): THREE.Texture => {
   return tex;
 };
 
-const createEarthTexture = (): THREE.Texture => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#0a2e4a';
-  ctx.fillRect(0, 0, 512, 256);
+const sharedTextureLoader = new THREE.TextureLoader();
 
-  // Continents
-  ctx.fillStyle = '#1e7b49';
-  const continents = [
-    { x: 90, y: 80, w: 90, h: 60 },
-    { x: 130, y: 150, w: 60, h: 70 },
-    { x: 260, y: 70, w: 90, h: 50 },
-    { x: 275, y: 130, w: 90, h: 80 },
-    { x: 380, y: 80, w: 100, h: 90 },
-    { x: 410, y: 180, w: 60, h: 40 },
-  ];
-  continents.forEach(c => {
-    ctx.beginPath();
-    ctx.ellipse(c.x, c.y, c.w / 2, c.h / 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  // Cloud swirls
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-  for (let i = 0; i < 24; i++) {
-    ctx.beginPath();
-    ctx.arc((i * 43) % 512, 40 + ((i * 29) % 180), 22 + (i % 14), 0, Math.PI * 2);
-    ctx.fill();
+const loadNasaPlanetTexture = (type: string): THREE.Texture => {
+  const mapPath: Record<string, string> = {
+    EARTH: '/assets/planets/2k_earth_daymap.jpg',
+    MOON: '/assets/planets/2k_moon.jpg',
+    MARS: '/assets/planets/2k_mars.jpg',
+    JUPITER: '/assets/planets/2k_jupiter.jpg',
+    SATURN: '/assets/planets/2k_saturn.jpg',
+    SUN: '/assets/planets/2k_sun.jpg',
+    NEPTUNE: '/assets/planets/2k_neptune.jpg',
+    URANUS: '/assets/planets/2k_uranus.jpg',
+    VENUS: '/assets/planets/2k_venus_surface.jpg',
+    MERCURY: '/assets/planets/2k_mercury.jpg',
+  };
+  const url = mapPath[type.toUpperCase()] || '/assets/planets/2k_earth_daymap.jpg';
+  try {
+    const tex = sharedTextureLoader.load(url);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    return tex;
+  } catch {
+    return createEarthTexture();
   }
+};
 
-  return new THREE.CanvasTexture(canvas);
+const createEarthTexture = (): THREE.Texture => {
+  try {
+    const tex = sharedTextureLoader.load('/assets/planets/2k_earth_daymap.jpg');
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    return tex;
+  } catch {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#0a2e4a';
+    ctx.fillRect(0, 0, 512, 256);
+    return new THREE.CanvasTexture(canvas);
+  }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1283,31 +1291,28 @@ const JuniorCadetNmsGame: React.FC<CadetGameProps> = ({ isMuted, onBack, onUpdat
     const starPoints = new THREE.Points(starGeo, starMat);
     scene.add(starPoints);
 
-    // Dynamic Celestial Body Tailored to Active Map (Earth, Jupiter, Saturn, Phobos, Sun)
-    const celestGeo = new THREE.SphereGeometry(activeMap.celestialBody.size * 0.45, 32, 32);
-    let celestMat: THREE.Material;
-    if (activeMap.celestialBody.type === 'EARTH') {
-      celestMat = new THREE.MeshStandardMaterial({
-        map: createEarthTexture(),
-        roughness: 0.6,
-        metalness: 0.1,
-      });
-    } else {
-      celestMat = new THREE.MeshStandardMaterial({
-        color: activeMap.celestialBody.color,
-        emissive: activeMap.celestialBody.color,
-        emissiveIntensity: 0.35,
-        roughness: 0.7,
-      });
-    }
+    // Dynamic Celestial Body Tailored to Active Map (Earth, Jupiter, Saturn, Mars, Moon, Sun)
+    const celestGeo = new THREE.SphereGeometry(activeMap.celestialBody.size * 0.45, 48, 48);
+    const planetTex = loadNasaPlanetTexture(activeMap.celestialBody.type);
+    const celestMat = new THREE.MeshStandardMaterial({
+      map: planetTex,
+      roughness: 0.55,
+      metalness: 0.1,
+    });
     const celestialMesh = new THREE.Mesh(celestGeo, celestMat);
     celestialMesh.position.set(...activeMap.celestialBody.position);
     scene.add(celestialMesh);
 
-    // If Saturn, render tilted particle ring system
+    // If Saturn, render photorealistic alpha-textured ring system
     if (activeMap.celestialBody.type === 'SATURN') {
-      const saturnRingGeo = new THREE.RingGeometry(activeMap.celestialBody.size * 0.55, activeMap.celestialBody.size * 0.95, 64);
-      const saturnRingMat = new THREE.MeshBasicMaterial({ color: 0xfde047, side: THREE.DoubleSide, transparent: true, opacity: 0.65 });
+      const saturnRingGeo = new THREE.RingGeometry(activeMap.celestialBody.size * 0.55, activeMap.celestialBody.size * 1.05, 64);
+      const ringTex = sharedTextureLoader.load('/assets/planets/2k_saturn_ring_alpha.png');
+      const saturnRingMat = new THREE.MeshStandardMaterial({
+        map: ringTex,
+        side: THREE.DoubleSide,
+        transparent: true,
+        roughness: 0.4,
+      });
       const saturnRing = new THREE.Mesh(saturnRingGeo, saturnRingMat);
       saturnRing.rotation.x = Math.PI / 2.6;
       celestialMesh.add(saturnRing);
@@ -4341,12 +4346,11 @@ const MasterCommanderScGame: React.FC<CommanderGameProps> = ({ isMuted, onBack, 
     const planetGroup = new THREE.Group();
     const planetRadius = 420;
     const planetGeo = new THREE.SphereGeometry(planetRadius, 64, 64);
+    const gasGiantTex = sharedTextureLoader.load('/assets/planets/2k_jupiter.jpg');
     const planetMat = new THREE.MeshStandardMaterial({
-      color: 0x1d4ed8,
-      emissive: 0x0c2560,
-      emissiveIntensity: 0.25,
-      roughness: 0.6,
-      metalness: 0.2,
+      map: gasGiantTex,
+      roughness: 0.55,
+      metalness: 0.1,
     });
     const planetMesh = new THREE.Mesh(planetGeo, planetMat);
     planetGroup.add(planetMesh);
@@ -4361,14 +4365,14 @@ const MasterCommanderScGame: React.FC<CommanderGameProps> = ({ isMuted, onBack, 
     });
     planetGroup.add(new THREE.Mesh(auraGeo, auraMat));
 
-    // Massive Planetary Rings
-    const ringGeo = new THREE.RingGeometry(planetRadius * 1.35, planetRadius * 2.1, 64);
+    // Massive Planetary Rings with authentic alpha transparency map
+    const ringGeo = new THREE.RingGeometry(planetRadius * 1.35, planetRadius * 2.3, 64);
+    const ringAlphaTex = sharedTextureLoader.load('/assets/planets/2k_saturn_ring_alpha.png');
     const ringMat = new THREE.MeshStandardMaterial({
-      color: 0x93c5fd,
+      map: ringAlphaTex,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.45,
-      roughness: 0.7,
+      roughness: 0.5,
     });
     const ringMesh = new THREE.Mesh(ringGeo, ringMat);
     ringMesh.rotation.x = Math.PI / 2.5;

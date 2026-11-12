@@ -2290,8 +2290,16 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
 
     // 5.1 LAUNCH MISSION
     if (mission.gameType === 'launch') {
-      // Cape Canaveral / KSC Coastal Surface Terrain with procedural photorealistic pad texture
-      const kscPadTex = createProceduralKSCPadTexture();
+      // Cape Canaveral / KSC Coastal Surface Terrain with photorealistic pad texture
+      let kscPadTex: THREE.Texture;
+      try {
+        kscPadTex = mainTextureLoader.load('/assets/pad_bg.jpg');
+        kscPadTex.wrapS = THREE.RepeatWrapping;
+        kscPadTex.wrapT = THREE.RepeatWrapping;
+        kscPadTex.repeat.set(4, 4);
+      } catch {
+        kscPadTex = createProceduralKSCPadTexture();
+      }
       const terrainGeo = new THREE.CircleGeometry(3600, 64);
       const terrainMat = new THREE.MeshStandardMaterial({
         map: kscPadTex,
