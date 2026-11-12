@@ -2365,99 +2365,175 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* ═══ FLOATING CELESTIAL CONTROLS TOOLBAR (Directly over 3D Canvas) ═══ */}
             <div className="ne-floating-celestial-toolbar nasa-eyes-interactive" role="toolbar" aria-label="Orrery Navigation Controls">
-              {/* Category Filter Chips */}
-              <nav className="ne-category-bar" aria-label="Celestial Filters">
-                <button
-                  className={`ne-category-tab ${activeCategory === 'all' ? 'active' : ''}`}
-                  onClick={() => { setActiveCategory('all'); handleResetCamera(); }}
-                  title="View Complete Solar System"
-                >
-                  <Sun size={13} />
-                  <span>Solar System</span>
-                </button>
-                <button
-                  className={`ne-category-tab ${activeCategory === 'inner' ? 'active' : ''}`}
-                  onClick={() => { setActiveCategory('inner'); flyToTarget('earth'); }}
-                  title="Focus on Terrestrial Inner Worlds"
-                >
-                  <Globe size={13} />
-                  <span>Inner Worlds</span>
-                </button>
-                <button
-                  className={`ne-category-tab ${activeCategory === 'satellites' ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveCategory('satellites');
-                    flyToTarget('earth');
-                    camDistanceRef.current = 15;
-                    soundFx.playTelemetryChirp();
-                  }}
-                  title="Explore Earth's Orbital Satellite Fleet (ISS, Landsat, Hubble, PACE, SWOT, GOES)"
-                >
-                  <Satellite size={13} />
-                  <span>🛰️ Earth &amp; Satellites</span>
-                </button>
-                <button
-                  className={`ne-category-tab ${selectedEntity?.data.id === 'moon' ? 'active' : ''}`}
-                  onClick={() => flyToTarget('moon')}
-                  title="Focus on the Moon (Target for Artemis Base Camp)"
-                >
-                  <span>🌙 Moon</span>
-                </button>
-                <button
-                  className={`ne-category-tab ${selectedEntity?.data.id === 'mars' ? 'active' : ''}`}
-                  onClick={() => flyToTarget('mars')}
-                  title="Focus on Mars (Target for Jezero Crater Outpost)"
-                >
-                  <span>🔴 Mars</span>
-                </button>
-                <button
-                  className={`ne-category-tab ${activeCategory === 'outer' ? 'active' : ''}`}
-                  onClick={() => { setActiveCategory('outer'); flyToTarget('jupiter'); }}
-                  title="Focus on Outer Gas & Ice Giants"
-                >
-                  <Sparkles size={13} />
-                  <span>Gas Giants</span>
-                </button>
-                <button
-                  className={`ne-category-tab ${activeCategory === 'fleet' ? 'active' : ''}`}
-                  onClick={() => { setActiveCategory('fleet'); flyToTarget('iss'); }}
-                  title="Track Active Spacecraft Fleet & Probes"
-                >
-                  <Satellite size={13} />
-                  <span>Fleet</span>
-                </button>
-                <button
-                  className={`ne-category-tab ${isStoriesModalOpen ? 'active' : ''}`}
-                  onClick={() => { setIsStoriesModalOpen(!isStoriesModalOpen); soundFx.playClick(800); }}
-                  title="Curated NASA Guided Expeditions"
-                >
-                  <Rocket size={13} />
-                  <span>Tours</span>
-                </button>
-              </nav>
+              {/* Row 1: Category Filter Chips + Search + Tools */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', maxWidth: '100%' }}>
+                <nav className="ne-category-bar" aria-label="Celestial Filters">
+                  <button
+                    className={`ne-category-tab ${activeCategory === 'all' ? 'active' : ''}`}
+                    onClick={() => { setActiveCategory('all'); handleResetCamera(); }}
+                    title="View Complete Solar System"
+                  >
+                    <Sun size={13} />
+                    <span>Solar System</span>
+                  </button>
+                  <button
+                    className={`ne-category-tab ${activeCategory === 'inner' ? 'active' : ''}`}
+                    onClick={() => { setActiveCategory('inner'); flyToTarget('earth'); }}
+                    title="Focus on Terrestrial Inner Worlds"
+                  >
+                    <Globe size={13} />
+                    <span>Inner Worlds</span>
+                  </button>
+                  <button
+                    className={`ne-category-tab ${activeCategory === 'satellites' ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveCategory('satellites');
+                      flyToTarget('earth');
+                      camDistanceRef.current = 15;
+                      soundFx.playTelemetryChirp();
+                    }}
+                    title="Explore Earth's Orbital Satellite Fleet (ISS, Landsat, Hubble, PACE, SWOT, GOES)"
+                  >
+                    <Satellite size={13} />
+                    <span>Earth &amp; Satellites</span>
+                  </button>
+                  <button
+                    className={`ne-category-tab ${selectedEntity?.data.id === 'moon' ? 'active' : ''}`}
+                    onClick={() => flyToTarget('moon')}
+                    title="Focus on the Moon (Target for Artemis Base Camp)"
+                  >
+                    <span>🌙 Moon</span>
+                  </button>
+                  <button
+                    className={`ne-category-tab ${selectedEntity?.data.id === 'mars' ? 'active' : ''}`}
+                    onClick={() => flyToTarget('mars')}
+                    title="Focus on Mars (Target for Jezero Crater Outpost)"
+                  >
+                    <span>🔴 Mars</span>
+                  </button>
+                  <button
+                    className={`ne-category-tab ${activeCategory === 'outer' ? 'active' : ''}`}
+                    onClick={() => { setActiveCategory('outer'); flyToTarget('jupiter'); }}
+                    title="Focus on Outer Gas & Ice Giants"
+                  >
+                    <Sparkles size={13} />
+                    <span>Gas Giants</span>
+                  </button>
+                  <button
+                    className={`ne-category-tab ${activeCategory === 'fleet' ? 'active' : ''}`}
+                    onClick={() => { setActiveCategory('fleet'); flyToTarget('iss'); }}
+                    title="Track Active Spacecraft Fleet & Probes"
+                  >
+                    <Satellite size={13} />
+                    <span>Fleet</span>
+                  </button>
+                  <button
+                    className={`ne-category-tab ${isStoriesModalOpen ? 'active' : ''}`}
+                    onClick={() => { setIsStoriesModalOpen(!isStoriesModalOpen); soundFx.playClick(800); }}
+                    title="Curated NASA Guided Expeditions"
+                  >
+                    <Rocket size={13} />
+                    <span>Tours</span>
+                  </button>
+                </nav>
 
-              {/* Sub-toolbar: Active Earth Satellite Fleet Selector */}
+                {/* Central Search Bar */}
+                <div className="ne-search-wrapper" style={{ maxWidth: '240px' }}>
+                  <div className="ne-search-input-box" style={{ borderRadius: '9999px', padding: '5px 12px' }}>
+                    <Search size={13} style={{ color: '#38bdf8' }} />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      placeholder="Search... (/)"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
+                      style={{ fontSize: '11.5px' }}
+                    />
+                    <span className="ne-search-key-badge" style={{ padding: '1px 5px', fontSize: '10px' }}>/</span>
+                  </div>
+
+                  {/* Autocomplete Dropdown */}
+                  {isSearchFocused && searchResults.length > 0 && (
+                    <div className="ne-search-dropdown">
+                      {searchResults.map((res) => (
+                        <div
+                          key={res.id}
+                          className="ne-search-result-item"
+                          onClick={() => {
+                            flyToTarget(res.id);
+                            setSearchQuery('');
+                            setIsSearchFocused(false);
+                          }}
+                        >
+                          <div className="ne-search-item-left">
+                            <span>{res.icon}</span>
+                            <strong style={{ fontSize: '12px' }}>{res.name}</strong>
+                          </div>
+                          <span className="ne-search-item-badge">{res.type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Camera Reset & Fullscreen Controls */}
+                <div className="ne-toolbar-quick-tools">
+                  <button
+                    className="ne-btn-icon"
+                    onClick={handleResetCamera}
+                    title="Reset Camera to Solar System Overview"
+                  >
+                    <RotateCcw size={14} />
+                  </button>
+                  <button
+                    className="ne-btn-icon"
+                    onClick={() => {
+                      if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().catch(() => { });
+                      } else {
+                        document.exitFullscreen().catch(() => { });
+                      }
+                    }}
+                    title="Toggle Fullscreen Canvas"
+                  >
+                    <Maximize2 size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Row 2: Sub-toolbar: Active Earth Satellite Fleet Selector */}
               {activeCategory === 'satellites' && (
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '6px 12px',
-                    background: 'rgba(9, 16, 36, 0.94)',
-                    backdropFilter: 'blur(12px)',
-                    borderRadius: '24px',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
-                    overflowX: 'auto',
-                    maxWidth: '100%',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                    padding: '5px 14px',
+                    background: 'rgba(9, 16, 36, 0.96)',
+                    backdropFilter: 'blur(16px)',
+                    borderRadius: '9999px',
+                    border: '1.5px solid rgba(56, 189, 248, 0.45)',
+                    boxShadow: '0 6px 24px rgba(0, 0, 0, 0.65), 0 0 15px rgba(56, 189, 248, 0.25)',
+                    animation: 'neFadeIn 0.25s ease-out',
                   }}
                 >
-                  <span style={{ fontSize: '10px', color: '#38bdf8', padding: '0 4px', textTransform: 'uppercase', fontWeight: 800, whiteSpace: 'nowrap' }}>
-                    🛰️ Fleet:
+                  <span style={{ fontSize: '10.5px', color: '#38bdf8', padding: '0 4px', textTransform: 'uppercase', fontWeight: 800, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Satellite size={12} />
+                    <span>Earth Fleet:</span>
                   </span>
-                  {['iss', 'hubble', 'landsat-9', 'pace', 'swot', 'grace-fo', 'goes-16', 'tiangong'].map((satId) => {
-                    const sat = SPACE_STATIONS.find((s) => s.id === satId);
+                  {[
+                    { id: 'iss', short: 'ISS' },
+                    { id: 'hubble', short: 'Hubble' },
+                    { id: 'landsat-9', short: 'Landsat 9' },
+                    { id: 'pace', short: 'PACE' },
+                    { id: 'swot', short: 'SWOT' },
+                    { id: 'grace-fo', short: 'GRACE-FO' },
+                    { id: 'goes-16', short: 'GOES-16' },
+                    { id: 'tiangong', short: 'Tiangong' },
+                  ].map((satMeta) => {
+                    const sat = SPACE_STATIONS.find((s) => s.id === satMeta.id);
                     if (!sat) return null;
                     const isCur = selectedEntity?.data.id === sat.id;
                     return (
@@ -2469,10 +2545,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         }}
                         style={{
                           padding: '4px 10px',
-                          borderRadius: '14px',
-                          border: isCur ? '1.5px solid #38bdf8' : '1px solid rgba(148, 163, 184, 0.25)',
-                          background: isCur ? 'rgba(56, 189, 248, 0.3)' : 'rgba(30, 41, 59, 0.65)',
-                          color: isCur ? '#ffffff' : '#cbd5e1',
+                          borderRadius: '9999px',
+                          border: isCur ? '1.5px solid #38bdf8' : '1px solid rgba(148, 163, 184, 0.2)',
+                          background: isCur ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                          color: isCur ? '#38bdf8' : '#e2e8f0',
                           fontSize: '11px',
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -2481,79 +2557,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           gap: '5px',
                           whiteSpace: 'nowrap',
                           transition: 'all 0.15s ease',
+                          boxShadow: isCur ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
                         }}
                       >
-                        <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: sat.color }} />
-                        <span>{sat.name.split(' (')[0]}</span>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: sat.color }} />
+                        <span>{satMeta.short}</span>
                       </button>
                     );
                   })}
                 </div>
               )}
-
-              {/* Central Search Bar */}
-              <div className="ne-search-wrapper">
-                <div className="ne-search-input-box">
-                  <Search size={14} style={{ color: '#38bdf8' }} />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="Search celestial bodies, probes, missions... (/)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
-                  />
-                  <span className="ne-search-key-badge">/</span>
-                </div>
-
-                {/* Autocomplete Dropdown */}
-                {isSearchFocused && searchResults.length > 0 && (
-                  <div className="ne-search-dropdown">
-                    {searchResults.map((res) => (
-                      <div
-                        key={res.id}
-                        className="ne-search-result-item"
-                        onClick={() => {
-                          flyToTarget(res.id);
-                          setSearchQuery('');
-                          setIsSearchFocused(false);
-                        }}
-                      >
-                        <div className="ne-search-item-left">
-                          <span>{res.icon}</span>
-                          <strong style={{ fontSize: '12px' }}>{res.name}</strong>
-                        </div>
-                        <span className="ne-search-item-badge">{res.type}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Camera Reset & Fullscreen Controls */}
-              <div className="ne-toolbar-quick-tools">
-                <button
-                  className="ne-btn-icon"
-                  onClick={handleResetCamera}
-                  title="Reset Camera to Solar System Overview"
-                >
-                  <RotateCcw size={14} />
-                </button>
-                <button
-                  className="ne-btn-icon"
-                  onClick={() => {
-                    if (!document.fullscreenElement) {
-                      document.documentElement.requestFullscreen().catch(() => { });
-                    } else {
-                      document.exitFullscreen().catch(() => { });
-                    }
-                  }}
-                  title="Toggle Fullscreen Canvas"
-                >
-                  <Maximize2 size={14} />
-                </button>
-              </div>
             </div>
 
             {/* Right: Flagship Quick Trigger Button */}

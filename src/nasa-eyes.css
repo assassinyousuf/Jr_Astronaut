@@ -85,24 +85,18 @@
   transform: none;
   margin: 0 auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-xs);
-  background: rgba(9, 16, 36, 0.94);
-  border: var(--rule-hair) solid var(--color-rule);
-  padding: 6px 12px;
-  border-radius: 9999px;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
   z-index: 46;
-  max-width: 680px;
+  max-width: 900px;
   min-width: 0;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.ne-floating-celestial-toolbar::-webkit-scrollbar {
-  display: none;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 
 @media (max-width: 1200px) and (min-width: 769px) {
@@ -113,7 +107,7 @@
     right: 12px;
   }
   .ne-floating-celestial-toolbar {
-    max-width: 580px;
+    max-width: 700px;
   }
 }
 
@@ -270,40 +264,43 @@
 .ne-category-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-2xs);
-  background: var(--color-paper-3);
-  padding: var(--space-2xs) var(--space-xs);
-  border-radius: var(--radius-card);
-  border: var(--rule-hair) solid var(--color-rule);
+  gap: 4px;
+  background: rgba(9, 16, 36, 0.92);
+  padding: 4px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
   flex-shrink: 0;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
 }
 
 .ne-category-tab {
   background: transparent;
   border: none;
   color: var(--color-muted);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-card);
-  font-size: 12px;
-  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
   font-family: var(--font-body);
   cursor: pointer;
-  transition: color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out);
+  transition: all var(--dur-micro) var(--ease-out);
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 5px;
   white-space: nowrap;
 }
 
 .ne-category-tab:hover {
-  color: var(--color-ink);
-  background: var(--color-paper-2);
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .ne-category-tab.active {
-  background: var(--color-paper);
-  color: var(--color-ink);
-  border: var(--rule-hair) solid var(--color-accent);
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
 }
 
 /* Central Search Bar */
