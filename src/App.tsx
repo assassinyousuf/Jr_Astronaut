@@ -950,7 +950,7 @@ export const App: React.FC = () => {
         )}
 
         {isFlashcardOpen && activeFlashcard && (
-        <AudioTeachingFlashcard
+          <AudioTeachingFlashcard
             card={activeFlashcard}
             isOpen={isFlashcardOpen}
             onClose={() => setIsFlashcardOpen(false)}

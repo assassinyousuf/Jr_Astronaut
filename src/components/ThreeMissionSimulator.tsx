@@ -39,6 +39,7 @@ import {
   type CrewRole,
   type MultiplayerRoomState,
 } from '../utils/multiplayerMissionService';
+import { AuthenticCockpitOverlay } from './AuthenticCockpitOverlay';
 
 export type VisualToneMode = 'REALISTIC_NASA' | 'CINEMATIC_GRADE' | 'TACTICAL_HUD';
 
@@ -112,6 +113,8 @@ class AeroAudioSynth {
   private ctx: AudioContext | null = null;
   private engineOsc: OscillatorNode | null = null;
   private engineGain: GainNode | null = null;
+  private noiseNode: AudioBufferSourceNode | null = null;
+  private noiseGain: GainNode | null = null;
   private enabled: boolean = true;
 
   init() {
@@ -126,8 +129,9 @@ class AeroAudioSynth {
 
   setEnabled(val: boolean) {
     this.enabled = val;
-    if (!val && this.engineGain) {
-      this.engineGain.gain.setValueAtTime(0, this.ctx?.currentTime || 0);
+    if (!val) {
+      if (this.engineGain) this.engineGain.gain.setValueAtTime(0, this.ctx?.currentTime || 0);
+      if (this.noiseGain) this.noiseGain.gain.setValueAtTime(0, this.ctx?.currentTime || 0);
     }
   }
 
@@ -138,6 +142,7 @@ class AeroAudioSynth {
     }
 
     if (throttle > 0.02) {
+      // 1. Sub-bass acoustic combustion roar oscillator (35 - 90 Hz)
       if (!this.engineOsc) {
         this.engineOsc = this.ctx.createOscillator();
         this.engineOsc.type = 'sawtooth';
@@ -146,20 +151,78 @@ class AeroAudioSynth {
 
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(120, this.ctx.currentTime);
+        filter.frequency.setValueAtTime(140, this.ctx.currentTime);
 
         this.engineOsc.connect(filter);
         filter.connect(this.engineGain);
         this.engineGain.connect(this.ctx.destination);
         this.engineOsc.start();
       }
-      const freq = 45 + throttle * 75;
+      const freq = 38 + throttle * 55;
       this.engineOsc.frequency.setValueAtTime(freq, this.ctx.currentTime);
       if (this.engineGain) {
-        this.engineGain.gain.setValueAtTime(Math.min(0.25, throttle * 0.22), this.ctx.currentTime);
+        this.engineGain.gain.setValueAtTime(Math.min(0.32, throttle * 0.28), this.ctx.currentTime);
       }
-    } else if (this.engineGain) {
-      this.engineGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+      // 2. High-speed turbulent rocket exhaust roar (procedural combustion noise)
+      if (!this.noiseNode) {
+        const bufferSize = this.ctx.sampleRate * 2;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let lastOut = 0.0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          output[i] = (lastOut + 0.02 * white) / 1.02; // Pinkish combustion rumble
+          lastOut = output[i];
+          output[i] *= 3.5;
+        }
+
+        this.noiseNode = this.ctx.createBufferSource();
+        this.noiseNode.buffer = noiseBuffer;
+        this.noiseNode.loop = true;
+
+        const noiseFilter = this.ctx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.setValueAtTime(260, this.ctx.currentTime);
+        noiseFilter.Q.setValueAtTime(1.4, this.ctx.currentTime);
+
+        this.noiseGain = this.ctx.createGain();
+        this.noiseGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+        this.noiseNode.connect(noiseFilter);
+        noiseFilter.connect(this.noiseGain);
+        this.noiseGain.connect(this.ctx.destination);
+        this.noiseNode.start();
+      }
+      if (this.noiseGain) {
+        this.noiseGain.gain.setValueAtTime(Math.min(0.35, throttle * 0.32), this.ctx.currentTime);
+      }
+    } else {
+      if (this.engineGain) {
+        this.engineGain.gain.setValueAtTime(0, this.ctx.currentTime);
+      }
+      if (this.noiseGain) {
+        this.noiseGain.gain.setValueAtTime(0, this.ctx.currentTime);
+      }
+    }
+  }
+
+  playStageSeparationThump() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(22, this.ctx.currentTime + 0.38);
+      gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.42);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.45);
+    } catch {
+      // ignore
     }
   }
 
@@ -250,6 +313,100 @@ class AeroAudioSynth {
   }
 }
 
+// ─── PROCEDURAL KENNEDY SPACE CENTER LAUNCH PAD TEXTURES ─────────────────────
+const createProceduralKSCPadTexture = (): THREE.CanvasTexture => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d')!;
+
+  // 1. Coastal Florida wetland base (natural vibrant green Florida palmetto scrub)
+  ctx.fillStyle = '#244b25';
+  ctx.fillRect(0, 0, 1024, 1024);
+
+  // Sandy loam coastal grass patches (rich subtropical greens)
+  ctx.fillStyle = '#346635';
+  for (let i = 0; i < 45; i++) {
+    const rx = (i * 47) % 1024;
+    const ry = (i * 89) % 1024;
+    ctx.beginPath();
+    ctx.arc(rx, ry, 60 + (i % 35), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 2. Concrete Circular Launch Mound (Pad 39 / LC-14 Hardstand)
+  ctx.fillStyle = '#475569'; // Outer concrete perimeter berm
+  ctx.beginPath();
+  ctx.arc(512, 512, 340, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#64748b'; // Inner reinforced blast deck
+  ctx.beginPath();
+  ctx.arc(512, 512, 260, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Safety Perimeter Yellow Stripe
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(512, 512, 260, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Central Flame Trench Cutout Graphic
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(440, 160, 144, 704);
+
+  // High-temperature Flame Deflector Blast Scorch Marks
+  const scorchGrad = ctx.createRadialGradient(512, 512, 40, 512, 512, 160);
+  scorchGrad.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
+  scorchGrad.addColorStop(0.5, 'rgba(30, 20, 15, 0.8)');
+  scorchGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = scorchGrad;
+  ctx.fillRect(400, 400, 224, 224);
+
+  // 3. Crawlerway Gravel Road (Leading South to VAB)
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(476, 512, 72, 512);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.needsUpdate = true;
+  return tex;
+};
+
+const createProceduralOceanTexture = (): THREE.CanvasTexture => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+
+  const grad = ctx.createLinearGradient(0, 0, 512, 512);
+  grad.addColorStop(0, '#042842');
+  grad.addColorStop(0.5, '#0c4a6e');
+  grad.addColorStop(1, '#032034');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 512, 512);
+
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+  ctx.lineWidth = 2;
+  for (let y = 12; y < 512; y += 20) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    for (let x = 0; x < 512; x += 32) {
+      ctx.quadraticCurveTo(x + 16, y + ((x % 24 === 0) ? 5 : -5), x + 32, y);
+    }
+    ctx.stroke();
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(12, 12);
+  tex.needsUpdate = true;
+  return tex;
+};
+
 export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
   mission,
   onSuccess,
@@ -263,7 +420,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
   const mountRef = useRef<HTMLDivElement>(null);
   const navballCanvasRef = useRef<HTMLCanvasElement>(null);
   const seismographCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [cameraMode, setCameraMode] = useState<CameraMode>('orbit');
+  const [cameraMode, setCameraMode] = useState<CameraMode>(mission.gameType === 'launch' ? 'chase' : 'orbit');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [showBriefing, setShowBriefing] = useState<boolean>(false);
   const [visualTone, setVisualTone] = useState<VisualToneMode>('REALISTIC_NASA');
@@ -271,6 +428,44 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
   const [modelLoading, setModelLoading] = useState<boolean>(true);
   const [moonquakeAlert, setMoonquakeAlert] = useState<{ mag: number; depth: number; site: string } | null>(null);
   const [showDiagnosticsOverlay, setShowDiagnosticsOverlay] = useState<boolean>(false);
+
+  // Determine Mission Destination Architecture (Earth Orbit vs Moon vs Mars)
+  const isLunarMission = useMemo(() => {
+    // Launch missions are strictly atmospheric ascent to Low Earth Orbit (LEO) insertion!
+    if (mission.gameType === 'launch') return false;
+    const name = (mission.missionName || '').toLowerCase();
+    const prog = (mission.programName || '').toLowerCase();
+    const brief = (mission.briefing || '').toLowerCase();
+    const obj = (mission.objective || '').toLowerCase();
+    const isApolloLunar = prog.includes('apollo') && !name.includes('apollo 7') && !name.includes('apollo 9') && !name.includes('astp') && !name.includes('skylab');
+    const isArtemisLunar = prog.includes('artemis') || name.includes('artemis');
+    const mentionsMoon = (brief.includes('moon') || brief.includes('lunar') || obj.includes('moon') || obj.includes('tli')) && !name.includes('earth orbit');
+    return isApolloLunar || isArtemisLunar || mentionsMoon || mission.gameType === 'lunar_landing';
+  }, [mission]);
+
+  const isMarsMission = useMemo(() => {
+    const name = (mission.missionName || '').toLowerCase();
+    const prog = (mission.programName || '').toLowerCase();
+    const brief = (mission.briefing || '').toLowerCase();
+    return name.includes('mars') || prog.includes('mars') || brief.includes('mars') || name.includes('perseverance') || name.includes('curiosity') || name.includes('viking');
+  }, [mission]);
+
+  // Authentic Rocket Architecture Profiling (Single-Core vs Strap-on Boosters vs Project Mercury)
+  const isMercury = useMemo(() => {
+    const name = (mission.missionName || (mission as any).name || '').toLowerCase();
+    const prog = (mission.programName || '').toLowerCase();
+    return name.includes('mercury') || prog.includes('mercury') || mission.id === 'NASA-M001';
+  }, [mission]);
+
+  const hasSideBoosters = useMemo(() => {
+    const name = (mission.missionName || (mission as any).name || '').toLowerCase();
+    const prog = (mission.programName || '').toLowerCase();
+    if (name.includes('shuttle') || prog.includes('shuttle') || name.includes('sts')) return true;
+    if (name.includes('artemis') || prog.includes('artemis') || name.includes('sls')) return true;
+    if (name.includes('heavy')) return true;
+    if (name.includes('titan iv')) return true;
+    return false;
+  }, [mission]);
 
   // Astronaut Academy Age & Difficulty Tier (Cadet 6-10 / Officer 11-15 / Commander 16+)
   const [ageTier, setAgeTier] = useState<AstronautAgeTier>(() => {
@@ -393,7 +588,12 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     thermalHullPct: 100,
     flightAssistActive: true,
     scanProgress: 0,
+    vertSpeedMs: 0,
+    horizSpeedKms: 0,
+    dynamicPressureQ: 0,
   });
+
+  const karmanAnnouncedRef = useRef<boolean>(false);
 
   // Astronaut Pre-Flight Checklist & Terminal Countdown
   const [preflightChecklist, setPreflightChecklist] = useState({
@@ -404,7 +604,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
   });
   const [countdownTime, setCountdownTime] = useState<number | null>(null);
   const [flightPhase, setFlightPhase] = useState<'pad' | 'ascent' | 'boosters_sep' | 'fairing_jettison' | 'meco' | 'orbit' | 'tli_burn' | 'lunar_approach' | 'lunar_orbit'>('pad');
-  const [boosterSeparated, setBoosterSeparated] = useState<boolean>(false);
+  const [boosterSeparated, setBoosterSeparated] = useState<boolean>(!hasSideBoosters);
   const [fairingSeparated, setFairingSeparated] = useState<boolean>(false);
   const [tliActive, setTliActive] = useState<boolean>(false);
   const [tliComplete, setTliComplete] = useState<boolean>(false);
@@ -434,7 +634,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     gForce: 1.0,
     towerJettisoned: false,
     maxQPassed: false,
-    boosterSeparated: false,
+    boosterSeparated: !hasSideBoosters,
     fairingSeparated: false,
     tliActive: false,
     tliComplete: false,
@@ -459,6 +659,11 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     scanProgress: 0,
     driftVelX: 0,
     driftVelZ: 0,
+    vertSpeedMs: 0,
+    horizSpeedKms: 0,
+    dynamicPressureQ: 0,
+    realVy: 0,
+    realVx: 0,
   });
 
   const cameraModeRef = useRef<CameraMode>(cameraMode);
@@ -488,6 +693,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
   const lasTowerMeshRef = useRef<THREE.Mesh | null>(null);
   const shockConeMeshRef = useRef<THREE.Mesh | null>(null);
   const loxVentMeshRef = useRef<THREE.Points | null>(null);
+  const machDiamondGroupRef = useRef<THREE.Group | null>(null);
   const trenchSteamGroupRef = useRef<THREE.Group | null>(null);
   const lunarDustRef = useRef<THREE.Points | null>(null);
   const roverDustRef = useRef<THREE.Points | null>(null);
@@ -889,6 +1095,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     state.statusColor = '#fbbf24';
     soundFx.playRadioChirp();
     audioSynthRef.current.playQuindarBeep();
+    audioSynthRef.current.playStageSeparationThump();
 
     if (playerVehicleRef.current) {
       if (boosterLeftMeshRef.current && boosterLeftMeshRef.current.parent === playerVehicleRef.current) {
@@ -920,12 +1127,26 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     state.fairingSeparated = true;
     setFairingSeparated(true);
     setFlightPhase('fairing_jettison');
-    state.statusText = '🛡️ PAYLOAD FAIRING JETTISONED · LUNAR SPACECRAFT EXPOSED TO VACUUM';
+    state.statusText = isMercury
+      ? '🚀 MERCURY LES ESCAPE TOWER JETTISONED · NOMINAL FREEDOM 7 ASCENT'
+      : '🛡️ PAYLOAD FAIRING JETTISONED · SPACECRAFT EXPOSED TO VACUUM';
     state.statusColor = '#38bdf8';
     soundFx.playRadioChirp();
     audioSynthRef.current.playQuindarBeep();
+    audioSynthRef.current.playStageSeparationThump();
 
     if (playerVehicleRef.current) {
+      if (lasTowerMeshRef.current && lasTowerMeshRef.current.parent) {
+        const worldPos = new THREE.Vector3();
+        const worldQuat = new THREE.Quaternion();
+        lasTowerMeshRef.current.getWorldPosition(worldPos);
+        lasTowerMeshRef.current.getWorldQuaternion(worldQuat);
+        lasTowerMeshRef.current.parent.remove(lasTowerMeshRef.current);
+        lasTowerMeshRef.current.position.copy(worldPos);
+        lasTowerMeshRef.current.quaternion.copy(worldQuat);
+        playerVehicleRef.current.parent?.add(lasTowerMeshRef.current);
+        simStateRef.current.towerJettisoned = true;
+      }
       if (fairingLeftMeshRef.current && fairingLeftMeshRef.current.parent) {
         const worldPos = new THREE.Vector3();
         const worldQuat = new THREE.Quaternion();
@@ -955,10 +1176,13 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     state.stage = 2;
     state.propellant = 100;
     setFlightPhase('meco');
-    state.statusText = '💥 STAGE 1 CORE MECO & SEPARATION · S-II VACUUM ENGINE IGNITION!';
+    state.statusText = isMercury
+      ? '💥 REDSTONE BOOSTER MECO & SEPARATION · FREEDOM 7 CAPSULE COASTING IN SUBORBITAL SPACE!'
+      : '💥 STAGE 1 CORE MECO & SEPARATION · S-II VACUUM ENGINE IGNITION!';
     state.statusColor = '#fbbf24';
     soundFx.playRadioChirp();
     audioSynthRef.current.playQuindarBeep();
+    audioSynthRef.current.playStageSeparationThump();
 
     if (stage1MeshRef.current && playerVehicleRef.current) {
       const worldPos = new THREE.Vector3();
@@ -969,6 +1193,12 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       stage1MeshRef.current.position.copy(worldPos);
       stage1MeshRef.current.quaternion.copy(worldQuat);
       playerVehicleRef.current.parent?.add(stage1MeshRef.current);
+
+      // Re-align vacuum engine plume directly under Stage 2 upper stage nozzle
+      if (machDiamondGroupRef.current) {
+        machDiamondGroupRef.current.position.set(0, 19.2, 0);
+        machDiamondGroupRef.current.scale.set(0.85, 1.2, 0.85);
+      }
     }
 
     if (roomState) {
@@ -992,16 +1222,27 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
   const handleTouchStaging = () => {
     const state = simStateRef.current;
     if (mission.gameType === 'launch') {
-      if (!state.boosterSeparated) {
+      if (state.throttle === 0 || state.altitudeKm < 0.05) {
+        handleIgnite();
+      } else if (hasSideBoosters && !state.boosterSeparated) {
         handleBoosterSeparation();
       } else if (!state.fairingSeparated) {
         handleFairingSeparation();
       } else if (state.stage === 1) {
         handleStage1Separation();
-      } else if (!state.tliActive && state.altitudeKm >= 140) {
+      } else if (isLunarMission && !state.tliActive && state.altitudeKm >= 140) {
         handleInitiateTli();
       }
     }
+  };
+
+  const getStageActionLabel = () => {
+    if (telemetry.throttle === 0 || telemetry.altitudeKm < 0.05) return '🚀 LAUNCH ROCKET';
+    if (hasSideBoosters && !boosterSeparated) return '💥 SEPARATE BOOSTERS';
+    if (!fairingSeparated) return isMercury ? '🚀 JETTISON ESCAPE TOWER' : '🛡️ JETTISON FAIRING';
+    if (telemetry.stage === 1) return isMercury ? '⚡ MECO & CAPSULE SEP' : '⚡ MECO & STAGE 2';
+    if (isLunarMission && !tliActive && telemetry.altitudeKm >= 140) return '🌕 TLI MOON BURN';
+    return isMercury ? '🌌 REACHED SPACE ✓' : '🌍 CONFIRM ORBIT ✓';
   };
 
   const handleIgnite = () => {
@@ -1015,6 +1256,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     setCountdownTime(null);
     const state = simStateRef.current;
     state.throttle = 1.0;
+    (state as any).realVy = 14.0;
     state.statusText = '🚀 LIFTOFF CONFIRMED! ALL ENGINES AT 100% THRUST';
     state.statusColor = '#22c55e';
     soundFx.playReactorStart();
@@ -1457,7 +1699,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       gForce: 1.0,
       towerJettisoned: false,
       maxQPassed: false,
-      boosterSeparated: false,
+      boosterSeparated: !hasSideBoosters,
       fairingSeparated: false,
       tliActive: false,
       tliComplete: false,
@@ -1483,7 +1725,13 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       scanProgress: 0,
       driftVelX: 0,
       driftVelZ: 0,
+      vertSpeedMs: 0,
+      horizSpeedKms: 0,
+      dynamicPressureQ: 0,
+      realVy: 0,
+      realVx: 0,
     };
+    setBoosterSeparated(!hasSideBoosters);
     setModelLoading(true);
 
     // Initial Navball render
@@ -1495,9 +1743,14 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     const spaceVoidColor = visualTone === 'TACTICAL_HUD' ? 0x010804 : 0x020409;
     const marsSkyColor = 0xb45309;
 
+    const daySkyColor = new THREE.Color(0.22, 0.74, 0.97); // Daytime Florida Coast Azure
     if (isMarsRover) {
       scene.background = new THREE.Color(marsSkyColor);
       scene.fog = new THREE.FogExp2(0x9a3412, 0.0016);
+    } else if (mission.gameType === 'launch') {
+      // Photorealistic Florida Daytime Sky on Pad
+      scene.background = daySkyColor;
+      scene.fog = new THREE.FogExp2(0x38bdf8, 0.00015); // Crisp daytime coastal atmosphere
     } else {
       scene.background = new THREE.Color(spaceVoidColor);
       scene.fog = new THREE.FogExp2(spaceVoidColor, 0.0002);
@@ -1607,8 +1860,8 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
 
     // 2. Multi-Source Lighting
     const sunLight = new THREE.DirectionalLight(
-      isMarsRover ? 0xffedd5 : 0xfff7e8,
-      isMarsRover ? 3.4 : (visualTone === 'CINEMATIC_GRADE' ? 3.5 : 2.9)
+      isMarsRover ? 0xffedd5 : 0xfffaed,
+      isMarsRover ? 3.4 : (mission.gameType === 'launch' ? 3.8 : (visualTone === 'CINEMATIC_GRADE' ? 3.5 : 2.9))
     );
     sunLight.position.set(280, 480, 220);
     sunLight.castShadow = true;
@@ -1619,9 +1872,52 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     sunLight.shadow.bias = -0.0001;
     scene.add(sunLight);
 
+    // 2.2 Photorealistic Radiant Sun Disc & Atmospheric Flare Halo in Florida Coast / Space Sky
+    const sunGroup = new THREE.Group();
+    const sunDir = new THREE.Vector3(280, 480, 220).normalize();
+    sunGroup.position.copy(sunDir.clone().multiplyScalar(4500));
+
+    // Blinding central solar disc
+    const sunCoreGeo = new THREE.SphereGeometry(65, 32, 32);
+    const sunCoreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const sunCore = new THREE.Mesh(sunCoreGeo, sunCoreMat);
+    sunGroup.add(sunCore);
+
+    // Warm golden corona glare halo
+    const sunHaloGeo = new THREE.CircleGeometry(260, 32);
+    const sunHaloMat = new THREE.MeshBasicMaterial({
+      color: 0xffea85,
+      transparent: true,
+      opacity: 0.65,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    });
+    const sunHalo = new THREE.Mesh(sunHaloGeo, sunHaloMat);
+    sunHalo.lookAt(new THREE.Vector3(0, 0, 0));
+    sunGroup.add(sunHalo);
+
+    // Vast atmospheric outer lens glare
+    const sunGlareGeo = new THREE.CircleGeometry(580, 32);
+    const sunGlareMat = new THREE.MeshBasicMaterial({
+      color: 0xffedd5,
+      transparent: true,
+      opacity: 0.28,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    });
+    const sunGlare = new THREE.Mesh(sunGlareGeo, sunGlareMat);
+    sunGlare.lookAt(new THREE.Vector3(0, 0, 0));
+    sunGroup.add(sunGlare);
+
+    scene.add(sunGroup);
+
     const ambientLight = new THREE.AmbientLight(
-      isMarsRover ? 0x9a3412 : 0x0e1b2f,
-      isMarsRover ? 1.6 : 0.7
+      isMarsRover
+        ? 0x9a3412
+        : mission.gameType === 'launch'
+        ? 0xbae6fd // Warm Florida daylight ambient
+        : 0x0e1b2f,
+      isMarsRover ? 1.6 : (mission.gameType === 'launch' ? 1.15 : 0.7)
     );
     scene.add(ambientLight);
 
@@ -1678,38 +1974,45 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       scene.add(earthMesh);
       scene.add(atmoMesh);
 
-      // 3.5 3D Moon & Trans-Lunar Orbit Trajectory Line (for Lunar Missions & TLI)
-      const moonTex = mainTextureLoader.load('/assets/moon_texture.jpg');
-      const moonGeo = new THREE.SphereGeometry(220, 48, 48);
-      const moonMat = new THREE.MeshStandardMaterial({
-        map: moonTex,
-        roughness: 0.9,
-        metalness: 0.05,
-      });
-      const moonMesh = new THREE.Mesh(moonGeo, moonMat);
-      moonMesh.position.set(0, 750, -2800);
-      moonMesh.visible = false;
-      scene.add(moonMesh);
-      moonMeshRef.current = moonMesh;
-
-      // Glowing Lunar Transfer Trajectory Spline Curve
+      // 3.5 Glowing 3D Low Earth Orbit (LEO) Ascent & Insertion Trajectory Corridor around Earth
       const trajCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(0, 150, -80),
-        new THREE.Vector3(50, 320, -600),
-        new THREE.Vector3(30, 520, -1400),
-        new THREE.Vector3(-20, 680, -2100),
-        new THREE.Vector3(0, 750, -2700),
+        new THREE.Vector3(0, 4, 0),         // Pad at Cape Canaveral / KSC
+        new THREE.Vector3(18, 55, -15),     // Waypoint 1: Booster Separation Corridor (36 km)
+        new THREE.Vector3(55, 120, -45),    // Waypoint 2: Fairing Separation Corridor (75 km)
+        new THREE.Vector3(120, 200, -95),   // Waypoint 3: Core MECO & S-II Ignition (125 km)
+        new THREE.Vector3(220, 280, -165),  // Waypoint 4: Upper Stage Orbital Insertion Burn (160 km)
+        new THREE.Vector3(380, 330, -250),  // Target 185 km Circular LEO Flight Path around Earth
+        new THREE.Vector3(560, 350, -360),
+        new THREE.Vector3(760, 355, -490),
       ]);
-      const trajPoints = trajCurve.getPoints(80);
+      const trajPoints = trajCurve.getPoints(120);
       const trajGeo = new THREE.BufferGeometry().setFromPoints(trajPoints);
       const trajMat = new THREE.LineBasicMaterial({
-        color: 0x38bdf8,
+        color: 0x00e5ff,
+        linewidth: 3,
         transparent: true,
-        opacity: 0.75,
+        opacity: 0.85,
       });
       const trajLine = new THREE.Line(trajGeo, trajMat);
-      trajLine.visible = false;
+      trajLine.visible = true; // Always visible as orbital insertion flight corridor guidance!
       scene.add(trajLine);
+      trajectoryLineRef.current = trajLine;
+
+      // Holographic Waypoint Corridor Rings along the ascent flight path
+      const waypoints = [
+        { pos: new THREE.Vector3(18, 55, -15), radius: 8, color: 0xfbbf24 },   // Booster Sep (36 km)
+        { pos: new THREE.Vector3(55, 120, -45), radius: 10, color: 0x38bdf8 },  // Fairing Sep (75 km)
+        { pos: new THREE.Vector3(120, 200, -95), radius: 12, color: 0xa855f7 }, // MECO (125 km)
+        { pos: new THREE.Vector3(380, 330, -250), radius: 16, color: 0x22c55e }, // LEO Orbit Target (185 km)
+      ];
+      waypoints.forEach((wp) => {
+        const ringGeo = new THREE.TorusGeometry(wp.radius, 0.35, 16, 48);
+        const ringMat = new THREE.MeshBasicMaterial({ color: wp.color, transparent: true, opacity: 0.65 });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.copy(wp.pos);
+        ring.lookAt(wp.pos.clone().add(new THREE.Vector3(1, 0.4, -0.7)));
+        scene.add(ring);
+      });
       trajectoryLineRef.current = trajLine;
     } else if (mission.gameType === 'docking' || mission.gameType === 'telescope') {
       // In orbital missions, Earth is placed 460 units below so it curves beautifully as a blue planetary globe without clipping through the spacecraft
@@ -1756,6 +2059,8 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       vertexColors: true,
       size: 2.2,
       sizeAttenuation: false,
+      transparent: true,
+      opacity: mission.gameType === 'launch' ? 0.0 : 1.0,
     });
     const starPoints = new THREE.Points(starGeo, starMat);
     scene.add(starPoints);
@@ -1816,6 +2121,43 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     });
     const smokeParticles = new THREE.Points(smokeGeo, smokeMat);
     scene.add(smokeParticles);
+
+    // Transonic Condensation Shockwave Cone (Mach 1 Vapor Cone)
+    const vaporConeGeo = new THREE.ConeGeometry(4.4, 4.0, 32, 1, true);
+    const vaporConeMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.45,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    });
+    const vaporCone = new THREE.Mesh(vaporConeGeo, vaporConeMat);
+    vaporCone.rotation.x = Math.PI;
+    vaporCone.position.y = 8;
+    vaporCone.visible = false;
+
+    // Continuous Trailing Billowing Smoke Plume System (Ellipse / KSP Smoke Column)
+    const plumeCount = 450;
+    const plumeGeo = new THREE.BufferGeometry();
+    const plumePos = new Float32Array(plumeCount * 3);
+    const plumeData: { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; maxLife: number }[] = [];
+    for (let p = 0; p < plumeCount; p++) {
+      plumePos[p * 3] = 0;
+      plumePos[p * 3 + 1] = -9999;
+      plumePos[p * 3 + 2] = 0;
+      plumeData.push({ x: 0, y: -9999, z: 0, vx: 0, vy: 0, vz: 0, life: 999, maxLife: 7.5 });
+    }
+    plumeGeo.setAttribute('position', new THREE.BufferAttribute(plumePos, 3));
+    const plumeMat = new THREE.PointsMaterial({
+      color: 0xeeeeee,
+      size: 34,
+      transparent: true,
+      opacity: 0.42,
+      depthWrite: false,
+    });
+    const continuousPlumeMesh = new THREE.Points(plumeGeo, plumeMat);
+    scene.add(continuousPlumeMesh);
+    let plumeCursor = 0;
 
     // Volumetric Flame Trench Steam Billow Puffs (Water Deluge Vapor)
     const trenchSteamGroup = new THREE.Group();
@@ -1878,11 +2220,13 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
     // 5. VEHICLE MESHES & GLTF ASSET LOADING
     // ─────────────────────────────────────────────────────────────
     const playerVehicle = new THREE.Group();
+    playerVehicle.add(vaporCone);
     let targetObject = new THREE.Group();
     let stage1Mesh: THREE.Group | null = null;
     let stage2Mesh: THREE.Group | null = null;
     let machDiamondGroup: THREE.Group | null = null;
     const groundPadGroup = new THREE.Group();
+    const cloudDeckGroup = new THREE.Group();
     const gltfLoader = getSharedGLTFLoader();
 
     // Helper to center and scale loaded GLTF
@@ -1928,12 +2272,13 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
 
     // 5.1 LAUNCH MISSION
     if (mission.gameType === 'launch') {
-      // Cape Canaveral / KSC Coastal Surface Terrain (eliminates sphere clipping on the pad)
+      // Cape Canaveral / KSC Coastal Surface Terrain with procedural photorealistic pad texture
+      const kscPadTex = createProceduralKSCPadTexture();
       const terrainGeo = new THREE.CircleGeometry(3600, 64);
       const terrainMat = new THREE.MeshStandardMaterial({
-        color: 0x1e2922, // coastal Florida scrub & wetland
-        roughness: 0.9,
-        metalness: 0.1,
+        map: kscPadTex,
+        roughness: 0.85,
+        metalness: 0.15,
       });
       const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
       terrainMesh.rotation.x = -Math.PI / 2;
@@ -1941,16 +2286,18 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       terrainMesh.receiveShadow = true;
       groundPadGroup.add(terrainMesh);
 
-      // Atlantic Ocean Coastline to the East
-      const oceanGeo = new THREE.PlaneGeometry(3600, 1800);
+      // Atlantic Ocean Coastline to the East extending to the horizon
+      const oceanTex = createProceduralOceanTexture();
+      const oceanGeo = new THREE.PlaneGeometry(6000, 6000);
       const oceanMat = new THREE.MeshStandardMaterial({
-        color: 0x082f49,
-        roughness: 0.25,
-        metalness: 0.75,
+        map: oceanTex,
+        roughness: 0.2,
+        metalness: 0.7,
+        color: 0x083344,
       });
       const oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
       oceanMesh.rotation.x = -Math.PI / 2;
-      oceanMesh.position.set(0, -0.2, 1200);
+      oceanMesh.position.set(2400, -0.25, 0);
       groundPadGroup.add(oceanMesh);
 
       // Launch Pad Perimeter Berm & Concrete Crawlerway
@@ -2070,6 +2417,38 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       groundPadGroup.add(trenchSteamGroup);
       scene.add(groundPadGroup);
 
+      // Tropospheric Cumulus Cloud Deck (2.5 km - 5.5 km altitude) for high-speed ascent parallax
+      const cloudMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        roughness: 0.95,
+        metalness: 0.05,
+        transparent: true,
+        opacity: 0.82,
+      });
+      for (let c = 0; c < 42; c++) {
+        const cluster = new THREE.Group();
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 45 + Math.random() * 380;
+        const cy = 80 + Math.random() * 95; // 2.5 - 5.5 km altitude deck
+        cluster.position.set(Math.cos(angle) * dist, cy, Math.sin(angle) * dist);
+
+        const puffCount = 6 + Math.floor(Math.random() * 4);
+        for (let p = 0; p < puffCount; p++) {
+          const pSize = 12 + Math.random() * 22;
+          const pGeo = new THREE.DodecahedronGeometry(pSize, 2);
+          const pMesh = new THREE.Mesh(pGeo, cloudMat);
+          pMesh.position.set(
+            (Math.random() - 0.5) * 35,
+            (Math.random() - 0.5) * 12,
+            (Math.random() - 0.5) * 35
+          );
+          pMesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+          cluster.add(pMesh);
+        }
+        cloudDeckGroup.add(cluster);
+      }
+      scene.add(cloudDeckGroup);
+
       // Stage 1 (Booster with Ceramic White Skin & NASA Decals)
       stage1Mesh = new THREE.Group();
       const s1BodyGeo = new THREE.CylinderGeometry(2.2, 2.2, 20, 48);
@@ -2103,131 +2482,154 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       bandMesh.position.y = 15;
       stage1Mesh.add(bandMesh);
 
-      // 4 Titanium Grid Fins
-      for (let f = 0; f < 4; f++) {
-        const finGeo = new THREE.BoxGeometry(0.25, 3.4, 2.4);
-        const finMat = new THREE.MeshStandardMaterial({
-          color: 0x1e293b,
-          metalness: 0.8,
-          roughness: 0.2,
-        });
-        const fin = new THREE.Mesh(finGeo, finMat);
-        const angle = (f * Math.PI) / 2;
-        fin.position.set(Math.cos(angle) * 2.8, 2.5, Math.sin(angle) * 2.8);
-        fin.rotation.y = angle;
-        stage1Mesh.add(fin);
-      }
-
-      // 5 Rocket Engines
-      for (let e = 0; e < 5; e++) {
-        const nozGeo = new THREE.ConeGeometry(0.65, 2.0, 24);
-        const nozMat = new THREE.MeshStandardMaterial({
-          color: 0x334155,
-          metalness: 0.9,
-          roughness: 0.2,
-        });
+      if (isMercury) {
+        // Authentic Redstone Rocketdyne A-7 Single Engine Nozzle
+        const nozGeo = new THREE.ConeGeometry(0.95, 2.2, 28);
+        const nozMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.2 });
         const noz = new THREE.Mesh(nozGeo, nozMat);
         noz.rotation.x = Math.PI;
-        if (e === 0) {
-          noz.position.set(0, -0.4, 0);
-        } else {
-          const a = (e * Math.PI) / 2;
-          noz.position.set(Math.cos(a) * 1.25, -0.4, Math.sin(a) * 1.25);
-        }
+        noz.position.set(0, -0.4, 0);
         stage1Mesh.add(noz);
+
+        // 4 Swept Triangular Aerodynamic Tail Fins
+        for (let f = 0; f < 4; f++) {
+          const finGeo = new THREE.BoxGeometry(0.2, 3.8, 2.6);
+          const finMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.3 });
+          const fin = new THREE.Mesh(finGeo, finMat);
+          const angle = (f * Math.PI) / 2;
+          fin.position.set(Math.cos(angle) * 2.6, 2.0, Math.sin(angle) * 2.6);
+          fin.rotation.y = angle;
+          stage1Mesh.add(fin);
+        }
+      } else {
+        // 4 Titanium Grid Fins
+        for (let f = 0; f < 4; f++) {
+          const finGeo = new THREE.BoxGeometry(0.25, 3.4, 2.4);
+          const finMat = new THREE.MeshStandardMaterial({
+            color: 0x1e293b,
+            metalness: 0.8,
+            roughness: 0.2,
+          });
+          const fin = new THREE.Mesh(finGeo, finMat);
+          const angle = (f * Math.PI) / 2;
+          fin.position.set(Math.cos(angle) * 2.8, 2.5, Math.sin(angle) * 2.8);
+          fin.rotation.y = angle;
+          stage1Mesh.add(fin);
+        }
+
+        // 5 Rocket Engines
+        for (let e = 0; e < 5; e++) {
+          const nozGeo = new THREE.ConeGeometry(0.65, 2.0, 24);
+          const nozMat = new THREE.MeshStandardMaterial({
+            color: 0x334155,
+            metalness: 0.9,
+            roughness: 0.2,
+          });
+          const noz = new THREE.Mesh(nozGeo, nozMat);
+          noz.rotation.x = Math.PI;
+          if (e === 0) {
+            noz.position.set(0, -0.4, 0);
+          } else {
+            const a = (e * Math.PI) / 2;
+            noz.position.set(Math.cos(a) * 1.25, -0.4, Math.sin(a) * 1.25);
+          }
+          stage1Mesh.add(noz);
+        }
       }
       stage1MeshRef.current = stage1Mesh;
       playerVehicle.add(stage1Mesh);
 
-      // Heavy Rocket Dual Side Boosters (Left & Right Strap-On Boosters)
-      for (const side of [-1, 1]) {
-        const bGroup = new THREE.Group();
-        bGroup.position.set(side * 3.95, 10, 0);
+      // Heavy Rocket Dual Side Boosters (Only for multi-booster rockets like Shuttle/SLS)
+      if (hasSideBoosters) {
+        for (const side of [-1, 1]) {
+          const bGroup = new THREE.Group();
+          bGroup.position.set(side * 3.95, 10, 0);
 
-        // Booster Main Propellant Tank (White Ceramic Finish with Black Roll Band)
-        const bCylGeo = new THREE.CylinderGeometry(1.5, 1.5, 19, 32);
-        const bCylMat = new THREE.MeshStandardMaterial({
-          color: 0xf8fafc,
-          metalness: 0.3,
-          roughness: 0.3,
-        });
-        const bCyl = new THREE.Mesh(bCylGeo, bCylMat);
-        bCyl.castShadow = true;
-        bGroup.add(bCyl);
+          // Booster Main Propellant Tank (White Ceramic Finish with Black Roll Band)
+          const bCylGeo = new THREE.CylinderGeometry(1.5, 1.5, 19, 32);
+          const bCylMat = new THREE.MeshStandardMaterial({
+            color: 0xf8fafc,
+            metalness: 0.3,
+            roughness: 0.3,
+          });
+          const bCyl = new THREE.Mesh(bCylGeo, bCylMat);
+          bCyl.castShadow = true;
+          bGroup.add(bCyl);
 
-        // Black Roll Pattern Markings
-        const bBandGeo = new THREE.CylinderGeometry(1.51, 1.51, 5, 16, 1, false, 0, Math.PI / 2);
-        const bBandMat = new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.DoubleSide });
-        const bBand = new THREE.Mesh(bBandGeo, bBandMat);
-        bBand.position.y = 3.5;
-        bGroup.add(bBand);
+          // Black Roll Pattern Markings
+          const bBandGeo = new THREE.CylinderGeometry(1.51, 1.51, 5, 16, 1, false, 0, Math.PI / 2);
+          const bBandMat = new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.DoubleSide });
+          const bBand = new THREE.Mesh(bBandGeo, bBandMat);
+          bBand.position.y = 3.5;
+          bGroup.add(bBand);
 
-        // Aerodynamic Slanted Nose Cone (Canted slightly inwards towards core)
-        const bNoseGeo = new THREE.ConeGeometry(1.5, 4.2, 32);
-        const bNoseMat = new THREE.MeshStandardMaterial({
-          color: 0xf1f5f9,
-          metalness: 0.35,
-          roughness: 0.25,
-        });
-        const bNose = new THREE.Mesh(bNoseGeo, bNoseMat);
-        bNose.position.set(0, 11.5, 0);
-        bNose.rotation.z = -side * 0.08;
-        bGroup.add(bNose);
+          // Aerodynamic Slanted Nose Cone (Canted slightly inwards towards core)
+          const bNoseGeo = new THREE.ConeGeometry(1.5, 4.2, 32);
+          const bNoseMat = new THREE.MeshStandardMaterial({
+            color: 0xf1f5f9,
+            metalness: 0.35,
+            roughness: 0.25,
+          });
+          const bNose = new THREE.Mesh(bNoseGeo, bNoseMat);
+          bNose.position.set(0, 11.5, 0);
+          bNose.rotation.z = -side * 0.08;
+          bGroup.add(bNose);
 
-        // Booster Aft Skirt Flare
-        const bSkirtGeo = new THREE.CylinderGeometry(1.5, 1.7, 1.4, 32);
-        const bSkirtMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8 });
-        const bSkirt = new THREE.Mesh(bSkirtGeo, bSkirtMat);
-        bSkirt.position.y = -9.8;
-        bGroup.add(bSkirt);
+          // Booster Aft Skirt Flare
+          const bSkirtGeo = new THREE.CylinderGeometry(1.5, 1.7, 1.4, 32);
+          const bSkirtMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8 });
+          const bSkirt = new THREE.Mesh(bSkirtGeo, bSkirtMat);
+          bSkirt.position.y = -9.8;
+          bGroup.add(bSkirt);
 
-        // Dual Booster High-Thrust Rocket Nozzles
-        for (let n = -1; n <= 1; n += 2) {
-          const bNozGeo = new THREE.ConeGeometry(0.52, 1.8, 20);
-          const bNozMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.2 });
-          const bNoz = new THREE.Mesh(bNozGeo, bNozMat);
-          bNoz.rotation.x = Math.PI;
-          bNoz.position.set(n * 0.5, -11.0, 0);
-          bGroup.add(bNoz);
-        }
+          // Dual Booster High-Thrust Rocket Nozzles
+          for (let n = -1; n <= 1; n += 2) {
+            const bNozGeo = new THREE.ConeGeometry(0.52, 1.8, 20);
+            const bNozMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.2 });
+            const bNoz = new THREE.Mesh(bNozGeo, bNozMat);
+            bNoz.rotation.x = Math.PI;
+            bNoz.position.set(n * 0.5, -11.0, 0);
+            bGroup.add(bNoz);
+          }
 
-        // Radial Separation Solid Kick Motors
-        const sepGeo = new THREE.ConeGeometry(0.18, 0.6, 8);
-        const sepMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
-        const sepTop = new THREE.Mesh(sepGeo, sepMat);
-        sepTop.rotation.z = (side * Math.PI) / 2;
-        sepTop.position.set(side * 1.5, 8.5, 0);
-        bGroup.add(sepTop);
+          // Radial Separation Solid Kick Motors
+          const sepGeo = new THREE.ConeGeometry(0.18, 0.6, 8);
+          const sepMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+          const sepTop = new THREE.Mesh(sepGeo, sepMat);
+          sepTop.rotation.z = (side * Math.PI) / 2;
+          sepTop.position.set(side * 1.5, 8.5, 0);
+          bGroup.add(sepTop);
 
-        // Booster Exhaust Plume Cone
-        const bPlumeGeo = new THREE.ConeGeometry(1.7, 18, 20);
-        const bPlumeMat = new THREE.MeshBasicMaterial({
-          color: 0xffedd5,
-          transparent: true,
-          opacity: 0.85,
-          blending: THREE.AdditiveBlending,
-        });
-        const bPlume = new THREE.Mesh(bPlumeGeo, bPlumeMat);
-        bPlume.position.y = -20;
-        bGroup.add(bPlume);
+          // Booster Exhaust Plume Cone
+          const bPlumeGeo = new THREE.ConeGeometry(1.7, 18, 20);
+          const bPlumeMat = new THREE.MeshBasicMaterial({
+            color: 0xffedd5,
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending,
+          });
+          const bPlume = new THREE.Mesh(bPlumeGeo, bPlumeMat);
+          bPlume.position.y = -20;
+          bGroup.add(bPlume);
 
-        // Structural Attachment Decoupler Struts
-        const strutGeo = new THREE.BoxGeometry(0.9, 0.35, 0.35);
-        const strutMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85 });
-        const strutTop = new THREE.Mesh(strutGeo, strutMat);
-        strutTop.position.set(-side * 0.75, 7.0, 0);
-        bGroup.add(strutTop);
-        const strutBot = new THREE.Mesh(strutGeo, strutMat);
-        strutBot.position.set(-side * 0.75, -7.0, 0);
-        bGroup.add(strutBot);
+          // Structural Attachment Decoupler Struts
+          const strutGeo = new THREE.BoxGeometry(0.9, 0.35, 0.35);
+          const strutMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85 });
+          const strutTop = new THREE.Mesh(strutGeo, strutMat);
+          strutTop.position.set(-side * 0.75, 7.0, 0);
+          bGroup.add(strutTop);
+          const strutBot = new THREE.Mesh(strutGeo, strutMat);
+          strutBot.position.set(-side * 0.75, -7.0, 0);
+          bGroup.add(strutBot);
 
-        playerVehicle.add(bGroup);
-        if (side === -1) {
-          boosterLeftMeshRef.current = bGroup;
-          boosterLeftPlumeRef.current = bPlume;
-        } else {
-          boosterRightMeshRef.current = bGroup;
-          boosterRightPlumeRef.current = bPlume;
+          playerVehicle.add(bGroup);
+          if (side === -1) {
+            boosterLeftMeshRef.current = bGroup;
+            boosterLeftPlumeRef.current = bPlume;
+          } else {
+            boosterRightMeshRef.current = bGroup;
+            boosterRightPlumeRef.current = bPlume;
+          }
         }
       }
 
@@ -2236,156 +2638,186 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       stage2MeshRef.current = stage2Mesh;
       stage2Mesh.position.y = 20;
 
-      const s2BodyGeo = new THREE.CylinderGeometry(2.05, 2.05, 9, 48);
-      const s2BodyMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        roughness: 0.28,
-        metalness: 0.2,
-      });
-      const s2Body = new THREE.Mesh(s2BodyGeo, s2BodyMat);
-      s2Body.position.y = 4.5;
-      s2Body.castShadow = true;
-      stage2Mesh.add(s2Body);
+      if (isMercury) {
+        // Authentic Project Mercury Freedom 7 Spacecraft (Black Corrugated Capsule)
+        const mercCapGeo = new THREE.ConeGeometry(1.5, 3.2, 32);
+        const mercCapMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.6, metalness: 0.3 });
+        const mercCap = new THREE.Mesh(mercCapGeo, mercCapMat);
+        mercCap.position.y = 1.6;
+        stage2Mesh.add(mercCap);
 
-      // Vacuum Engine Nozzle (J-2 / YF-75D Vacuum Expander)
-      const s2NozGeo = new THREE.ConeGeometry(1.1, 2.4, 32);
-      const s2NozMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.95, roughness: 0.15 });
-      const s2Noz = new THREE.Mesh(s2NozGeo, s2NozMat);
-      s2Noz.rotation.x = Math.PI;
-      s2Noz.position.y = -0.8;
-      stage2Mesh.add(s2Noz);
+        // Cylindrical recovery compartment collar
+        const recGeo = new THREE.CylinderGeometry(0.65, 0.85, 1.2, 24);
+        const recMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 });
+        const rec = new THREE.Mesh(recGeo, recMat);
+        rec.position.y = 3.8;
+        stage2Mesh.add(rec);
 
-      // ── LUNAR CREW SPACECRAFT (Housed inside Clamshell Fairing) ──
-      const payloadGroup = new THREE.Group();
-      payloadGroup.position.y = 9.0;
+        // Red NASA Launch Escape System (LES) Tower
+        const lesGeo = new THREE.CylinderGeometry(0.09, 0.09, 6.5, 8);
+        const lesMat = new THREE.MeshStandardMaterial({ color: 0xdc2626 });
+        const les = new THREE.Mesh(lesGeo, lesMat);
+        les.position.y = 7.6;
 
-      // 1. Lunar Lander Descent Stage Base (Gold Kapton Multi-Layer Insulation)
-      const lmBaseGeo = new THREE.BoxGeometry(2.8, 1.6, 2.8);
-      const lmBaseMat = new THREE.MeshStandardMaterial({
-        color: 0xca8a04,
-        metalness: 0.85,
-        roughness: 0.2,
-      });
-      const lmBase = new THREE.Mesh(lmBaseGeo, lmBaseMat);
-      lmBase.position.y = 0.9;
-      payloadGroup.add(lmBase);
+        const escMotorGeo = new THREE.ConeGeometry(0.35, 1.2, 12);
+        const escMotor = new THREE.Mesh(escMotorGeo, lesMat);
+        escMotor.position.y = 3.8;
+        les.add(escMotor);
 
-      // 4 Lunar Lander Landing Gear Struts
-      for (let l = 0; l < 4; l++) {
-        const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.0, 8);
-        const legMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9 });
-        const leg = new THREE.Mesh(legGeo, legMat);
-        const ang = (l * Math.PI) / 2 + Math.PI / 4;
-        leg.position.set(Math.cos(ang) * 1.5, 0.35, Math.sin(ang) * 1.5);
-        leg.rotation.z = Math.cos(ang) * 0.4;
-        leg.rotation.x = -Math.sin(ang) * 0.4;
-        payloadGroup.add(leg);
+        stage2Mesh.add(les);
+        lasTowerMeshRef.current = les;
+      } else {
+        const s2BodyGeo = new THREE.CylinderGeometry(2.05, 2.05, 9, 48);
+        const s2BodyMat = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.28,
+          metalness: 0.2,
+        });
+        const s2Body = new THREE.Mesh(s2BodyGeo, s2BodyMat);
+        s2Body.position.y = 4.5;
+        s2Body.castShadow = true;
+        stage2Mesh.add(s2Body);
+
+        // Vacuum Engine Nozzle (J-2 / YF-75D Vacuum Expander)
+        const s2NozGeo = new THREE.ConeGeometry(1.1, 2.4, 32);
+        const s2NozMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.95, roughness: 0.15 });
+        const s2Noz = new THREE.Mesh(s2NozGeo, s2NozMat);
+        s2Noz.rotation.x = Math.PI;
+        s2Noz.position.y = -0.8;
+        stage2Mesh.add(s2Noz);
+
+        // ── LUNAR CREW SPACECRAFT (Housed inside Clamshell Fairing) ──
+        const payloadGroup = new THREE.Group();
+        payloadGroup.position.y = 9.0;
+
+        // 1. Lunar Lander Descent Stage Base (Gold Kapton Multi-Layer Insulation)
+        const lmBaseGeo = new THREE.BoxGeometry(2.8, 1.6, 2.8);
+        const lmBaseMat = new THREE.MeshStandardMaterial({
+          color: 0xca8a04,
+          metalness: 0.85,
+          roughness: 0.2,
+        });
+        const lmBase = new THREE.Mesh(lmBaseGeo, lmBaseMat);
+        lmBase.position.y = 0.9;
+        payloadGroup.add(lmBase);
+
+        // 4 Lunar Lander Landing Gear Struts
+        for (let l = 0; l < 4; l++) {
+          const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.0, 8);
+          const legMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9 });
+          const leg = new THREE.Mesh(legGeo, legMat);
+          const ang = (l * Math.PI) / 2 + Math.PI / 4;
+          leg.position.set(Math.cos(ang) * 1.5, 0.35, Math.sin(ang) * 1.5);
+          leg.rotation.z = Math.cos(ang) * 0.4;
+          leg.rotation.x = -Math.sin(ang) * 0.4;
+          payloadGroup.add(leg);
+        }
+
+        // 2. Service Module (Silver Cylindrical Module with Heat Radiators & RCS)
+        const smGeo = new THREE.CylinderGeometry(1.7, 1.7, 3.6, 32);
+        const smMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.25 });
+        const sm = new THREE.Mesh(smGeo, smMat);
+        sm.position.y = 3.5;
+        payloadGroup.add(sm);
+
+        // High Gain Antenna Dish
+        const dishGeo = new THREE.CylinderGeometry(0.65, 0.05, 0.25, 16);
+        const dishMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.9 });
+        const dish = new THREE.Mesh(dishGeo, dishMat);
+        dish.position.set(1.35, 4.1, 0);
+        dish.rotation.z = -Math.PI / 3;
+        payloadGroup.add(dish);
+
+        // 3. Command Module Capsule (Conical Crew Cabin with Windows & Heat Shield)
+        const cmGeo = new THREE.ConeGeometry(1.7, 2.8, 32);
+        const cmMat = new THREE.MeshStandardMaterial({
+          color: 0xf8fafc,
+          metalness: 0.5,
+          roughness: 0.25,
+        });
+        const cm = new THREE.Mesh(cmGeo, cmMat);
+        cm.position.y = 6.7;
+        payloadGroup.add(cm);
+
+        // Cockpit Windows
+        for (let w = -1; w <= 1; w += 2) {
+          const winGeo = new THREE.PlaneGeometry(0.35, 0.35);
+          const winMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
+          const win = new THREE.Mesh(winGeo, winMat);
+          win.position.set(w * 0.45, 6.5, 1.15);
+          win.rotation.x = -0.3;
+          win.rotation.y = w * 0.25;
+          payloadGroup.add(win);
+        }
+
+        // Docking Probe Mechanism on top
+        const probeGeo = new THREE.CylinderGeometry(0.25, 0.4, 0.8, 16);
+        const probeMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9 });
+        const probe = new THREE.Mesh(probeGeo, probeMat);
+        probe.position.y = 8.3;
+        payloadGroup.add(probe);
+
+        stage2Mesh.add(payloadGroup);
+
+        // ── BIPARTITE CLAMSHELL PAYLOAD FAIRINGS (Split Left & Right Halves) ──
+        const fairingMat = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.25,
+          metalness: 0.25,
+          side: THREE.DoubleSide,
+        });
+
+        // Left Fairing Half
+        const fairingLeft = new THREE.Group();
+        fairingLeft.position.set(0, 9.0, 0);
+        const fCylLeft = new THREE.Mesh(
+          new THREE.CylinderGeometry(2.08, 2.08, 7.5, 32, 1, false, 0, Math.PI),
+          fairingMat
+        );
+        fCylLeft.position.y = 3.75;
+        fairingLeft.add(fCylLeft);
+        const fConeLeft = new THREE.Mesh(
+          new THREE.ConeGeometry(2.08, 5.0, 32, 1, false, 0, Math.PI),
+          fairingMat
+        );
+        fConeLeft.position.y = 10.0;
+        fairingLeft.add(fConeLeft);
+        stage2Mesh.add(fairingLeft);
+        fairingLeftMeshRef.current = fairingLeft;
+
+        // Right Fairing Half
+        const fairingRight = new THREE.Group();
+        fairingRight.position.set(0, 9.0, 0);
+        const fCylRight = new THREE.Mesh(
+          new THREE.CylinderGeometry(2.08, 2.08, 7.5, 32, 1, false, Math.PI, Math.PI),
+          fairingMat
+        );
+        fCylRight.position.y = 3.75;
+        fairingRight.add(fCylRight);
+        const fConeRight = new THREE.Mesh(
+          new THREE.ConeGeometry(2.08, 5.0, 32, 1, false, Math.PI, Math.PI),
+          fairingMat
+        );
+        fConeRight.position.y = 10.0;
+        fairingRight.add(fConeRight);
+        stage2Mesh.add(fairingRight);
+        fairingRightMeshRef.current = fairingRight;
+
+        // Launch Escape System (LES) Tower on top of fairing
+        const lasTowerGeo = new THREE.CylinderGeometry(0.2, 0.2, 8, 12);
+        const lasTowerMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+        const lasTower = new THREE.Mesh(lasTowerGeo, lasTowerMat);
+        lasTower.position.y = 24.5;
+
+        const nosePackGeo = new THREE.ConeGeometry(0.5, 1.8, 16);
+        const nosePackMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const nosePack = new THREE.Mesh(nosePackGeo, nosePackMat);
+        nosePack.position.y = 4.8;
+        lasTower.add(nosePack);
+
+        lasTowerMeshRef.current = lasTower;
+        stage2Mesh.add(lasTower);
       }
-
-      // 2. Service Module (Silver Cylindrical Module with Heat Radiators & RCS)
-      const smGeo = new THREE.CylinderGeometry(1.7, 1.7, 3.6, 32);
-      const smMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.25 });
-      const sm = new THREE.Mesh(smGeo, smMat);
-      sm.position.y = 3.5;
-      payloadGroup.add(sm);
-
-      // High Gain Antenna Dish
-      const dishGeo = new THREE.CylinderGeometry(0.65, 0.05, 0.25, 16);
-      const dishMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.9 });
-      const dish = new THREE.Mesh(dishGeo, dishMat);
-      dish.position.set(1.35, 4.1, 0);
-      dish.rotation.z = -Math.PI / 3;
-      payloadGroup.add(dish);
-
-      // 3. Command Module Capsule (Conical Crew Cabin with Windows & Heat Shield)
-      const cmGeo = new THREE.ConeGeometry(1.7, 2.8, 32);
-      const cmMat = new THREE.MeshStandardMaterial({
-        color: 0xf8fafc,
-        metalness: 0.5,
-        roughness: 0.25,
-      });
-      const cm = new THREE.Mesh(cmGeo, cmMat);
-      cm.position.y = 6.7;
-      payloadGroup.add(cm);
-
-      // Cockpit Windows
-      for (let w = -1; w <= 1; w += 2) {
-        const winGeo = new THREE.PlaneGeometry(0.35, 0.35);
-        const winMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
-        const win = new THREE.Mesh(winGeo, winMat);
-        win.position.set(w * 0.45, 6.5, 1.15);
-        win.rotation.x = -0.3;
-        win.rotation.y = w * 0.25;
-        payloadGroup.add(win);
-      }
-
-      // Docking Probe Mechanism on top
-      const probeGeo = new THREE.CylinderGeometry(0.25, 0.4, 0.8, 16);
-      const probeMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9 });
-      const probe = new THREE.Mesh(probeGeo, probeMat);
-      probe.position.y = 8.3;
-      payloadGroup.add(probe);
-
-      stage2Mesh.add(payloadGroup);
-
-      // ── BIPARTITE CLAMSHELL PAYLOAD FAIRINGS (Split Left & Right Halves) ──
-      const fairingMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        roughness: 0.25,
-        metalness: 0.25,
-        side: THREE.DoubleSide,
-      });
-
-      // Left Fairing Half
-      const fairingLeft = new THREE.Group();
-      fairingLeft.position.set(0, 9.0, 0);
-      const fCylLeft = new THREE.Mesh(
-        new THREE.CylinderGeometry(2.08, 2.08, 7.5, 32, 1, false, 0, Math.PI),
-        fairingMat
-      );
-      fCylLeft.position.y = 3.75;
-      fairingLeft.add(fCylLeft);
-      const fConeLeft = new THREE.Mesh(
-        new THREE.ConeGeometry(2.08, 5.0, 32, 1, false, 0, Math.PI),
-        fairingMat
-      );
-      fConeLeft.position.y = 10.0;
-      fairingLeft.add(fConeLeft);
-      stage2Mesh.add(fairingLeft);
-      fairingLeftMeshRef.current = fairingLeft;
-
-      // Right Fairing Half
-      const fairingRight = new THREE.Group();
-      fairingRight.position.set(0, 9.0, 0);
-      const fCylRight = new THREE.Mesh(
-        new THREE.CylinderGeometry(2.08, 2.08, 7.5, 32, 1, false, Math.PI, Math.PI),
-        fairingMat
-      );
-      fCylRight.position.y = 3.75;
-      fairingRight.add(fCylRight);
-      const fConeRight = new THREE.Mesh(
-        new THREE.ConeGeometry(2.08, 5.0, 32, 1, false, Math.PI, Math.PI),
-        fairingMat
-      );
-      fConeRight.position.y = 10.0;
-      fairingRight.add(fConeRight);
-      stage2Mesh.add(fairingRight);
-      fairingRightMeshRef.current = fairingRight;
-
-      // Launch Escape System (LES) Tower on top of fairing
-      const lasTowerGeo = new THREE.CylinderGeometry(0.2, 0.2, 8, 12);
-      const lasTowerMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
-      const lasTower = new THREE.Mesh(lasTowerGeo, lasTowerMat);
-      lasTower.position.y = 24.5;
-
-      const nosePackGeo = new THREE.ConeGeometry(0.5, 1.8, 16);
-      const nosePackMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-      const nosePack = new THREE.Mesh(nosePackGeo, nosePackMat);
-      nosePack.position.y = 4.8;
-      lasTower.add(nosePack);
-
-      lasTowerMeshRef.current = lasTower;
-      stage2Mesh.add(lasTower);
 
       playerVehicle.add(stage2Mesh);
       playerVehicle.position.set(0, 4, 0);
@@ -2427,6 +2859,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
 
       // Rocket Exhaust Plume with Mach Shock Diamonds
       machDiamondGroup = new THREE.Group();
+      machDiamondGroupRef.current = machDiamondGroup;
       machDiamondGroup.position.y = -8;
 
       const flameGeo = new THREE.ConeGeometry(3.0, 24, 32);
@@ -2890,6 +3323,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
       landerFlame.visible = false;
       playerVehicle.add(landerFlame);
       machDiamondGroup = new THREE.Group();
+      machDiamondGroupRef.current = machDiamondGroup;
       machDiamondGroup.add(landerFlame);
     }
 
@@ -4388,43 +4822,44 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
           lasTowerMeshRef.current.rotation.x += dt * 0.2;
         }
 
-        // Falling detached Stage 1 booster animation
+        // Falling detached Stage 1 core booster animation
         if (simStateRef.current.stage === 2 && stage1MeshRef.current && stage1MeshRef.current.parent === scene) {
-          stage1MeshRef.current.position.y -= (28 + dt * 10);
-          stage1MeshRef.current.rotation.x += dt * 0.08;
-          stage1MeshRef.current.rotation.z += dt * 0.05;
+          stage1MeshRef.current.position.y -= 35 * dt;
+          stage1MeshRef.current.position.x -= 6 * dt;
+          stage1MeshRef.current.rotation.x += dt * 0.15;
+          stage1MeshRef.current.rotation.z += dt * 0.1;
         }
 
         // Separated Dual Side Boosters Animation (Radial Korolev Cross outward drift)
         if (boosterLeftMeshRef.current && boosterLeftMeshRef.current.parent === scene) {
-          boosterLeftMeshRef.current.position.x -= 24 * dt;
-          boosterLeftMeshRef.current.position.y -= (26 + dt * 8);
+          boosterLeftMeshRef.current.position.x -= 16 * dt;
+          boosterLeftMeshRef.current.position.y -= 30 * dt;
           boosterLeftMeshRef.current.position.z -= 6 * dt;
-          boosterLeftMeshRef.current.rotation.z += 0.24 * dt;
-          boosterLeftMeshRef.current.rotation.y += 0.05 * dt;
+          boosterLeftMeshRef.current.rotation.z += 0.35 * dt;
+          boosterLeftMeshRef.current.rotation.y += 0.15 * dt;
         }
         if (boosterRightMeshRef.current && boosterRightMeshRef.current.parent === scene) {
-          boosterRightMeshRef.current.position.x += 24 * dt;
-          boosterRightMeshRef.current.position.y -= (26 + dt * 8);
+          boosterRightMeshRef.current.position.x += 16 * dt;
+          boosterRightMeshRef.current.position.y -= 30 * dt;
           boosterRightMeshRef.current.position.z -= 6 * dt;
-          boosterRightMeshRef.current.rotation.z -= 0.24 * dt;
-          boosterRightMeshRef.current.rotation.y -= 0.05 * dt;
+          boosterRightMeshRef.current.rotation.z -= 0.35 * dt;
+          boosterRightMeshRef.current.rotation.y += 0.15 * dt;
         }
 
         // Separated Bipartite Clamshell Fairing Halves Animation (Split Drift into Space)
         if (fairingLeftMeshRef.current && fairingLeftMeshRef.current.parent === scene) {
-          fairingLeftMeshRef.current.position.x -= 16 * dt;
-          fairingLeftMeshRef.current.position.y -= (14 + dt * 6);
+          fairingLeftMeshRef.current.position.x -= 14 * dt;
+          fairingLeftMeshRef.current.position.y -= 22 * dt;
           fairingLeftMeshRef.current.position.z -= 10 * dt;
-          fairingLeftMeshRef.current.rotation.z += 0.28 * dt;
-          fairingLeftMeshRef.current.rotation.y += 0.2 * dt;
+          fairingLeftMeshRef.current.rotation.z += 0.45 * dt;
+          fairingLeftMeshRef.current.rotation.y += 0.3 * dt;
         }
         if (fairingRightMeshRef.current && fairingRightMeshRef.current.parent === scene) {
-          fairingRightMeshRef.current.position.x += 16 * dt;
-          fairingRightMeshRef.current.position.y -= (14 + dt * 6);
+          fairingRightMeshRef.current.position.x += 14 * dt;
+          fairingRightMeshRef.current.position.y -= 22 * dt;
           fairingRightMeshRef.current.position.z -= 10 * dt;
-          fairingRightMeshRef.current.rotation.z -= 0.28 * dt;
-          fairingRightMeshRef.current.rotation.y -= 0.2 * dt;
+          fairingRightMeshRef.current.rotation.z -= 0.45 * dt;
+          fairingRightMeshRef.current.rotation.y += 0.3 * dt;
         }
 
         // Booster exhaust plume flicker while attached
@@ -4443,60 +4878,138 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
           if (boosterRightPlumeRef.current) boosterRightPlumeRef.current.visible = false;
         }
 
-        // Automatic Flight Milestones (if astronaut hasn't manually hit separation keys)
+        // Manual Flight Milestones & Prompts (Astronaut must hit separation keys or on-screen buttons)
         if (state.altitudeKm >= 36 && !state.boosterSeparated) {
-          handleBoosterSeparation();
-        }
-        if (state.altitudeKm >= 75 && !state.fairingSeparated) {
-          handleFairingSeparation();
-        }
-        if (state.altitudeKm >= 125 && state.stage === 1) {
-          handleStage1Separation();
+          state.statusText = '⚠️ BOOSTER BURNOUT REACHED · PRESS [SPACE] OR CLICK JETTISON BOOSTERS!';
+        } else if (state.altitudeKm >= 75 && !state.fairingSeparated) {
+          state.statusText = '⚠️ VACUUM REACHED · PRESS [SPACE] OR CLICK JETTISON FAIRING!';
+        } else if (state.altitudeKm >= 125 && state.stage === 1) {
+          state.statusText = '⚠️ S-IC MECO BURNOUT · PRESS [SPACE] OR CLICK SEPARATE STAGE 1!';
         }
 
-        // Trans-Lunar Injection (TLI) Burn Dynamics towards Moon
-        if (state.tliActive && !state.tliComplete) {
-          state.tliProgress = Math.min(100, state.tliProgress + dt * 6.5);
-          state.velocityKms = THREE.MathUtils.lerp(7.8, 11.2, state.tliProgress / 100);
-          state.moonDistanceKm = THREE.MathUtils.lerp(384400, 100, state.tliProgress / 100);
-          setMoonDistDisplay(Math.round(state.moonDistanceKm));
-
-          if (moonMeshRef.current) {
-            moonMeshRef.current.visible = true;
-            const mDist = THREE.MathUtils.lerp(2800, 360, state.tliProgress / 100);
-            moonMeshRef.current.position.set(0, 750 - (state.tliProgress / 100) * 380, -mDist);
-          }
-          if (trajectoryLineRef.current) {
-            trajectoryLineRef.current.visible = true;
-          }
-
-          if (earthMeshRef.current && atmoMeshRef.current) {
-            const earthDepth = THREE.MathUtils.lerp(-earthRadius - 320, -earthRadius - 3000, state.tliProgress / 100);
-            earthMeshRef.current.position.y = earthDepth;
-            atmoMeshRef.current.position.y = earthDepth;
-          }
-
-          if (state.tliProgress >= 100) {
-            state.tliComplete = true;
-            setTliComplete(true);
-            setFlightPhase('lunar_orbit');
-            state.statusText = '🎉 TRANS-LUNAR INJECTION COMPLETE · LUNAR INSERTION ORBIT ACHIEVED!';
-            state.statusColor = '#22c55e';
-            soundFx.playRadioChirp();
-            audioSynthRef.current.playQuindarBeep();
-            confetti({ particleCount: 220, spread: 100 });
+        // Continuous Trailing Smoke Plume behind climbing vehicle (Ellipse / KSP Smoke Column)
+        if (state.throttle > 0.01 && state.altitudeKm < 85) {
+          for (let sp = 0; sp < 2; sp++) {
+            const pIdx = plumeCursor;
+            plumeCursor = (plumeCursor + 1) % plumeCount;
+            const worldNozzle = new THREE.Vector3(0, -2, 0);
+            playerVehicle.localToWorld(worldNozzle);
+            plumeData[pIdx] = {
+              x: worldNozzle.x + (Math.random() - 0.5) * 2.2,
+              y: worldNozzle.y - 0.8,
+              z: worldNozzle.z + (Math.random() - 0.5) * 2.2,
+              vx: (Math.random() - 0.5) * 3.5,
+              vy: -Math.random() * 5.0 - 2.0,
+              vz: (Math.random() - 0.5) * 3.5,
+              life: 0,
+              maxLife: 6.5,
+            };
           }
         }
 
-        // Earth globe visibility based on altitude
+        // Update trailing plume positions and aging
+        const pPos = plumeGeo.attributes.position.array as Float32Array;
+        for (let i = 0; i < plumeCount; i++) {
+          const pd = plumeData[i];
+          if (pd.life < pd.maxLife) {
+            pd.life += dt;
+            pd.x += pd.vx * dt;
+            pd.y += pd.vy * dt;
+            pd.z += pd.vz * dt;
+            pPos[i * 3] = pd.x;
+            pPos[i * 3 + 1] = pd.y;
+            pPos[i * 3 + 2] = pd.z;
+          } else {
+            pPos[i * 3 + 1] = -9999;
+          }
+        }
+        plumeGeo.attributes.position.needsUpdate = true;
+
+        // Transonic Vapor Shock Cone (Mach 1 shock condensation around vehicle body)
+        const isTransonic = state.velocityKms >= 0.30 && state.velocityKms <= 0.42 && state.altitudeKm < 35 && state.throttle > 0.01;
+        vaporCone.visible = isTransonic;
+        if (isTransonic) {
+          const buzz = 1.0 + Math.sin(time * 45) * 0.08;
+          vaporCone.scale.set(buzz, 1.0, buzz);
+          vaporConeMat.opacity = 0.35 + Math.random() * 0.25;
+        }
+
+        // Dynamic Atmospheric Sky & Fog Transition (Florida Coast Azure -> Deep Space Void)
+        if (scene) {
+          const alt = state.altitudeKm;
+          if (alt < 15) {
+            // Troposphere (0 - 15 km): Florida Azure Daylight to Deep Blue
+            const t = Math.max(0, alt / 15);
+            daySkyColor.setRGB(
+              THREE.MathUtils.lerp(0.22, 0.06, t),
+              THREE.MathUtils.lerp(0.74, 0.20, t),
+              THREE.MathUtils.lerp(0.97, 0.50, t)
+            );
+            if (scene.fog) {
+              scene.fog.color.copy(daySkyColor);
+              (scene.fog as THREE.FogExp2).density = THREE.MathUtils.lerp(0.00015, 0.00005, t);
+            }
+            if (starMat) starMat.opacity = 0;
+          } else if (alt < 55) {
+            // Stratosphere (15 - 55 km): Deep Royal Blue to Twilight Inky Indigo
+            const t = (alt - 15) / 40;
+            daySkyColor.setRGB(
+              THREE.MathUtils.lerp(0.06, 0.02, t),
+              THREE.MathUtils.lerp(0.20, 0.04, t),
+              THREE.MathUtils.lerp(0.50, 0.12, t)
+            );
+            if (scene.fog) {
+              scene.fog.color.copy(daySkyColor);
+              (scene.fog as THREE.FogExp2).density = THREE.MathUtils.lerp(0.00005, 0.00001, t);
+            }
+            if (starMat) starMat.opacity = t * 0.55;
+          } else if (alt < 90) {
+            // Mesosphere: Twilight Indigo to Pitch Black Space
+            const t = (alt - 55) / 35;
+            daySkyColor.setRGB(
+              THREE.MathUtils.lerp(0.02, 0.008, t),
+              THREE.MathUtils.lerp(0.04, 0.012, t),
+              THREE.MathUtils.lerp(0.12, 0.024, t)
+            );
+            if (scene.fog) {
+              (scene.fog as THREE.FogExp2).density = 0;
+            }
+            if (starMat) starMat.opacity = 0.55 + t * 0.45;
+          } else {
+            // Space Vacuum: Deep cosmic void with high-contrast stars & Earth curvature
+            daySkyColor.setRGB(0.008, 0.012, 0.024);
+            if (scene.fog) {
+              (scene.fog as THREE.FogExp2).density = 0;
+            }
+            if (starMat) starMat.opacity = 1.0;
+          }
+
+          // Kármán Line Crossing Milestone (100 km)
+          if (state.altitudeKm >= 100 && !karmanAnnouncedRef.current) {
+            karmanAnnouncedRef.current = true;
+            soundFx.playVictory();
+          }
+        }
+
+        // Photorealistic Curved Earth Globe rising smoothly beneath the spacecraft
         if (earthMeshRef.current && atmoMeshRef.current) {
-          if (state.altitudeKm > 32) {
+          if (state.altitudeKm > 8) {
             earthMeshRef.current.visible = true;
             atmoMeshRef.current.visible = true;
+            const targetY = -earthRadius - 120 + Math.min(state.altitudeKm * 1.8, 160);
+            earthMeshRef.current.position.y = targetY;
+            atmoMeshRef.current.position.y = targetY;
+            earthMeshRef.current.rotation.y = time * 0.00003;
+            atmoMeshRef.current.rotation.y = time * 0.00003;
           } else {
             earthMeshRef.current.visible = false;
             atmoMeshRef.current.visible = false;
           }
+        }
+
+        // Hide flat launch pad once high above Cape Canaveral to prevent clipping
+        if (groundPadGroup) {
+          groundPadGroup.visible = state.altitudeKm < 45;
         }
 
         if (canControl) {
@@ -4525,32 +5038,115 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
           }
         }
 
+        // ── True Newtonian Aerospace Flight Dynamics (Variable Mass, F=m*a, Aerodynamic Drag, Gravity Turn) ──
         const effectiveThrustMult = state.pumpPressure || 1.0;
         audioSynthRef.current.setEngineThrust(state.throttle);
 
+        // 1. Variable Rocket Mass: Burn fuel -> vehicle gets lighter -> acceleration surges
+        const dryMassKg = isMercury ? 4800 : (state.stage === 1 ? 32000 : 9200);
+        const fuelCapacityKg = isMercury ? 26000 : (state.stage === 1 ? 120000 : 42000);
+        const currentMassKg = dryMassKg + fuelCapacityKg * (state.propellant / 100);
+
+        // 2. Propellant consumption
         if (state.throttle > 0.01 && state.propellant > 0) {
-          const burnRate = 0.85 * (state.stage === 1 ? 1.0 : 0.6) * effectiveThrustMult;
-          state.propellant = Math.max(0, state.propellant - state.throttle * burnRate * dt);
+          const burnDurationSec = isMercury ? 120 : (state.stage === 1 ? 140 : 280);
+          const burnRatePctPerSec = (100 / burnDurationSec) * state.throttle * effectiveThrustMult;
+          state.propellant = Math.max(0, state.propellant - burnRatePctPerSec * dt);
+        } else if (state.propellant <= 0) {
+          state.throttle = 0;
+        }
 
-          const baseThrust = state.throttle * (state.stage === 1 ? 95 : 65) * effectiveThrustMult;
-          const rad = (state.pitchDeg * Math.PI) / 180;
-          const vertThrust = baseThrust * Math.sin(rad);
-          const horizThrust = baseThrust * Math.cos(rad);
+        // 3. Rocket Thrust calculation (Liftoff TWR ~2.5 - 2.8 for exciting, responsive Ellipse flight)
+        const liftoffMassKg = dryMassKg + fuelCapacityKg;
+        const twrMult = isMercury ? 2.6 : (state.stage === 1 ? 2.4 : 2.8);
+        const maxThrustN = liftoffMassKg * 9.81 * twrMult;
+        const currentThrustN = state.throttle * maxThrustN * effectiveThrustMult;
 
-          state.gForce = 1.0 + (baseThrust / 95) * 2.8;
-          state.velocityKms += (horizThrust * 0.08 + (vertThrust - 9.81) * 0.04) * dt;
-          state.velocityKms = Math.max(0, state.velocityKms);
-          state.altitudeKm += (vertThrust * 0.06 + state.velocityKms * 0.8) * dt;
+        // 4. Vector Components
+        const pitchRad = (state.pitchDeg * Math.PI) / 180;
+        const thrustY = currentThrustN * Math.sin(pitchRad);
+        const thrustX = currentThrustN * Math.cos(pitchRad);
 
-          // Exhaust Plume
-          if (machDiamondGroup) {
+        // 5. Atmospheric Density, Aerodynamic Drag & Gravity
+        const localG = 9.81 * ((6371 / (6371 + state.altitudeKm)) ** 2);
+        const atmoDensity = 1.225 * Math.exp(-state.altitudeKm / 8.5);
+        const currentSpeedMs = Math.sqrt(((state as any).realVx || 0) ** 2 + ((state as any).realVy || 0) ** 2);
+        const dragN = 0.5 * atmoDensity * (currentSpeedMs ** 2) * 0.45;
+
+        // 6. Net Accelerations
+        const aThrust = currentThrustN / currentMassKg;
+        const aY = (thrustY - dragN * Math.sin(pitchRad)) / currentMassKg - localG;
+        const aX = (thrustX - dragN * Math.cos(pitchRad)) / currentMassKg;
+
+        // Dynamic G-Force
+        if (state.altitudeKm <= 0.005 && state.throttle < 0.15) {
+          state.gForce = 1.0;
+        } else {
+          state.gForce = Number((Math.max(0, aThrust / 9.81)).toFixed(2));
+        }
+
+        // 7. Integrate Continuous High-Precision Floating Velocities (m/s)
+        if (typeof (state as any).realVy !== 'number') (state as any).realVy = 0;
+        if (typeof (state as any).realVx !== 'number') (state as any).realVx = 0;
+
+        // Immediate responsive liftoff boost if throttle is applied on the pad
+        if (state.altitudeKm <= 0.002 && state.throttle > 0.05 && (state as any).realVy <= 0.5) {
+          (state as any).realVy = 12.0 * state.throttle;
+        }
+
+        if (state.altitudeKm <= 0.001 && state.throttle < 0.05) {
+          (state as any).realVy = 0;
+          (state as any).realVx = 0;
+        } else {
+          (state as any).realVy = Math.max(0, (state as any).realVy + aY * dt);
+          (state as any).realVx = Math.max(0, (state as any).realVx + aX * dt);
+        }
+
+        const totalSpeedMs = Math.sqrt((state as any).realVx ** 2 + (state as any).realVy ** 2);
+        state.velocityKms = totalSpeedMs / 1000;
+        state.vertSpeedMs = Math.round((state as any).realVy);
+        state.horizSpeedKms = Number(((state as any).realVx / 1000).toFixed(2));
+
+        // 8. Integrate Altitude (km)
+        const dAltKm = ((state as any).realVy * dt) / 1000;
+        state.altitudeKm = Math.max(0, state.altitudeKm + dAltKm);
+
+        // 9. Astrodynamics (Ap, Pe, Max-Q)
+        const ballisticPeak = state.altitudeKm + ((((state as any).realVy) / 1000) ** 2) / (2 * (localG / 1000));
+        const orbitalProgress = Math.min(1.0, state.horizSpeedKms / 7.8);
+        const apoapsisKm = Math.round(Math.max(state.altitudeKm, ballisticPeak * (1 + orbitalProgress * 1.4)));
+        const periapsisKm = state.flightPhase === 'orbit' ? 185 : (state.horizSpeedKms > 5.5 ? Math.round(((state.horizSpeedKms - 5.5) / 2.3) * 185) : 0);
+        const dynamicPressureQ = Math.round(0.5 * atmoDensity * (totalSpeedMs ** 2) * 0.001);
+        state.dynamicPressureQ = dynamicPressureQ;
+        state.apoapsisKm = apoapsisKm;
+        state.periapsisKm = periapsisKm;
+
+        if (dynamicPressureQ > 28 && !state.maxQPassed) {
+          state.maxQPassed = true;
+          state.statusText = '⚡ VEHICLE PASSING MAX-Q (MAXIMUM DYNAMIC PRESSURE)';
+          state.statusColor = '#f59e0b';
+        }
+
+        // Dynamic Supersonic Exhaust Plume & Vacuum Underexpansion
+        if (machDiamondGroup) {
+          if (state.throttle > 0.01) {
             machDiamondGroup.visible = true;
-            const flicker = 1 + Math.random() * 0.15;
-            machDiamondGroup.scale.set(flicker, state.throttle * 1.4 * flicker * effectiveThrustMult, flicker);
+            const flicker = 1.0 + Math.random() * 0.12;
+            const vacuumExpansion = 1.0 + Math.min(2.8, Math.max(0, (state.altitudeKm - 15) / 18));
+            machDiamondGroup.scale.set(
+              vacuumExpansion * flicker,
+              state.throttle * 1.5 * flicker * effectiveThrustMult,
+              vacuumExpansion * flicker
+            );
+            plumePointLight.intensity = state.throttle * (22 + Math.random() * 6);
+            plumePointLight.position.set(0, playerVehicle.position.y - 6, 0);
+          } else {
+            machDiamondGroup.visible = false;
+            plumePointLight.intensity = 0;
           }
-          plumePointLight.intensity = state.throttle * (20 + Math.random() * 6);
-          plumePointLight.position.set(0, playerVehicle.position.y - 6, 0);
+        }
 
+        if (state.throttle > 0.01 && state.propellant > 0) {
           // Volumetric Launch Pad Smoke & Steam Deluge Generation
           const isEmittingSmoke = (countdownTime !== null && countdownTime <= 6) || state.throttle > 0.01;
           if (isEmittingSmoke && state.altitudeKm < 35) {
@@ -4579,11 +5175,6 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
             }
             smokeEmitIndex = (smokeEmitIndex + spawnCount) % smokeCount;
           }
-        } else {
-          state.throttle = 0;
-          state.gForce = Math.max(1.0, state.gForce - dt * 3);
-          if (machDiamondGroup) machDiamondGroup.visible = false;
-          plumePointLight.intensity = 0;
         }
 
         // Animate volumetric flame trench steam billows rolling across pad
@@ -4625,27 +5216,41 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
         smokeGeo.attributes.position.needsUpdate = true;
         smokeGeo.attributes.size.needsUpdate = true;
 
-        // Vehicle Orientation
+        // Vehicle Orientation & Visual Displacements
         const radRoll = ((90 - state.pitchDeg) * Math.PI) / 180;
         playerVehicle.rotation.z = -radRoll;
-        playerVehicle.position.y = 4 + Math.min(state.altitudeKm * 25, 450);
-        groundPadGroup.position.y = -Math.min(state.altitudeKm * 25, 1400);
+        playerVehicle.position.y = 4 + Math.min(state.altitudeKm * 60, 480);
+        groundPadGroup.position.y = -Math.min(state.altitudeKm * 60, 1800);
+        if (cloudDeckGroup) {
+          cloudDeckGroup.position.y = -Math.min(state.altitudeKm * 60, 1800);
+        }
+
+        const effectiveTargetAlt = p.targetAltitudeKm > 0 ? p.targetAltitudeKm : 185;
+        const reachedSpaceOrOrbit = isMercury
+          ? (state.altitudeKm >= 100 || state.altitudeKm >= effectiveTargetAlt * 0.85)
+          : ((state.altitudeKm >= effectiveTargetAlt * 0.85 && state.velocityKms >= 6.8) || state.altitudeKm >= 185);
 
         if (state.tliComplete) {
           state.isFinished = true;
           soundFx.playRadioChirp();
           confetti({ particleCount: 180, spread: 90 });
           setTimeout(() => onSuccess(1000), 2000);
-        } else if (state.altitudeKm >= p.targetAltitudeKm && state.velocityKms >= p.targetVelocityKms * 0.85 && !state.tliActive) {
-          if (simStateRef.current.flightPhase !== 'orbit' && simStateRef.current.flightPhase !== 'tli_burn' && simStateRef.current.flightPhase !== 'lunar_orbit') {
+        } else if (reachedSpaceOrOrbit && !state.tliActive) {
+          if (!state.isFinished) {
             simStateRef.current.flightPhase = 'orbit';
             setFlightPhase('orbit');
-            state.statusText = '🌍 LOW EARTH ORBIT (LEO) ACQUIRED · PROCEED TO TRANS-LUNAR INJECTION (TLI) BURN!';
-            state.statusColor = '#38bdf8';
-            if (moonMeshRef.current) moonMeshRef.current.visible = true;
+            state.isFinished = true;
+            soundFx.playVictory();
+            confetti({ particleCount: 220, spread: 90 });
+            state.statusText = isMercury
+              ? '🌌 REACHED SPACE! KÁRMÁN LINE (100 KM) PASSED · SUBORBITAL MISSION ACCOMPLISHED!'
+              : '🌍 ORBITAL INSERTION ACHIEVED · WELCOME TO SPACE · MISSION ACCOMPLISHED!';
+            state.statusColor = '#22c55e';
+            if (moonMeshRef.current) moonMeshRef.current.visible = false;
             if (trajectoryLineRef.current) trajectoryLineRef.current.visible = true;
+            setTimeout(() => onSuccess(1000), 2500);
           }
-        } else if (state.timeRemaining <= 0 || (state.propellant <= 0 && state.altitudeKm < p.targetAltitudeKm * 0.7 && !state.tliActive)) {
+        } else if (state.timeRemaining <= 0 || (state.propellant <= 0 && state.altitudeKm < 60 && !state.tliActive)) {
           state.isFinished = true;
           soundFx.playAlarm();
           onFailure(`Trajectory profile missed. Final Altitude: ${state.altitudeKm.toFixed(1)} km`);
@@ -5133,13 +5738,14 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
           camera.lookAt(lookAtTarget);
         } else if (mission.gameType === 'launch') {
           controls.enabled = false;
-          // Trailing chase camera following behind and below the ascending rocket
+          // Trailing chase camera following behind and below the ascending rocket with aerodynamic buffeting
+          const shakeMag = (state.throttle * 0.12 + Math.min(0.2, (state.dynamicPressureQ || 0) / 15000)) * (Math.random() - 0.5);
           const chaseCamPos = new THREE.Vector3(
-            playerVehicle.position.x,
-            playerVehicle.position.y - 4.0,
-            playerVehicle.position.z + 32.0
+            playerVehicle.position.x + shakeMag,
+            playerVehicle.position.y - 4.2 + shakeMag,
+            playerVehicle.position.z + 30.0 + shakeMag
           );
-          camera.position.lerp(chaseCamPos, dt * 5.0);
+          camera.position.lerp(chaseCamPos, dt * 6.0);
           const lookAtTarget = playerVehicle.position.clone().add(new THREE.Vector3(0, 14.0, 0));
           camera.lookAt(lookAtTarget);
         } else if (mission.gameType === 'rover') {
@@ -5295,6 +5901,9 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
         thermalHullPct: state.thermalHullPct,
         flightAssistActive: state.flightAssist,
         scanProgress: state.scanProgress,
+        vertSpeedMs: state.vertSpeedMs || 0,
+        horizSpeedKms: state.horizSpeedKms || 0,
+        dynamicPressureQ: state.dynamicPressureQ || 0,
       });
 
       renderer.render(scene, camera);
@@ -5452,287 +6061,30 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
         </div>
       )}
 
-      {/* ─── IMMERSIVE FIRST-PERSON COCKPIT / DRIVER VIEWPORT HUD ──── */}
+      {/* ─── IMMERSIVE AUTHENTIC HISTORIC COCKPIT VIEWPORT ──── */}
       {cameraMode === 'cockpit' && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            zIndex: 15,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            boxShadow: 'inset 0 0 100px rgba(0, 0, 0, 0.85), inset 0 0 40px rgba(0, 0, 0, 0.95)',
+        <AuthenticCockpitOverlay
+          mission={mission}
+          telemetry={{
+            altitudeKm: telemetry.altitudeKm,
+            velocityKms: telemetry.velocityKms,
+            throttle: telemetry.throttle,
+            propellantPct: telemetry.propellantPct,
+            pitchDeg: telemetry.pitchDeg,
+            rollDeg: telemetry.rollDeg,
+            gForce: telemetry.gForce,
+            flightPhase,
+            targetAltitudeKm: (mission.params as any).targetAltitudeKm || 185,
+            targetVelocityKms: (mission.params as any).targetVelocityKms || 7.8,
+            isLunarMission,
+            isMarsMission,
+            destinationName: isLunarMission ? 'The Moon' : isMarsMission ? 'Mars' : 'Low Earth Orbit (LEO)',
           }}
-        >
-          {/* Top Bezel Mode Indicator */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              paddingTop: '50px',
-            }}
-          >
-            <div
-              style={{
-                background: 'rgba(2, 6, 23, 0.78)',
-                border: `1px solid ${hudTheme.primary}`,
-                borderRadius: '20px',
-                padding: '4px 14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backdropFilter: 'blur(8px)',
-                boxShadow: `0 0 15px ${hudTheme.glow}`,
-              }}
-            >
-              <div
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: hudTheme.primary,
-                  boxShadow: `0 0 6px ${hudTheme.primary}`,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: '9.5px',
-                  fontWeight: 800,
-                  color: hudTheme.primary,
-                  letterSpacing: '0.08em',
-                }}
-              >
-                {mission.gameType === 'rover'
-                  ? '🪑 ROVER DRIVER STATION · SURFACE OPTICS'
-                  : mission.gameType === 'lunar_landing'
-                  ? '👨‍🚀 APOLLO LUNAR MODULE FORWARD WINDOW · PDI GUIDANCE'
-                  : mission.gameType === 'docking'
-                  ? '🎯 FORWARD DOCKING CAMERA · CENTERLINE BORESIGHT'
-                  : mission.gameType === 'telescope'
-                  ? '🔭 CASSEGRAIN OPTICAL DETECTOR · PRIMARY FOCAL PLANE'
-                  : mission.gameType === 'deep_space'
-                  ? '📡 PROBE OPTICAL NAVIGATION SENSOR · 1ST PERSON SIGHT'
-                  : '👨‍🚀 CREW CAPSULE COCKPIT · FLIGHT DECK VIEW'}
-              </span>
-            </div>
-          </div>
-
-          {/* Center First-Person HUD Reticle */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '260px',
-              height: '260px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '24px',
-                height: '24px',
-                borderTop: `2px solid ${hudTheme.primary}`,
-                borderLeft: `2px solid ${hudTheme.primary}`,
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                width: '24px',
-                height: '24px',
-                borderTop: `2px solid ${hudTheme.primary}`,
-                borderRight: `2px solid ${hudTheme.primary}`,
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                width: '24px',
-                height: '24px',
-                borderBottom: `2px solid ${hudTheme.primary}`,
-                borderLeft: `2px solid ${hudTheme.primary}`,
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0,
-                width: '24px',
-                height: '24px',
-                borderBottom: `2px solid ${hudTheme.primary}`,
-                borderRight: `2px solid ${hudTheme.primary}`,
-              }}
-            />
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                border: `1px dashed ${hudTheme.primary}`,
-                borderRadius: '50%',
-                opacity: 0.6,
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                width: '8px',
-                height: '1px',
-                background: hudTheme.primary,
-                opacity: 0.7,
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                height: '8px',
-                width: '1px',
-                background: hudTheme.primary,
-                opacity: 0.7,
-              }}
-            />
-          </div>
-
-          {/* Bottom Cockpit Edge Advisory & 360° Quick Look Bar */}
-          <div
-            style={{
-              paddingBottom: '68px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '6px',
-              pointerEvents: 'none',
-            }}
-          >
-            <div
-              style={{
-                background: 'rgba(2, 6, 23, 0.85)',
-                border: '1px solid rgba(56, 189, 248, 0.4)',
-                borderRadius: '20px',
-                padding: '4px 14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backdropFilter: 'blur(8px)',
-                boxShadow: '0 0 16px rgba(56, 189, 248, 0.25)',
-              }}
-            >
-              <span style={{ fontSize: '11px' }}>🖱️</span>
-              <span style={{ fontSize: '9px', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em' }}>
-                DRAG MOUSE IN ANY DIRECTION TO LOOK 360° AROUND COCKPIT / WINDOWS / INSTRUMENTS
-              </span>
-            </div>
-
-            {/* Quick Look Direction Buttons */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                pointerEvents: 'auto',
-              }}
-            >
-              <button
-                onClick={() => handleCockpitLookSet(-Math.PI / 2, 0)}
-                style={{
-                  background: 'rgba(15, 23, 42, 0.8)',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  color: '#94a3b8',
-                  borderRadius: '5px',
-                  padding: '3px 8px',
-                  fontSize: '8.5px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  backdropFilter: 'blur(6px)',
-                }}
-                title="Turn head 90° left to view left window / instruments (or drag mouse left)"
-              >
-                ⬅️ LOOK LEFT (90°)
-              </button>
-              <button
-                onClick={() => handleCockpitLookSet(0, 0)}
-                style={{
-                  background: 'rgba(56, 189, 248, 0.2)',
-                  border: '1px solid #38bdf8',
-                  color: '#38bdf8',
-                  borderRadius: '5px',
-                  padding: '3px 8px',
-                  fontSize: '8.5px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  backdropFilter: 'blur(6px)',
-                }}
-                title="Look straight ahead"
-              >
-                ⬆️ FRONT VIEW (0°)
-              </button>
-              <button
-                onClick={() => handleCockpitLookSet(Math.PI / 2, 0)}
-                style={{
-                  background: 'rgba(15, 23, 42, 0.8)',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  color: '#94a3b8',
-                  borderRadius: '5px',
-                  padding: '3px 8px',
-                  fontSize: '8.5px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  backdropFilter: 'blur(6px)',
-                }}
-                title="Turn head 90° right to view right window / instruments (or drag mouse right)"
-              >
-                LOOK RIGHT (90°) ➡️
-              </button>
-              <button
-                onClick={() => handleCockpitLookSet(Math.PI, 0)}
-                style={{
-                  background: 'rgba(15, 23, 42, 0.8)',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  color: '#94a3b8',
-                  borderRadius: '5px',
-                  padding: '3px 8px',
-                  fontSize: '8.5px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  backdropFilter: 'blur(6px)',
-                }}
-                title="Look 180° behind"
-              >
-                🔄 REAR (180°)
-              </button>
-              <button
-                onClick={() => handleCockpitLookSet(0, 0)}
-                style={{
-                  background: 'rgba(34, 197, 94, 0.2)',
-                  border: '1px solid #22c55e',
-                  color: '#86efac',
-                  borderRadius: '5px',
-                  padding: '3px 8px',
-                  fontSize: '8.5px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  backdropFilter: 'blur(6px)',
-                }}
-                title="Re-center view to forward"
-              >
-                🎯 RE-CENTER
-              </button>
-            </div>
-          </div>
-        </div>
+          cockpitLookYaw={cockpitLookRef.current.yaw}
+          cockpitLookPitch={cockpitLookRef.current.pitch}
+          onSetCockpitLook={handleCockpitLookSet}
+          onAbort={handleAbort}
+        />
       )}
 
       {/* ─── TOP COCKPIT AVIONICS STATUS BAR ────────────────────── */}
@@ -5770,94 +6122,98 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
             <span style={{ fontSize: '9px', color: '#94a3b8' }}>[{mission.year}]</span>
           </div>
 
+          {mission.gameType !== 'launch' && (
+            <div
+              style={{
+                background: hudTheme.cardBg,
+                border: `1px solid ${hudTheme.border}`,
+                borderRadius: '8px',
+                padding: '3px 6px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                backdropFilter: 'blur(12px)',
+              }}
+            >
+              <Palette size={12} style={{ color: hudTheme.amber }} />
+              {(['REALISTIC_NASA', 'CINEMATIC_GRADE', 'TACTICAL_HUD'] as VisualToneMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setVisualTone(mode);
+                    soundFx.playClick(900);
+                  }}
+                  style={{
+                    background: visualTone === mode ? hudTheme.primary : 'transparent',
+                    color: visualTone === mode ? '#020617' : '#94a3b8',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '3px 6px',
+                    fontSize: '9px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {mode === 'REALISTIC_NASA' ? 'NASA REAL' : mode === 'CINEMATIC_GRADE' ? 'CINEMATIC' : 'TAC-HUD'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Center: Astronaut Academy Age Tier Selector Pill (Hidden during launch to remove clutter) */}
+        {mission.gameType !== 'launch' && (
           <div
             style={{
               background: hudTheme.cardBg,
-              border: `1px solid ${hudTheme.border}`,
-              borderRadius: '8px',
+              border: `1.5px solid ${ageTier === 'cadet' ? '#38bdf8' : ageTier === 'officer' ? '#fbbf24' : '#c084fc'}`,
+              borderRadius: '10px',
               padding: '3px 6px',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
               backdropFilter: 'blur(12px)',
+              boxShadow: `0 0 16px ${ageTier === 'cadet' ? 'rgba(56, 189, 248, 0.3)' : ageTier === 'officer' ? 'rgba(251, 191, 36, 0.3)' : 'rgba(192, 132, 252, 0.3)'}`,
+              pointerEvents: 'auto',
             }}
           >
-            <Palette size={12} style={{ color: hudTheme.amber }} />
-            {(['REALISTIC_NASA', 'CINEMATIC_GRADE', 'TACTICAL_HUD'] as VisualToneMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => {
-                  setVisualTone(mode);
-                  soundFx.playClick(900);
-                }}
-                style={{
-                  background: visualTone === mode ? hudTheme.primary : 'transparent',
-                  color: visualTone === mode ? '#020617' : '#94a3b8',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '3px 6px',
-                  fontSize: '9px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {mode === 'REALISTIC_NASA' ? 'NASA REAL' : mode === 'CINEMATIC_GRADE' ? 'CINEMATIC' : 'TAC-HUD'}
-              </button>
-            ))}
+            {(['cadet', 'officer', 'commander'] as AstronautAgeTier[]).map((t) => {
+              const cfg = ASTRONAUT_TIERS[t];
+              const isSelected = ageTier === t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => handleSelectAgeTier(t)}
+                  title={`${cfg.label} (${cfg.ageRange}): ${cfg.description}\nNASA Mission: ${cfg.nasaMissionContext}`}
+                  style={{
+                    background: isSelected
+                      ? (t === 'cadet' ? 'linear-gradient(135deg, #0284c7, #0369a1)' : t === 'officer' ? 'linear-gradient(135deg, #d97706, #b45309)' : 'linear-gradient(135deg, #7c3aed, #6d28d9)')
+                      : 'transparent',
+                    color: isSelected ? '#ffffff' : '#94a3b8',
+                    border: isSelected ? '1px solid rgba(255,255,255,0.4)' : '1px solid transparent',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '9.5px',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  <span>{cfg.badge}</span>
+                  <span>{cfg.label}</span>
+                  <span style={{ fontSize: '8px', opacity: 0.8, fontWeight: 700 }}>
+                    ({cfg.ageRange.replace('Ages ', '')})
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        </div>
-
-        {/* Center: Astronaut Academy Age Tier Selector Pill */}
-        <div
-          style={{
-            background: hudTheme.cardBg,
-            border: `1.5px solid ${ageTier === 'cadet' ? '#38bdf8' : ageTier === 'officer' ? '#fbbf24' : '#c084fc'}`,
-            borderRadius: '10px',
-            padding: '3px 6px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            backdropFilter: 'blur(12px)',
-            boxShadow: `0 0 16px ${ageTier === 'cadet' ? 'rgba(56, 189, 248, 0.3)' : ageTier === 'officer' ? 'rgba(251, 191, 36, 0.3)' : 'rgba(192, 132, 252, 0.3)'}`,
-            pointerEvents: 'auto',
-          }}
-        >
-          {(['cadet', 'officer', 'commander'] as AstronautAgeTier[]).map((t) => {
-            const cfg = ASTRONAUT_TIERS[t];
-            const isSelected = ageTier === t;
-            return (
-              <button
-                key={t}
-                onClick={() => handleSelectAgeTier(t)}
-                title={`${cfg.label} (${cfg.ageRange}): ${cfg.description}\nNASA Mission: ${cfg.nasaMissionContext}`}
-                style={{
-                  background: isSelected
-                    ? (t === 'cadet' ? 'linear-gradient(135deg, #0284c7, #0369a1)' : t === 'officer' ? 'linear-gradient(135deg, #d97706, #b45309)' : 'linear-gradient(135deg, #7c3aed, #6d28d9)')
-                    : 'transparent',
-                  color: isSelected ? '#ffffff' : '#94a3b8',
-                  border: isSelected ? '1px solid rgba(255,255,255,0.4)' : '1px solid transparent',
-                  borderRadius: '6px',
-                  padding: '4px 10px',
-                  fontSize: '9.5px',
-                  fontWeight: 900,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.15s ease',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                <span>{cfg.badge}</span>
-                <span>{cfg.label}</span>
-                <span style={{ fontSize: '8px', opacity: 0.8, fontWeight: 700 }}>
-                  ({cfg.ageRange.replace('Ages ', '')})
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        )}
 
         {/* Center / Right: Camera, Sound & Briefing */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', pointerEvents: 'auto' }}>
@@ -5871,10 +6227,13 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
               gap: '3px',
             }}
           >
-            {(['orbit', 'chase', 'cockpit', 'distant', 'pad'] as CameraMode[]).map((mode) => {
+            {(mission.gameType === 'launch'
+              ? (['chase', 'orbit', 'cockpit'] as CameraMode[])
+              : (['orbit', 'chase', 'cockpit', 'distant', 'pad'] as CameraMode[])
+            ).map((mode) => {
               const label =
                 mode === 'orbit'
-                  ? '🌐 360° ORBIT'
+                  ? '🌐 ORBIT'
                   : mode === 'chase'
                   ? '🚀 CHASE'
                   : mode === 'distant'
@@ -5891,7 +6250,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
                   : mode === 'distant'
                   ? 'Distant: Wide external cinematic view'
                   : mode === 'cockpit'
-                  ? 'Cockpit: First-person astronaut / driver perspective'
+                  ? 'Cockpit: First-person astronaut perspective'
                   : 'Observation: Fixed observation post';
 
               return (
@@ -6008,15 +6367,32 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
             overflowX: 'auto',
           }}
         >
-          {[
-            { id: 'liftoff', label: '1. LIFTOFF', done: telemetry.altitudeKm > 0.05, current: telemetry.altitudeKm <= 35 && telemetry.altitudeKm > 0 },
-            { id: 'boosters', label: '2. BOOSTERS SEP', done: boosterSeparated, current: !boosterSeparated && telemetry.altitudeKm > 30 },
-            { id: 'fairing', label: '3. FAIRINGS', done: fairingSeparated, current: boosterSeparated && !fairingSeparated },
-            { id: 'meco', label: '4. S-II MECO', done: telemetry.stage === 2, current: fairingSeparated && telemetry.stage === 1 },
-            { id: 'orbit', label: '5. LEO ORBIT', done: telemetry.altitudeKm >= 140, current: telemetry.stage === 2 && telemetry.altitudeKm < 140 },
-            { id: 'tli', label: '6. TLI MOON BURN', done: tliComplete, current: tliActive && !tliComplete },
-            { id: 'lunar', label: '7. LUNAR ORBIT', done: tliComplete, current: tliComplete },
-          ].map((step, idx, arr) => (
+          {(isMercury
+            ? [
+                { id: 'liftoff', label: '1. LIFTOFF', done: telemetry.altitudeKm > 0.05, current: telemetry.altitudeKm <= 20 && telemetry.altitudeKm > 0 },
+                { id: 'ascent', label: '2. REDSTONE ASCENT', done: telemetry.altitudeKm > 20, current: telemetry.altitudeKm > 0.05 && telemetry.altitudeKm <= 40 },
+                { id: 'les', label: '3. LES TOWER JETTISON', done: fairingSeparated, current: telemetry.altitudeKm > 35 && !fairingSeparated },
+                { id: 'meco', label: '4. MECO & SEPARATION', done: telemetry.stage === 2, current: fairingSeparated && telemetry.stage === 1 },
+                { id: 'apogee', label: '5. SUBORBITAL SPACE (187 KM)', done: telemetry.altitudeKm >= 140, current: telemetry.stage === 2 && telemetry.altitudeKm < 140 },
+              ]
+            : isLunarMission
+            ? [
+                { id: 'liftoff', label: '1. LIFTOFF', done: telemetry.altitudeKm > 0.05, current: telemetry.altitudeKm <= 35 && telemetry.altitudeKm > 0 },
+                { id: 'boosters', label: '2. BOOSTERS SEP', done: boosterSeparated, current: hasSideBoosters && !boosterSeparated && telemetry.altitudeKm > 30 },
+                { id: 'fairing', label: '3. FAIRINGS', done: fairingSeparated, current: boosterSeparated && !fairingSeparated },
+                { id: 'meco', label: '4. S-II MECO', done: telemetry.stage === 2, current: fairingSeparated && telemetry.stage === 1 },
+                { id: 'orbit', label: '5. LEO PARKING ORBIT', done: telemetry.altitudeKm >= 140, current: telemetry.stage === 2 && telemetry.altitudeKm < 140 },
+                { id: 'tli', label: '6. TLI MOON BURN', done: tliComplete, current: tliActive && !tliComplete },
+                { id: 'lunar', label: '7. LUNAR INSERTION', done: tliComplete, current: tliComplete },
+              ]
+            : [
+                { id: 'liftoff', label: '1. LIFTOFF', done: telemetry.altitudeKm > 0.05, current: telemetry.altitudeKm <= 35 && telemetry.altitudeKm > 0 },
+                { id: 'boosters', label: '2. BOOSTERS SEP', done: boosterSeparated, current: hasSideBoosters && !boosterSeparated && telemetry.altitudeKm > 30 },
+                { id: 'fairing', label: '3. FAIRINGS', done: fairingSeparated, current: boosterSeparated && !fairingSeparated },
+                { id: 'meco', label: '4. CORE MECO', done: telemetry.stage === 2, current: fairingSeparated && telemetry.stage === 1 },
+                { id: 'orbit', label: '5. LEO ORBIT INSERTION', done: telemetry.altitudeKm >= 140, current: telemetry.stage === 2 && telemetry.altitudeKm < 140 },
+              ]
+          ).map((step, idx, arr) => (
             <React.Fragment key={step.id}>
               <div
                 style={{
@@ -6041,7 +6417,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
               )}
             </React.Fragment>
           ))}
-          {tliActive && (
+          {isLunarMission && tliActive && (
             <div style={{ marginLeft: '6px', paddingLeft: '8px', borderLeft: '1px solid #334155', fontSize: '9px', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
               <span>🌕 MOON:</span>
               <strong style={{ color: '#f8fafc' }}>{moonDistDisplay.toLocaleString()} KM</strong>
@@ -6050,12 +6426,347 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
         </div>
       )}
 
+
+
+      {/* ─── KÁRMÁN LINE SPACE CROSSING BANNER ─── */}
+      {mission.gameType === 'launch' && telemetry.altitudeKm >= 100 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '124px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 24,
+            background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(168, 85, 247, 0.3))',
+            border: '1px solid rgba(56, 189, 248, 0.75)',
+            borderRadius: '20px',
+            padding: '4px 18px',
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 0 24px rgba(56, 189, 248, 0.55)',
+            color: '#ffffff',
+            fontWeight: 900,
+            fontSize: '11px',
+            letterSpacing: '0.08em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            pointerEvents: 'none',
+          }}
+        >
+          <span>🌌</span>
+          <span>KÁRMÁN LINE CROSSED (100 KM) · IN SPACE!</span>
+        </div>
+      )}
+
+      {/* ─── ELLIPSE VERTICAL THROTTLE SLIDER (LEFT SCREEN) ─── */}
+      {mission.gameType === 'launch' && (
+        <div
+          style={{
+            position: 'absolute',
+            left: '18px',
+            bottom: '24px',
+            zIndex: 28,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(11, 19, 43, 0.88)',
+            padding: '10px 8px',
+            borderRadius: '12px',
+            border: '1px solid rgba(56, 189, 248, 0.35)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(10px)',
+            width: '56px',
+          }}
+        >
+          {/* MAX Button */}
+          <button
+            onClick={() => {
+              const state = simStateRef.current;
+              state.throttle = 1.0;
+              if (state.altitudeKm < 0.05) {
+                (state as any).realVy = 14.0;
+              }
+              setPreflightChecklist({
+                internalPower: true,
+                cryoPressurization: true,
+                gncAlignment: true,
+                waterDeluge: true,
+              });
+              setCountdownTime(null);
+              soundFx.playClick(950);
+              soundFx.playReactorStart();
+            }}
+            style={{
+              width: '100%',
+              padding: '4px 0',
+              borderRadius: '6px',
+              background: telemetry.throttle >= 0.98 ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'rgba(30, 41, 59, 0.9)',
+              border: '1px solid rgba(239, 68, 68, 0.6)',
+              color: '#ffffff',
+              fontSize: '9.5px',
+              fontWeight: 900,
+              cursor: 'pointer',
+              fontFamily: 'monospace',
+            }}
+            title="Set Throttle to 100% & Launch (or press W)"
+          >
+            MAX
+          </button>
+
+          {/* Vertical Slider Track */}
+          <div
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const clickY = e.clientY - rect.top;
+              const newThr = Math.max(0, Math.min(1, 1 - clickY / rect.height));
+              const state = simStateRef.current;
+              state.throttle = newThr;
+              if (state.altitudeKm < 0.05 && newThr > 0.05 && (state as any).realVy <= 0.5) {
+                (state as any).realVy = 12.0 * newThr;
+                soundFx.playReactorStart();
+              }
+              soundFx.playClick(800 + newThr * 300);
+            }}
+            style={{
+              position: 'relative',
+              width: '22px',
+              height: '130px',
+              background: 'rgba(11, 19, 43, 0.95)',
+              borderRadius: '10px',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              cursor: 'ns-resize',
+              overflow: 'hidden',
+            }}
+            title="Drag or click to adjust Throttle (W / S)"
+          >
+            {/* Filled Liquid Level */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: `${telemetry.throttle * 100}%`,
+                background: telemetry.throttle > 0.8
+                  ? 'linear-gradient(to top, #10b981, #f59e0b, #ef4444)'
+                  : telemetry.throttle > 0.4
+                  ? 'linear-gradient(to top, #10b981, #f59e0b)'
+                  : '#10b981',
+                transition: 'height 0.05s ease-out',
+                boxShadow: telemetry.throttle > 0 ? '0 0 12px rgba(239, 68, 68, 0.8)' : 'none',
+              }}
+            />
+
+            {/* Horizontal Tick Lines */}
+            {[0.25, 0.5, 0.75].map((tick) => (
+              <div
+                key={tick}
+                style={{
+                  position: 'absolute',
+                  bottom: `${tick * 100}%`,
+                  left: 0,
+                  right: 0,
+                  height: '1px',
+                  background: 'rgba(255, 255, 255, 0.25)',
+                  pointerEvents: 'none',
+                }}
+              />
+            ))}
+
+            {/* Draggable Indicator Handle */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: `calc(${telemetry.throttle * 100}% - 4px)`,
+                left: '-2px',
+                right: '-2px',
+                height: '8px',
+                background: '#ffffff',
+                borderRadius: '4px',
+                boxShadow: '0 0 8px #ffffff',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
+
+          {/* CUT Button */}
+          <button
+            onClick={() => {
+              simStateRef.current.throttle = 0.0;
+              soundFx.playClick(600);
+            }}
+            style={{
+              width: '100%',
+              padding: '4px 0',
+              borderRadius: '6px',
+              background: telemetry.throttle === 0 ? 'rgba(56, 189, 248, 0.3)' : 'rgba(30, 41, 59, 0.9)',
+              border: '1px solid rgba(148, 163, 184, 0.4)',
+              color: '#cbd5e1',
+              fontSize: '9.5px',
+              fontWeight: 900,
+              cursor: 'pointer',
+              fontFamily: 'monospace',
+            }}
+            title="Cut Engine Thrust (or press S)"
+          >
+            CUT
+          </button>
+
+          {/* Throttle % Label & Hotkey hint */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '11px', fontWeight: 900, color: '#fb923c', fontFamily: 'monospace' }}>
+              {(telemetry.throttle * 100).toFixed(0)}%
+            </div>
+            <div style={{ fontSize: '8px', color: '#64748b', fontFamily: 'monospace' }}>[W / S]</div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── RIGHT: ELLIPSE / KSP STAGE BUTTON ─── */}
+      {mission.gameType === 'launch' && (
+        <div
+          style={{
+            position: 'absolute',
+            right: '18px',
+            bottom: '24px',
+            zIndex: 28,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          {/* Gravity Turn Pitch Steering Controls */}
+          <div style={{ display: 'flex', gap: '6px', width: '142px' }}>
+            <button
+              onClick={() => handlePitchChange(10)}
+              style={{
+                flex: 1,
+                padding: '5px 0',
+                background: 'rgba(15, 23, 42, 0.92)',
+                border: '1px solid rgba(56, 189, 248, 0.45)',
+                borderRadius: '8px',
+                color: '#38bdf8',
+                fontSize: '9.5px',
+                fontWeight: 900,
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+              }}
+              title="Pitch Up / Vertical (Key: A or Left Arrow)"
+            >
+              ▲ UP [A]
+            </button>
+            <button
+              onClick={() => handlePitchChange(-10)}
+              style={{
+                flex: 1,
+                padding: '5px 0',
+                background: 'rgba(15, 23, 42, 0.92)',
+                border: '1px solid rgba(245, 158, 11, 0.45)',
+                borderRadius: '8px',
+                color: '#fbbf24',
+                fontSize: '9.5px',
+                fontWeight: 900,
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+              }}
+              title="Pitch Down / Gravity Turn East (Key: D or Right Arrow)"
+            >
+              GRAV [D] ▶
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              handleTouchStaging();
+              soundFx.playClick(900);
+            }}
+            style={{
+              width: '142px',
+              height: '76px',
+              borderRadius: '16px',
+              background: (telemetry.throttle === 0 || telemetry.altitudeKm < 0.05)
+                ? 'linear-gradient(135deg, #16a34a 0%, #15803d 50%, #14532d 100%)'
+                : 'linear-gradient(135deg, #ea580c 0%, #dc2626 50%, #991b1b 100%)',
+              border: (telemetry.throttle === 0 || telemetry.altitudeKm < 0.05)
+                ? '2px solid rgba(134, 239, 172, 0.95)'
+                : '2px solid rgba(254, 215, 170, 0.85)',
+              color: '#ffffff',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: (telemetry.throttle === 0 || telemetry.altitudeKm < 0.05)
+                ? '0 0 28px rgba(34, 197, 94, 0.75), inset 0 2px 4px rgba(255, 255, 255, 0.35)'
+                : '0 0 24px rgba(234, 88, 12, 0.65), inset 0 2px 4px rgba(255, 255, 255, 0.35)',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.96)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            title="Press [SPACE] or Click to Execute Next Flight Stage"
+          >
+            <div style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.12em', color: (telemetry.throttle === 0 || telemetry.altitudeKm < 0.05) ? '#86efac' : '#fed7aa', fontFamily: 'monospace' }}>
+              {(telemetry.throttle === 0 || telemetry.altitudeKm < 0.05) ? 'READY FOR LAUNCH' : `STAGE ${telemetry.stage}`}
+            </div>
+            <div
+              style={{
+                fontSize: '11px',
+                fontWeight: 900,
+                letterSpacing: '0.04em',
+                textAlign: 'center',
+                lineHeight: 1.2,
+                padding: '2px 4px',
+              }}
+            >
+              {getStageActionLabel()}
+            </div>
+            <div style={{ fontSize: '9px', fontWeight: 800, color: 'rgba(255, 255, 255, 0.85)', fontFamily: 'monospace' }}>
+              [SPACE]
+            </div>
+          </button>
+          <div style={{ fontSize: '8.5px', color: (telemetry.throttle === 0 || telemetry.altitudeKm < 0.05) ? '#4ade80' : '#94a3b8', fontFamily: 'monospace', fontWeight: 700 }}>
+            {(telemetry.throttle === 0 || telemetry.altitudeKm < 0.05) ? 'HIT SPACE TO LAUNCH' : 'KSP MANUAL STAGING'}
+          </div>
+        </div>
+      )}
+
+      {/* ─── ON-PAD FLIGHT INSTRUCTION PILL (Only visible on pad before liftoff) ─── */}
+      {mission.gameType === 'launch' && telemetry.altitudeKm < 0.05 && telemetry.throttle === 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 25,
+            background: 'rgba(15, 23, 42, 0.92)',
+            border: '1.5px solid rgba(34, 197, 94, 0.65)',
+            boxShadow: '0 0 28px rgba(34, 197, 94, 0.4)',
+            borderRadius: '24px',
+            padding: '8px 20px',
+            backdropFilter: 'blur(12px)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            color: '#ffffff',
+            pointerEvents: 'none',
+          }}
+        >
+          <span style={{ fontSize: '16px' }}>🚀</span>
+          <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.03em' }}>
+            Press <kbd style={{ background: '#22c55e', color: '#052e16', padding: '2px 7px', borderRadius: '4px', fontWeight: 900, fontFamily: 'monospace' }}>SPACE</kbd> or Click <strong style={{ color: '#4ade80' }}>LAUNCH ROCKET</strong> (or Hold <kbd style={{ background: '#38bdf8', color: '#082f49', padding: '2px 7px', borderRadius: '4px', fontWeight: 900, fontFamily: 'monospace' }}>W</kbd>) to Liftoff!
+          </span>
+        </div>
+      )}
+
       {/* ─── TACTICAL AEROSPACE NAVBALL HUD (BOTTOM-LEFT) ────────── */}
       <div
         style={{
           position: 'absolute',
-          left: '14px',
-          bottom: '76px',
+          left: mission.gameType === 'launch' ? '84px' : '14px',
+          bottom: mission.gameType === 'launch' ? '24px' : '84px',
           background: hudTheme.cardBg,
           border: `1px solid ${hudTheme.border}`,
           borderRadius: '12px',
@@ -6168,9 +6879,21 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
           <span style={{ color: '#94a3b8', fontSize: '11px' }}>VELOCITY:</span>
           <strong style={{ color: hudTheme.amber, fontSize: '12px' }}>
-            {mission.gameType === 'lunar_landing' ? `${Math.abs(telemetry.velocityKms).toFixed(1)} m/s` : `${telemetry.velocityKms.toFixed(2)} km/s`}
+            {mission.gameType === 'lunar_landing'
+              ? `${Math.abs(telemetry.velocityKms).toFixed(1)} m/s`
+              : (telemetry.velocityKms >= 1
+                ? `${telemetry.velocityKms.toFixed(2)} km/s`
+                : `${Math.round(telemetry.velocityKms * 1000)} m/s`)}
           </strong>
         </div>
+        {mission.gameType === 'launch' && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+            <span style={{ color: '#94a3b8', fontSize: '11px' }}>MACH:</span>
+            <strong style={{ color: '#38bdf8', fontSize: '12px' }}>
+              {(telemetry.velocityKms * 1000 / 340).toFixed(1)}
+            </strong>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
           <span style={{ color: '#94a3b8', fontSize: '11px' }}>G-FORCE:</span>
           <strong style={{ color: telemetry.gForce > 3.0 ? '#ef4444' : hudTheme.textColor, fontSize: '12px' }}>
@@ -6292,19 +7015,20 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
         </div>
       </div>
 
-      {/* ─── RIGHT HUD: CO-OP CREW STATIONS & REAL-TIME LOGS ────── */}
-      <div
-        style={{
-          position: 'absolute',
-          right: '14px',
-          top: '72px',
-          maxWidth: '260px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          zIndex: 20,
-        }}
-      >
+      {/* ─── RIGHT HUD: CO-OP CREW STATIONS & REAL-TIME LOGS (ONLY IN MULTIPLAYER) ────── */}
+      {multiplayerActive && roomState && (
+        <div
+          style={{
+            position: 'absolute',
+            right: '14px',
+            top: '72px',
+            maxWidth: '260px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            zIndex: 20,
+          }}
+        >
         <div
           style={{
             background: hudTheme.cardBg,
@@ -6437,6 +7161,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
           )}
         </div>
       </div>
+      )}
 
       {/* ─── DOCKING CROSSHAIR (FOR DOCKING MISSIONS) ─────────────── */}
       {mission.gameType === 'docking' && (
@@ -6538,206 +7263,25 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
         </div>
       )}
 
-      {/* ─── ON-SCREEN LIFTOFF & PRE-LAUNCH CHECKLIST BANNER ─── */}
-      {mission.gameType === 'launch' && telemetry.altitudeKm < 0.2 && telemetry.throttle === 0 && (
+      {/* ─── BOTTOM CO-OP ROLE-SPECIFIC CONTROL BAR (Only for non-launch missions or active multiplayer) ─── */}
+      {(mission.gameType !== 'launch' || (multiplayerActive && roomState)) && (
         <div
           style={{
             position: 'absolute',
-            bottom: '76px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'rgba(11, 19, 38, 0.96)',
-            border: `1.5px solid ${countdownTime !== null ? '#38bdf8' : '#22c55e'}`,
-            borderRadius: '14px',
-            padding: '12px 20px',
+            bottom: '12px',
+            left: '14px',
+            right: '14px',
+            background: hudTheme.cardBg,
+            border: `1px solid ${hudTheme.border}`,
+            borderRadius: '12px',
+            padding: '8px 14px',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            zIndex: 35,
-            boxShadow: `0 0 35px ${countdownTime !== null ? 'rgba(56, 189, 248, 0.45)' : 'rgba(34, 197, 94, 0.35)'}`,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            zIndex: 30,
             backdropFilter: 'blur(14px)',
-            maxWidth: '680px',
-            width: '94%',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '20px' }}>👨‍🚀</span>
-              <div>
-                <span style={{ fontSize: '11px', fontWeight: 900, color: '#f8fafc', letterSpacing: '0.05em' }}>
-                  NASA ASTRONAUT PRE-LAUNCH FLIGHT READINESS CHECKLIST
-                </span>
-                <div style={{ fontSize: '9px', color: '#94a3b8' }}>
-                  Cape Canaveral Launch Complex 14 · Complete flight systems verification before ignition
-                </div>
-              </div>
-            </div>
-            {countdownTime !== null ? (
-              <div style={{ background: '#020617', border: '1.5px solid #38bdf8', padding: '4px 12px', borderRadius: '8px', fontSize: '18px', fontWeight: 900, fontFamily: 'monospace', color: countdownTime <= 3 ? '#ef4444' : '#38bdf8', boxShadow: '0 0 15px rgba(56, 189, 248, 0.4)' }}>
-                T-{countdownTime < 10 ? `0${countdownTime}` : countdownTime}s
-              </div>
-            ) : (
-              <button
-                onClick={handleStartCountdown}
-                style={{
-                  background: 'linear-gradient(135deg, #0284c7, #0369a1)',
-                  border: '1px solid #38bdf8',
-                  color: '#fff',
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  fontWeight: 900,
-                  fontSize: '10.5px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  boxShadow: '0 0 12px rgba(56, 189, 248, 0.4)',
-                }}
-              >
-                <span>⚡</span>
-                <span>AUTO-SEQUENCE & COUNTDOWN</span>
-              </button>
-            )}
-          </div>
-
-          {/* 4 Interactive Pre-Launch Checklist Switches */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
-            <button
-              onClick={() => handleTogglePreflight('internalPower')}
-              disabled={countdownTime !== null}
-              style={{
-                background: preflightChecklist.internalPower ? 'rgba(34, 197, 94, 0.2)' : 'rgba(15, 23, 42, 0.8)',
-                border: `1px solid ${preflightChecklist.internalPower ? '#22c55e' : '#475569'}`,
-                color: preflightChecklist.internalPower ? '#86efac' : '#cbd5e1',
-                borderRadius: '8px',
-                padding: '6px 8px',
-                textAlign: 'left',
-                cursor: countdownTime !== null ? 'default' : 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '9px', fontWeight: 800 }}>
-                <span>1. INTERNAL POWER</span>
-                <span>{preflightChecklist.internalPower ? '✓ GO' : '⚪ PENDING'}</span>
-              </div>
-              <span style={{ fontSize: '7.5px', color: '#94a3b8' }}>Transfer to fuel cell bus</span>
-            </button>
-
-            <button
-              onClick={() => handleTogglePreflight('cryoPressurization')}
-              disabled={countdownTime !== null}
-              style={{
-                background: preflightChecklist.cryoPressurization ? 'rgba(34, 197, 94, 0.2)' : 'rgba(15, 23, 42, 0.8)',
-                border: `1px solid ${preflightChecklist.cryoPressurization ? '#22c55e' : '#475569'}`,
-                color: preflightChecklist.cryoPressurization ? '#86efac' : '#cbd5e1',
-                borderRadius: '8px',
-                padding: '6px 8px',
-                textAlign: 'left',
-                cursor: countdownTime !== null ? 'default' : 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '9px', fontWeight: 800 }}>
-                <span>2. CRYO TANKS</span>
-                <span>{preflightChecklist.cryoPressurization ? '✓ GO' : '⚪ PENDING'}</span>
-              </div>
-              <span style={{ fontSize: '7.5px', color: '#94a3b8' }}>Pressurize LOX to 52 PSI</span>
-            </button>
-
-            <button
-              onClick={() => handleTogglePreflight('gncAlignment')}
-              disabled={countdownTime !== null}
-              style={{
-                background: preflightChecklist.gncAlignment ? 'rgba(34, 197, 94, 0.2)' : 'rgba(15, 23, 42, 0.8)',
-                border: `1px solid ${preflightChecklist.gncAlignment ? '#22c55e' : '#475569'}`,
-                color: preflightChecklist.gncAlignment ? '#86efac' : '#cbd5e1',
-                borderRadius: '8px',
-                padding: '6px 8px',
-                textAlign: 'left',
-                cursor: countdownTime !== null ? 'default' : 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '9px', fontWeight: 800 }}>
-                <span>3. GNC INERTIAL</span>
-                <span>{preflightChecklist.gncAlignment ? '✓ GO' : '⚪ PENDING'}</span>
-              </div>
-              <span style={{ fontSize: '7.5px', color: '#94a3b8' }}>Align gyro azimuth 090°</span>
-            </button>
-
-            <button
-              onClick={() => handleTogglePreflight('waterDeluge')}
-              disabled={countdownTime !== null}
-              style={{
-                background: preflightChecklist.waterDeluge ? 'rgba(34, 197, 94, 0.2)' : 'rgba(15, 23, 42, 0.8)',
-                border: `1px solid ${preflightChecklist.waterDeluge ? '#22c55e' : '#475569'}`,
-                color: preflightChecklist.waterDeluge ? '#86efac' : '#cbd5e1',
-                borderRadius: '8px',
-                padding: '6px 8px',
-                textAlign: 'left',
-                cursor: countdownTime !== null ? 'default' : 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '9px', fontWeight: 800 }}>
-                <span>4. WATER DELUGE</span>
-                <span>{preflightChecklist.waterDeluge ? '✓ GO' : '⚪ PENDING'}</span>
-              </div>
-              <span style={{ fontSize: '7.5px', color: '#94a3b8' }}>Arm acoustic suppression</span>
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '6px' }}>
-            <span style={{ fontSize: '9px', color: '#94a3b8' }}>
-              {countdownTime !== null
-                ? `🚀 Terminal Count: ${countdownTime <= 6 ? 'Spooling engines (T-6s)' : 'All hold-down clamps active'}`
-                : 'Complete all 4 checks to start countdown or click IGNITE to launch immediately.'}
-            </span>
-            <button
-              onClick={handleIgnite}
-              style={{
-                background: 'linear-gradient(135deg, #16a34a, #15803d)',
-                border: '1px solid #22c55e',
-                color: '#fff',
-                padding: '4px 10px',
-                borderRadius: '5px',
-                fontWeight: 900,
-                fontSize: '10px',
-                cursor: 'pointer',
-              }}
-            >
-              🔥 INSTANT IGNITE [W]
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── BOTTOM CO-OP ROLE-SPECIFIC CONTROL BAR ─────────────── */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '12px',
-          left: '14px',
-          right: '14px',
-          background: hudTheme.cardBg,
-          border: `1px solid ${hudTheme.border}`,
-          borderRadius: '12px',
-          padding: '8px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          zIndex: 30,
-          backdropFilter: 'blur(14px)',
-        }}
-      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
@@ -6913,7 +7457,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
                     ⮟ DIVE
                   </button>
 
-                  {!boosterSeparated && (
+                  {hasSideBoosters && !boosterSeparated && (
                     <button
                       onClick={handleBoosterSeparation}
                       style={{
@@ -6947,9 +7491,9 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
                         cursor: 'pointer',
                         boxShadow: '0 0 10px rgba(56, 189, 248, 0.4)',
                       }}
-                      title="Jettison Clamshell Payload Fairing into space"
+                      title={isMercury ? "Jettison Mercury Launch Escape System (LES) Tower" : "Jettison Clamshell Payload Fairing into space"}
                     >
-                      🛡️ JETTISON FAIRING [SPACE]
+                      {isMercury ? "🚀 JETTISON LES TOWER [SPACE]" : "🛡️ JETTISON FAIRING [SPACE]"}
                     </button>
                   )}
 
@@ -6967,13 +7511,13 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
                         cursor: 'pointer',
                         boxShadow: '0 0 10px rgba(249, 115, 22, 0.4)',
                       }}
-                      title="Main Engine Cutoff & Stage 2 S-II Vacuum Engine Ignition"
+                      title={isMercury ? "Main Engine Cutoff & Freedom 7 Spacecraft Separation" : "Main Engine Cutoff & Stage 2 S-II Vacuum Engine Ignition"}
                     >
-                      ⚡ MECO & S-II [SPACE]
+                      {isMercury ? "⚡ MECO & CAPSULE SEP [SPACE]" : "⚡ MECO & S-II [SPACE]"}
                     </button>
                   )}
 
-                  {telemetry.altitudeKm >= 135 && !tliActive && (
+                  {isLunarMission && telemetry.altitudeKm >= 135 && !tliActive && (
                     <button
                       onClick={handleInitiateTli}
                       style={{
@@ -6995,6 +7539,36 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
                     >
                       <span>🌕</span>
                       <span>FIRE TLI BURN TO MOON</span>
+                    </button>
+                  )}
+
+                  {!isLunarMission && telemetry.altitudeKm >= 135 && (
+                    <button
+                      onClick={() => {
+                        simStateRef.current.isFinished = true;
+                        soundFx.playVictory();
+                        confetti({ particleCount: 220, spread: 90 });
+                        setTimeout(() => onSuccess(1000), 2200);
+                      }}
+                      style={{
+                        background: 'linear-gradient(135deg, #059669, #047857)',
+                        border: '1.5px solid #34d399',
+                        color: '#ffffff',
+                        borderRadius: '6px',
+                        padding: '4px 12px',
+                        fontSize: '10px',
+                        fontWeight: 900,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        boxShadow: '0 0 16px rgba(52, 211, 153, 0.65)',
+                        animation: 'pulse 1.8s infinite',
+                      }}
+                      title="Confirm Stable Low Earth Orbit (LEO) Insertion"
+                    >
+                      <span>🌍</span>
+                      <span>CONFIRM LEO ORBIT INSERTION</span>
                     </button>
                   )}
 
@@ -7542,6 +8116,7 @@ export const ThreeMissionSimulator: React.FC<ThreeMissionSimulatorProps> = ({
           ABORT
         </button>
       </div>
+      )}
 
       {/* ─── NO MAN'S SKY & MORPHITE GEOLOGICAL SCAN ENCYCLOPEDIA MODAL ─── */}
       {scannedLore && (
