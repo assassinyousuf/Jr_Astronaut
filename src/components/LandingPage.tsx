@@ -46,7 +46,12 @@ import {
   Eye,
   Sliders,
   Menu,
+  Radio,
+  HelpCircle,
+  Check,
 } from 'lucide-react';
+import { NasaLiveObservatoryModal } from './NasaLiveObservatoryModal';
+import { NASA_EARTH_VITAL_SIGNS, type EarthVitalSign } from '../services/nasaApiService';
 import { soundFx } from '../utils/audioEffects';
 import { speechEngine } from '../utils/speechEngine';
 import { spaceMusicEngine } from '../utils/spaceMusicEngine';
@@ -128,6 +133,15 @@ export interface PlanetData {
   orbitalVelocityKms: string;
   interiorLayers: { name: string; depth: string; desc: string }[];
   atmosphereGases: { name: string; pct: number; color: string }[];
+  whatItDoesForEarth?: string;
+  earthdataUrl?: string;
+  spacePlaceUrl?: string;
+  quiz?: {
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation: string;
+  };
 }
 
 export interface SpaceStationData {
@@ -141,10 +155,22 @@ export interface SpaceStationData {
   crewCount: number;
   crewManifest: string;
   launchYear: number;
-  status: 'Operational' | 'Active Transit' | 'Planned Construction';
+  status: 'Operational' | 'Active Transit' | 'Planned Construction' | 'Primary Mission' | 'Extended Mission';
   color: string;
   description: string;
   specs: { label: string; value: string }[];
+  whatItDoesForEarth?: string;
+  nasaInstruments?: { name: string; acronym: string; purpose: string }[];
+  earthdataProducts?: string[];
+  earthdataUrl?: string;
+  spacePlaceUrl?: string;
+  orbitCategory?: string;
+  quiz?: {
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation: string;
+  };
 }
 
 export interface SolarMissionData {
@@ -160,6 +186,15 @@ export interface SolarMissionData {
   missionObjective: string;
   keyAchievement: string;
   instruments: string[];
+  whatItDoesForEarth?: string;
+  earthdataUrl?: string;
+  spacePlaceUrl?: string;
+  quiz?: {
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation: string;
+  };
 }
 
 // ── PLANETARY DATA ROSTER (With Interior Structure & Atmosphere breakdown) ──
@@ -269,6 +304,15 @@ export const PLANETS: PlanetData[] = [
       { name: 'Argon (Ar)', pct: 0.93, color: '#8b5cf6' },
       { name: 'Carbon Dioxide & Vapor', pct: 0.04, color: '#10b981' },
     ],
+    whatItDoesForEarth: 'The home cradle of all known life. Sustained by five interconnected spheres: biosphere, hydrosphere, cryosphere, atmosphere, and geosphere, continuously monitored by NASA’s Earth System Observatory fleet.',
+    earthdataUrl: 'https://earthdata.nasa.gov/',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/menu/earth/',
+    quiz: {
+      question: 'Which atmospheric layer contains the ozone shield that protects Earth from harmful ultraviolet solar radiation?',
+      options: ['Troposphere', 'Stratosphere', 'Thermosphere', 'Exosphere'],
+      correctIndex: 1,
+      explanation: 'The ozone layer is located in the Stratosphere (15 to 35 km altitude), absorbing 97–99% of the Sun’s medium-frequency ultraviolet light!',
+    },
   },
   {
     id: 'moon',
@@ -301,6 +345,15 @@ export const PLANETS: PlanetData[] = [
     atmosphereGases: [
       { name: 'Helium / Neon / Argon (Exosphere)', pct: 100, color: '#94a3b8' },
     ],
+    whatItDoesForEarth: 'Earth’s celestial anchor. Gravitational pull stabilizes Earth’s 23.4° axial tilt, preventing catastrophic climate oscillations, and generates ocean tidal rhythms.',
+    earthdataUrl: 'https://pds-geosciences.wustl.edu/missions/lro/',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/all-about-the-moon/en/',
+    quiz: {
+      question: 'Why are Permanently Shadowed Regions (PSRs) at the lunar South Pole vital for NASA Artemis missions?',
+      options: ['They shield astronauts from all gravity', 'They trap volatile water ice that can be processed into oxygen and rocket propellant', 'They are warm year-round', 'They have thick breathable air'],
+      correctIndex: 1,
+      explanation: 'Deep crater floors at the lunar poles have not seen sunlight in billions of years and stay at -233°C (40 K), trapping precious water ice!',
+    },
   },
   {
     id: 'mars',
@@ -477,7 +530,7 @@ export const PLANETS: PlanetData[] = [
   },
 ];
 
-// ── SPACE STATIONS ────────────────────────────────────────────────────────
+// ── SPACE STATIONS & EARTH SATELLITE FLEET ──────────────────────────────
 export const SPACE_STATIONS: SpaceStationData[] = [
   {
     id: 'iss',
@@ -492,6 +545,7 @@ export const SPACE_STATIONS: SpaceStationData[] = [
     launchYear: 1998,
     status: 'Operational',
     color: '#38bdf8',
+    orbitCategory: 'LEO',
     description: 'Largest human-made laboratory in space. Continuous human occupation since Nov 2, 2000. Features 16 pressurized modules, Canadarm2, and 8 massive photovoltaic solar arrays.',
     specs: [
       { label: 'Altitude', value: '418.5 km (LEO)' },
@@ -500,6 +554,236 @@ export const SPACE_STATIONS: SpaceStationData[] = [
       { label: 'Mass', value: '444,615 kg (970,000 lbs)' },
       { label: 'Solar Span', value: '109 meters (Full Football Field)' },
     ],
+    whatItDoesForEarth: 'Serves as an orbital platform for Earth monitoring (ECOSTRESS thermal sensor for agricultural water stress and GEDI laser lidar mapping global forest biomass).',
+    nasaInstruments: [
+      { name: 'ECOsystem Spaceborne Thermal Radiometer Experiment', acronym: 'ECOSTRESS', purpose: 'Thermal infrared sensor measuring evapotranspiration and drought.' },
+      { name: 'Global Ecosystem Dynamics Investigation', acronym: 'GEDI', purpose: 'Lidar system mapping 3D forest canopy structure and stored carbon.' },
+    ],
+    earthdataProducts: ['ECOSTRESS Evapotranspiration', 'GEDI L4A Aboveground Biomass', 'Lightning Imaging Sensor'],
+    earthdataUrl: 'https://earthdata.nasa.gov/learn/pathfinders/wildfires',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/space-station/en/',
+    quiz: {
+      question: 'How fast does the ISS travel in Low Earth Orbit?',
+      options: ['About 1,000 km/h', 'About 10,000 km/h', 'About 27,600 km/h (7.66 km/s)', 'Speed of light'],
+      correctIndex: 2,
+      explanation: 'At 27,600 km/h, the station circles the Earth every 92 minutes, allowing the crew to witness 16 sunrises and sunsets every 24 hours!',
+    },
+  },
+  {
+    id: 'hubble',
+    name: 'Hubble Space Telescope (HST)',
+    agency: 'NASA / ESA',
+    type: 'Great Observatory Satellite',
+    parentBody: 'earth',
+    altitudeKm: 535.0,
+    velocityKms: 7.58,
+    crewCount: 0,
+    crewManifest: 'Autonomous Robotic Observatory',
+    launchYear: 1990,
+    status: 'Operational',
+    color: '#06b6d4',
+    orbitCategory: 'LEO',
+    description: 'The revolutionary space observatory operating in Low Earth Orbit since April 1990. Has made over 1.6 million astronomical observations, resolving distant nebulae, galaxies, and exoplanet atmospheres.',
+    specs: [
+      { label: 'Altitude', value: '535 km' },
+      { label: 'Primary Mirror', value: '2.4 meter (7.9 ft)' },
+      { label: 'Speed', value: '27,200 km/h (7.58 km/s)' },
+      { label: 'Observations Made', value: '> 1,600,000 Targets' },
+    ],
+    whatItDoesForEarth: 'Operating above Earth’s atmospheric distortion, Hubble verified the cosmic acceleration of the universe and helped determine the exact age of the universe (13.8 billion years).',
+    nasaInstruments: [
+      { name: 'Wide Field Camera 3', acronym: 'WFC3', purpose: 'Panchromatic imager covering UV, visible, and near-IR wavelengths.' },
+      { name: 'Cosmic Origins Spectrograph', acronym: 'COS', purpose: 'Ultraviolet spectrograph analyzing chemical composition of cosmic structures.' },
+    ],
+    earthdataProducts: ['Hubble Legacy Archive (HLA)', 'MAST High-Level Science Products'],
+    earthdataUrl: 'https://mast.stsci.edu/',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/hubble-explorer/en/',
+    quiz: {
+      question: 'Why did NASA place Hubble into space rather than building it on a mountain?',
+      options: ['To escape Earth gravity', 'Because Earth’s atmosphere bends, distorts, and blocks ultraviolet light', 'It was cheaper to launch', 'To get closer to the stars'],
+      correctIndex: 1,
+      explanation: 'Earth’s atmosphere blurs optical light (causing stars to twinkle) and absorbs UV wavelengths. Operating in vacuum gives Hubble crystal-clear vision!',
+    },
+  },
+  {
+    id: 'landsat-9',
+    name: 'Landsat 9 Earth Imager',
+    agency: 'NASA Goddard / USGS',
+    type: 'Earth Observation Satellite',
+    parentBody: 'earth',
+    altitudeKm: 705.0,
+    velocityKms: 7.50,
+    crewCount: 0,
+    crewManifest: 'Autonomous Earth Imager',
+    launchYear: 2021,
+    status: 'Operational',
+    color: '#10b981',
+    orbitCategory: 'SSO',
+    description: 'The newest sentinel of the 50-year NASA/USGS Landsat program. Scans every continent every 8 days across 11 spectral bands, tracking agriculture, deforestation, freshwater, and wildfires.',
+    specs: [
+      { label: 'Orbit', value: '705 km Sun-Synchronous Polar' },
+      { label: 'Inclination', value: '98.2°' },
+      { label: 'Repeat Cycle', value: '8 Days (With Landsat 8)' },
+      { label: 'Radiometric Res', value: '14-bit (16,384 shades of light)' },
+    ],
+    whatItDoesForEarth: 'Helps farmers monitor crop health, firefighters map wildfire perimeters, and scientists monitor glacier retreat and lake water volume across the globe.',
+    nasaInstruments: [
+      { name: 'Operational Land Imager 2', acronym: 'OLI-2', purpose: 'Measures visible, near-IR, and shortwave IR radiation reflected from land.' },
+      { name: 'Thermal Infrared Sensor 2', acronym: 'TIRS-2', purpose: 'Measures land surface temperature in two thermal infrared bands.' },
+    ],
+    earthdataProducts: ['Landsat Surface Reflectance Tier 1', 'Landsat Surface Temperature (LST)'],
+    earthdataUrl: 'https://earthdata.nasa.gov/learn/pathfinders/agriculture-and-water-resources',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/menu/earth/',
+    quiz: {
+      question: 'Why does Landsat 9 fly in a Sun-Synchronous Polar Orbit?',
+      options: ['To stay over the equator', 'To cross every latitude at the same local solar time (10:00 AM) for consistent lighting', 'To avoid space debris', 'To stay in Earth’s shadow'],
+      correctIndex: 1,
+      explanation: 'A Sun-Synchronous orbit keeps the Sun at the same angle beneath the satellite, guaranteeing identical shadow angles for comparing land changes across decades!',
+    },
+  },
+  {
+    id: 'pace',
+    name: 'PACE (Plankton, Aerosol, Cloud, ocean Ecosystem)',
+    agency: 'NASA Goddard Space Flight Center',
+    type: 'Ocean & Atmosphere Climate Satellite',
+    parentBody: 'earth',
+    altitudeKm: 676.5,
+    velocityKms: 7.52,
+    crewCount: 0,
+    crewManifest: 'Autonomous Climate Sentinel',
+    launchYear: 2024,
+    status: 'Operational',
+    color: '#0ea5e9',
+    orbitCategory: 'SSO',
+    description: 'NASA’s latest flagship climate satellite, launched February 2024. Revolutionizes ocean biology by dissecting ocean color into hundreds of hyper-spectral colors to identify microscopic phytoplankton.',
+    specs: [
+      { label: 'Orbit', value: '676.5 km Sun-Synchronous' },
+      { label: 'Inclination', value: '98.0°' },
+      { label: 'Spectral Range', value: '350 nm – 2,260 nm (UV to SWIR)' },
+      { label: 'Primary Mission', value: 'Ocean Ecology & Aerosol Radiative Forcing' },
+    ],
+    whatItDoesForEarth: 'Identifies toxic algae blooms (red tides) before they reach coastlines and determines how airborne dust and smoke aerosols cool or warm Earth’s climate.',
+    nasaInstruments: [
+      { name: 'Ocean Color Instrument', acronym: 'OCI', purpose: 'Hyperspectral scanning radiometer measuring ocean color pigment signatures.' },
+      { name: 'Spectro-polarimeter for Planetary Exploration', acronym: 'SPEXone', purpose: 'Measures polarization of sunlight scattered by atmospheric aerosols.' },
+    ],
+    earthdataProducts: ['PACE Hyperspectral Radiance', 'Phytoplankton Carbon Biomass'],
+    earthdataUrl: 'https://earthdata.nasa.gov/learn/articles/pace-launch-data',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/menu/earth/',
+    quiz: {
+      question: 'What percentage of Earth’s oxygen is generated by the microscopic ocean phytoplankton that NASA PACE tracks?',
+      options: ['Less than 5%', 'About 20%', 'More than 50%', 'Exactly 100%'],
+      correctIndex: 2,
+      explanation: 'Microscopic plants in the oceans produce over half the oxygen we breathe and absorb billions of tons of carbon dioxide every year!',
+    },
+  },
+  {
+    id: 'swot',
+    name: 'SWOT (Surface Water and Ocean Topography)',
+    agency: 'NASA JPL / CNES / CSA / UKSA',
+    type: 'Global Hydrology Radar Satellite',
+    parentBody: 'earth',
+    altitudeKm: 890.5,
+    velocityKms: 7.40,
+    crewCount: 0,
+    crewManifest: 'Autonomous Radar Altimeter',
+    launchYear: 2022,
+    status: 'Operational',
+    color: '#3b82f6',
+    orbitCategory: 'LEO',
+    description: 'First satellite to survey nearly all surface water on Earth. Equipped with a 10-meter radar mast boom that measures the height of rivers, lakes, and oceans with centimeter precision.',
+    specs: [
+      { label: 'Altitude', value: '890.5 km' },
+      { label: 'Inclination', value: '77.6°' },
+      { label: 'Swath Width', value: '120 km (Dual Radar Swaths)' },
+      { label: 'Target Count', value: '> 6 Million Lakes & Rivers Worldwide' },
+    ],
+    whatItDoesForEarth: 'Measures how much freshwater is stored in rivers and lakes worldwide to predict floods and droughts, and maps ocean eddies that absorb 90% of global excess heat.',
+    nasaInstruments: [
+      { name: 'Ka-band Radar Interferometer', acronym: 'KaRIn', purpose: 'Twin antennas bouncing radar pulses off water surfaces to map elevations.' },
+      { name: 'Poseidon-3C Altimeter', acronym: 'Poseidon', purpose: 'Nadir altimeter calibrating absolute sea surface height.' },
+    ],
+    earthdataProducts: ['SWOT River Single-Pass Vector Elevation', 'SWOT Lake Storage Dynamics'],
+    earthdataUrl: 'https://podaac.jpl.nasa.gov/SWOT',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/menu/earth/',
+    quiz: {
+      question: 'How does SWOT measure the water height of 6 million lakes and rivers from 890 km in space?',
+      options: ['With a giant tape measure', 'By bouncing Ka-band radar waves between twin antennas on a 10-meter boom', 'Using laser thermometers', 'By asking local boaters'],
+      correctIndex: 1,
+      explanation: 'KaRIn radar interferometry uses two antennas 10 meters apart to bounce microwave pulses off the water, measuring elevation down to centimeters!',
+    },
+  },
+  {
+    id: 'grace-fo',
+    name: 'GRACE-FO (Gravity Recovery & Climate Experiment)',
+    agency: 'NASA JPL / GFZ',
+    type: 'Twin Gravity Mapping Satellites',
+    parentBody: 'earth',
+    altitudeKm: 490.0,
+    velocityKms: 7.62,
+    crewCount: 0,
+    crewManifest: 'Tandem Gravimetric Pair',
+    launchYear: 2018,
+    status: 'Operational',
+    color: '#8b5cf6',
+    orbitCategory: 'LEO',
+    description: 'Twin tandem satellites flying 220 km apart. Laser and microwave ranging between the two satellites detect sub-microscopic distance shifts caused by gravitational variations on Earth.',
+    specs: [
+      { label: 'Altitude', value: '490 km' },
+      { label: 'Pair Separation', value: '~220 km Tandem Chase' },
+      { label: 'Interferometer Precision', value: 'Nanometers (Width of a bacterium)' },
+      { label: 'Primary Goal', value: 'Subterranean Groundwater & Polar Ice Mass' },
+    ],
+    whatItDoesForEarth: 'Weighs Earth’s water from space! Discovers when underground aquifers are drying up and measures exactly how many gigatons of ice melt from Greenland and Antarctica each year.',
+    nasaInstruments: [
+      { name: 'Laser Ranging Interferometer', acronym: 'LRI', purpose: 'Laser link measuring distance between twin satellites to nanometer accuracy.' },
+      { name: 'SuperSTAR Accelerometer', acronym: 'ACC', purpose: 'Measures non-gravitational forces like atmospheric drag.' },
+    ],
+    earthdataProducts: ['GRACE-FO Tellus Water Storage Grids', 'Antarctica & Greenland Mass Balance'],
+    earthdataUrl: 'https://gracefo.jpl.nasa.gov/',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/menu/earth/',
+    quiz: {
+      question: 'How do twin GRACE-FO satellites know if deep underground aquifers are losing water?',
+      options: ['They dig orbital holes', 'Water has mass, so losing water weakens regional gravity and changes the distance between the two satellites', 'They use colored smoke', 'They measure air moisture'],
+      correctIndex: 1,
+      explanation: 'Water has mass! As groundwater is pumped out, regional gravitational attraction decreases, causing tiny shifts in distance between the twin satellites!',
+    },
+  },
+  {
+    id: 'goes-16',
+    name: 'GOES-16 (Geostationary Weather Satellite)',
+    agency: 'NOAA / NASA Goddard',
+    type: 'Geostationary Environmental Satellite',
+    parentBody: 'earth',
+    altitudeKm: 35786.0,
+    velocityKms: 3.07,
+    crewCount: 0,
+    crewManifest: 'Autonomous Geostationary Sentinel',
+    launchYear: 2016,
+    status: 'Operational',
+    color: '#f59e0b',
+    orbitCategory: 'GEO',
+    description: 'The premier weather satellite hovering 35,786 km above the equator. Orbit matches Earth’s rotation speed exactly, providing continuous real-time 30-second storm imaging.',
+    specs: [
+      { label: 'Orbit', value: '35,786 km Geostationary (GEO)' },
+      { label: 'Period', value: '23h 56m 4s (Exact Earth Rotation)' },
+      { label: 'Scan Speed', value: 'Full Western Hemisphere Every 10 Minutes' },
+      { label: 'Rapid Scan', value: '30-second rapid refresh on severe storms' },
+    ],
+    whatItDoesForEarth: 'Detects hurricane intensification, maps lightning strikes to warn airliners, tracks wildfire smoke plumes, and monitors solar flares heading toward Earth’s electrical grid.',
+    nasaInstruments: [
+      { name: 'Advanced Baseline Imager', acronym: 'ABI', purpose: '16 spectral bands viewing weather from visible to infrared.' },
+      { name: 'Geostationary Lightning Mapper', acronym: 'GLM', purpose: 'Detects in-cloud and ground lightning flashes 24/7.' },
+    ],
+    earthdataProducts: ['GOES-East ABI Radiances', 'GLM Flash Density Grids'],
+    earthdataUrl: 'https://www.goes-r.gov/',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/geo-orbits/en/',
+    quiz: {
+      question: 'Why does GOES-16 appear to hover over the exact same spot on Earth forever?',
+      options: ['It is anchored to the ground', 'At 35,786 km altitude, its orbital speed matches Earth’s 24-hour spin rate exactly', 'It uses jet engines to stay in place', 'It is pulled by the Moon'],
+      correctIndex: 1,
+      explanation: 'In Geostationary Orbit (GEO), the satellite circles Earth once every 23h 56m, perfectly synchronized with Earth’s rotation!',
+    },
   },
   {
     id: 'tiangong',
@@ -514,6 +798,7 @@ export const SPACE_STATIONS: SpaceStationData[] = [
     launchYear: 2021,
     status: 'Operational',
     color: '#f59e0b',
+    orbitCategory: 'LEO',
     description: 'T-shaped permanent multi-module space station consisting of Tianhe core module, Wentian laboratory, Mengtian science module, and flexible gallium arsenide solar wings.',
     specs: [
       { label: 'Altitude', value: '389.2 km (LEO)' },
@@ -535,6 +820,7 @@ export const SPACE_STATIONS: SpaceStationData[] = [
     launchYear: 2027,
     status: 'Planned Construction',
     color: '#a855f7',
+    orbitCategory: 'NRHO',
     description: 'The international deep-space gateway orbiting the Moon in a Near-Rectilinear Halo Orbit (NRHO). Serves as a staging base for astronaut landings at the Lunar South Pole.',
     specs: [
       { label: 'Orbit Type', value: 'Near-Rectilinear Halo Orbit (NRHO)' },
@@ -542,26 +828,14 @@ export const SPACE_STATIONS: SpaceStationData[] = [
       { label: 'Habitation', value: 'HALO (Habitation & Logistics Outpost)' },
       { label: 'Robotic System', value: 'Canadarm3 AI Autonomous Arm' },
     ],
-  },
-  {
-    id: 'hubble',
-    name: 'Hubble Space Telescope (HST)',
-    agency: 'NASA / ESA',
-    type: 'Great Observatory Satellite',
-    parentBody: 'earth',
-    altitudeKm: 535.0,
-    velocityKms: 7.58,
-    crewCount: 0,
-    crewManifest: 'Autonomous Robotic Observatory',
-    launchYear: 1990,
-    status: 'Operational',
-    color: '#06b6d4',
-    description: 'The revolutionary space observatory operating in Low Earth Orbit since April 1990. Has made over 1.6 million astronomical observations.',
-    specs: [
-      { label: 'Altitude', value: '535 km' },
-      { label: 'Primary Mirror', value: '2.4 meter (7.9 ft)' },
-      { label: 'Observations Made', value: '> 1,600,000 Targets' },
-    ],
+    whatItDoesForEarth: 'Serves as humanity’s stepping stone beyond Low Earth Orbit, testing long-duration deep-space life-support systems needed for future human journeys to Mars.',
+    spacePlaceUrl: 'https://spaceplace.nasa.gov/all-about-the-moon/en/',
+    quiz: {
+      question: 'What special orbit will the Lunar Gateway use around the Moon?',
+      options: ['Low Lunar Orbit', 'Near-Rectilinear Halo Orbit (NRHO)', 'Geostationary Orbit', 'Retrograde Orbit'],
+      correctIndex: 1,
+      explanation: 'NRHO is an egg-shaped orbit balanced between Earth and Moon gravity, providing uninterrupted line-of-sight communication with Earth!',
+    },
   },
 ];
 
@@ -710,8 +984,8 @@ function createTextSprite(
   const sprite = new THREE.Sprite(spriteMat);
 
   // Base world scale ensuring text appears at least 14px-20px tall on screen
-  const baseScaleY = isCompact ? 4.2 : 5.4;
-  const baseScaleX = baseScaleY * (baseW / baseH);
+  const baseScaleY = isCompact ? 1.4 : 5.4;
+  const baseScaleX = isCompact ? 5.6 : baseScaleY * (baseW / baseH);
   sprite.scale.set(baseScaleX, baseScaleY, 1);
   sprite.userData = { baseScaleX, baseScaleY };
   return sprite;
@@ -802,6 +1076,200 @@ function createRealisticProbeMesh(colorHex: number): THREE.Group {
   return group;
 }
 
+function createRealisticHubbleMesh(): THREE.Group {
+  const group = new THREE.Group();
+  const barrelGeo = new THREE.CylinderGeometry(0.48, 0.48, 2.4, 20);
+  const barrelMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9, roughness: 0.15 });
+  const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+  barrel.rotation.z = Math.PI / 2;
+  group.add(barrel);
+
+  // Aperture door
+  const doorGeo = new THREE.CylinderGeometry(0.49, 0.49, 0.05, 20);
+  const doorMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.3 });
+  const door = new THREE.Mesh(doorGeo, doorMat);
+  door.position.set(1.22, 0.3, 0);
+  door.rotation.z = Math.PI / 3;
+  group.add(door);
+
+  // Solar Arrays
+  const wingGeo = new THREE.BoxGeometry(0.55, 2.2, 0.03);
+  const wingMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, emissive: 0x0369a1, emissiveIntensity: 0.45 });
+  const w1 = new THREE.Mesh(wingGeo, wingMat);
+  w1.position.set(0, 0, 1.4);
+  const w2 = new THREE.Mesh(wingGeo, wingMat);
+  w2.position.set(0, 0, -1.4);
+  group.add(w1);
+  group.add(w2);
+
+  group.scale.set(0.34, 0.34, 0.34);
+  return group;
+}
+
+function createRealisticLandsatMesh(): THREE.Group {
+  const group = new THREE.Group();
+  // Main spacecraft bus (Gold kapton foil)
+  const bodyGeo = new THREE.BoxGeometry(1.0, 1.0, 1.4);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.85, roughness: 0.25 });
+  group.add(new THREE.Mesh(bodyGeo, bodyMat));
+
+  // Single side solar array paddle
+  const arrayGeo = new THREE.BoxGeometry(2.4, 0.9, 0.03);
+  const arrayMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, emissive: 0x172554, emissiveIntensity: 0.6 });
+  const array = new THREE.Mesh(arrayGeo, arrayMat);
+  array.position.set(2.0, 0, 0);
+  group.add(array);
+
+  // OLI-2 & TIRS-2 Earth-facing optical sensor apertures
+  const lensGeo = new THREE.CylinderGeometry(0.28, 0.32, 0.4, 16);
+  const lensMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.95, roughness: 0.1 });
+  const lens = new THREE.Mesh(lensGeo, lensMat);
+  lens.position.set(0, -0.65, 0.2);
+  group.add(lens);
+
+  group.scale.set(0.32, 0.32, 0.32);
+  return group;
+}
+
+function createRealisticPaceMesh(): THREE.Group {
+  const group = new THREE.Group();
+  const bodyGeo = new THREE.CylinderGeometry(0.55, 0.55, 1.4, 8);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.6, roughness: 0.3 });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  group.add(body);
+
+  // Solar array
+  const solarGeo = new THREE.BoxGeometry(2.0, 0.75, 0.03);
+  const solarMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0284c7, emissiveIntensity: 0.5 });
+  const solar = new THREE.Mesh(solarGeo, solarMat);
+  solar.position.set(-1.6, 0, 0);
+  group.add(solar);
+
+  // OCI hyperspectral rotating telescope head
+  const ociGeo = new THREE.SphereGeometry(0.32, 16, 16);
+  const ociMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9, roughness: 0.2 });
+  const oci = new THREE.Mesh(ociGeo, ociMat);
+  oci.position.set(0, -0.75, 0);
+  group.add(oci);
+
+  group.scale.set(0.3, 0.3, 0.3);
+  return group;
+}
+
+function createRealisticSwotMesh(): THREE.Group {
+  const group = new THREE.Group();
+  // Central bus
+  const busGeo = new THREE.BoxGeometry(0.9, 0.9, 1.3);
+  const busMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.3 });
+  group.add(new THREE.Mesh(busGeo, busMat));
+
+  // 10-meter radar mast boom (spanning across X axis)
+  const boomGeo = new THREE.BoxGeometry(4.8, 0.08, 0.08);
+  const boomMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.2 });
+  group.add(new THREE.Mesh(boomGeo, boomMat));
+
+  // Dual KaRIn radar antennas at tips of boom
+  const antGeo = new THREE.BoxGeometry(0.8, 0.32, 0.04);
+  const antMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x1d4ed8, emissiveIntensity: 0.4 });
+  const ant1 = new THREE.Mesh(antGeo, antMat);
+  ant1.position.set(2.4, -0.2, 0);
+  ant1.rotation.z = -0.2;
+  const ant2 = new THREE.Mesh(antGeo, antMat);
+  ant2.position.set(-2.4, -0.2, 0);
+  ant2.rotation.z = 0.2;
+  group.add(ant1);
+  group.add(ant2);
+
+  // Solar array
+  const sGeo = new THREE.BoxGeometry(0.7, 1.8, 0.03);
+  const sMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, emissive: 0x1e3a8a, emissiveIntensity: 0.5 });
+  const s = new THREE.Mesh(sGeo, sMat);
+  s.position.set(0, 0, 1.3);
+  group.add(s);
+
+  group.scale.set(0.32, 0.32, 0.32);
+  return group;
+}
+
+function createRealisticGraceFoMesh(): THREE.Group {
+  const group = new THREE.Group();
+  // Aerodynamic wedge shape
+  const wedgeGeo = new THREE.BoxGeometry(1.5, 0.45, 0.85);
+  const wedgeMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7, roughness: 0.3 });
+  group.add(new THREE.Mesh(wedgeGeo, wedgeMat));
+
+  // Solar roof panel
+  const roofGeo = new THREE.BoxGeometry(1.4, 0.04, 0.8);
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0x8b5cf6, emissive: 0x6d28d9, emissiveIntensity: 0.4 });
+  const roof = new THREE.Mesh(roofGeo, roofMat);
+  roof.position.set(0, 0.24, 0);
+  group.add(roof);
+
+  // Laser ranging optical baffle
+  const lriGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.3, 12);
+  const lriMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.95 });
+  const lri = new THREE.Mesh(lriGeo, lriMat);
+  lri.rotation.z = Math.PI / 2;
+  lri.position.set(0.8, 0, 0);
+  group.add(lri);
+
+  group.scale.set(0.3, 0.3, 0.3);
+  return group;
+}
+
+function createRealisticGoesMesh(): THREE.Group {
+  const group = new THREE.Group();
+  // Geostationary satellite body
+  const bodyGeo = new THREE.BoxGeometry(1.1, 1.1, 1.2);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.7, roughness: 0.25 });
+  group.add(new THREE.Mesh(bodyGeo, bodyMat));
+
+  // Solar array wing (single long articulated paddle)
+  const solarGeo = new THREE.BoxGeometry(2.8, 0.9, 0.03);
+  const solarMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.4 });
+  const solar = new THREE.Mesh(solarGeo, solarMat);
+  solar.position.set(-2.2, 0, 0);
+  group.add(solar);
+
+  // Earth-pointing sensor deck
+  const sensorGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
+  const sensorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 });
+  const sensor = new THREE.Mesh(sensorGeo, sensorMat);
+  sensor.position.set(0, -0.65, 0);
+  group.add(sensor);
+
+  // Magnetometer boom
+  const boomGeo = new THREE.CylinderGeometry(0.03, 0.03, 2.4, 8);
+  const boomMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 });
+  const boom = new THREE.Mesh(boomGeo, boomMat);
+  boom.rotation.z = Math.PI / 2;
+  boom.position.set(1.6, 0, 0);
+  group.add(boom);
+
+  group.scale.set(0.32, 0.32, 0.32);
+  return group;
+}
+
+function createSatelliteOrbitRing(radius: number, colorHex: number, inclinationRad = 0): THREE.Line {
+  const points: THREE.Vector3[] = [];
+  const segments = 64;
+  for (let i = 0; i <= segments; i++) {
+    const theta = (i / segments) * Math.PI * 2;
+    const x = Math.cos(theta) * radius;
+    const rawZ = Math.sin(theta) * radius;
+    const y = rawZ * Math.sin(inclinationRad);
+    const z = rawZ * Math.cos(inclinationRad);
+    points.push(new THREE.Vector3(x, y, z));
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  const mat = new THREE.LineBasicMaterial({
+    color: colorHex,
+    transparent: true,
+    opacity: 0.45,
+  });
+  return new THREE.Line(geo, mat);
+}
+
 // ── COMPONENT IMPLEMENTATION ──────────────────────────────────────────────
 export const LandingPage: React.FC<LandingPageProps> = ({
   onEnter,
@@ -864,20 +1332,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     type: 'planet' | 'station' | 'mission';
     data: PlanetData | SpaceStationData | SolarMissionData;
   } | null>({ type: 'planet', data: PLANETS[2] }); // Default to Earth
-  const [drawerTab, setDrawerTab] = useState<'overview' | 'indepth' | 'numbers' | 'missions' | 'compare'>('overview');
+  const [drawerTab, setDrawerTab] = useState<'overview' | 'earthdata' | 'indepth' | 'numbers' | 'missions' | 'quiz' | 'compare'>('overview');
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [cameraTarget, setCameraTarget] = useState<string>('sun');
   const [isTargetLocked, setIsTargetLocked] = useState<boolean>(false);
+  const [isNasaLiveModalOpen, setIsNasaLiveModalOpen] = useState<boolean>(false);
+  const [quizAnsweredState, setQuizAnsweredState] = useState<{ [entityId: string]: { selected: number; isCorrect: boolean } }>({});
 
   // Search & Navigation
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isDestModalOpen, setIsDestModalOpen] = useState<boolean>(false);
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
-  const [activeCategory, setActiveCategory] = useState<'all' | 'inner' | 'outer' | 'fleet' | 'tours'>('all');
+  const [activeCategory, setActiveCategory] = useState<'all' | 'inner' | 'satellites' | 'outer' | 'fleet' | 'tours'>('all');
+  const activeCategoryRef = useRef(activeCategory);
+  activeCategoryRef.current = activeCategory;
   const [isSimulatorsDropdownOpen, setIsSimulatorsDropdownOpen] = useState<boolean>(false);
   const [isStoriesModalOpen, setIsStoriesModalOpen] = useState<boolean>(false);
-  const [isHeroDismissed, setIsHeroDismissed] = useState<boolean>(false);
+  const [isHeroDismissed, setIsHeroDismissed] = useState<boolean>(() => mode === 'explore');
 
   // Hover Tooltip
   const [hoverEntity, setHoverEntity] = useState<{ name: string; subtitle: string; x: number; y: number } | null>(null);
@@ -897,9 +1369,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const planetMeshesRef = useRef<Map<string, { mesh: THREE.Mesh; label: THREE.Sprite; clouds?: THREE.Mesh; moons?: { mesh: THREE.Mesh; label?: THREE.Sprite; angle: number; speed: number; orbitRadius: number }[]; orbitRadius: number; angle: number }>>(new Map());
-  const stationMeshesRef = useRef<Map<string, { group: THREE.Group; label: THREE.Sprite; parentId: string; orbitRadius: number; angle: number; orbitSpeed: number }>>(new Map());
+  const stationMeshesRef = useRef<Map<string, { group: THREE.Group; label: THREE.Sprite; parentId: string; orbitRadius: number; angle: number; orbitSpeed: number; inclination?: number }>>(new Map());
   const probeMeshesRef = useRef<Map<string, { group: THREE.Group; label: THREE.Sprite; distanceAU: number }>>(new Map());
   const orbitLinesRef = useRef<THREE.Line[]>([]);
+  const satOrbitLinesRef = useRef<THREE.Line[]>([]);
   const asteroidPointsRef = useRef<THREE.Points | null>(null);
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
@@ -1235,33 +1708,78 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     });
     orbitLinesRef.current = orbitLines;
 
-    // 7. Space Stations (ISS, Tiangong around Earth; Gateway around Moon)
+    // 7. Space Stations & Earth Satellite Fleet
+    const satOrbitLines: THREE.Line[] = [];
     SPACE_STATIONS.forEach((station) => {
       let stationGroup: THREE.Group;
       if (station.id === 'iss') {
         stationGroup = createRealisticISSMesh();
       } else if (station.id === 'tiangong') {
         stationGroup = createRealisticTiangongMesh();
+      } else if (station.id === 'hubble') {
+        stationGroup = createRealisticHubbleMesh();
+      } else if (station.id === 'landsat-9') {
+        stationGroup = createRealisticLandsatMesh();
+      } else if (station.id === 'pace') {
+        stationGroup = createRealisticPaceMesh();
+      } else if (station.id === 'swot') {
+        stationGroup = createRealisticSwotMesh();
+      } else if (station.id === 'grace-fo') {
+        stationGroup = createRealisticGraceFoMesh();
+      } else if (station.id === 'goes-16') {
+        stationGroup = createRealisticGoesMesh();
       } else {
-        stationGroup = createRealisticProbeMesh(0xa855f7);
+        stationGroup = createRealisticProbeMesh(parseInt(station.color.replace('#', '0x')));
       }
 
       stationGroup.name = station.id;
       scene.add(stationGroup);
 
-      const label = createTextSprite(station.name, station.color, true);
+      const shortName = station.id === 'iss' ? 'ISS'
+        : station.id === 'tiangong' ? 'Tiangong'
+        : station.id === 'hubble' ? 'Hubble'
+        : station.id === 'landsat-9' ? 'Landsat 9'
+        : station.id === 'pace' ? 'PACE'
+        : station.id === 'swot' ? 'SWOT'
+        : station.id === 'grace-fo' ? 'GRACE-FO'
+        : station.id === 'goes-16' ? 'GOES-16'
+        : station.id === 'lunar-gateway' ? 'Gateway'
+        : station.name.split(' (')[0];
+      const label = createTextSprite(shortName, station.color, true);
       label.visible = false;
       scene.add(label);
+
+      let orbitRadius = 4.5;
+      let orbitSpeed = 3.5;
+      let inclRad = 0;
+
+      if (station.id === 'iss') { orbitRadius = 4.4; orbitSpeed = 3.5; inclRad = 0.90; }
+      else if (station.id === 'tiangong') { orbitRadius = 4.2; orbitSpeed = 3.6; inclRad = 0.72; }
+      else if (station.id === 'hubble') { orbitRadius = 4.8; orbitSpeed = 3.3; inclRad = 0.50; }
+      else if (station.id === 'landsat-9') { orbitRadius = 5.3; orbitSpeed = 3.0; inclRad = 1.71; }
+      else if (station.id === 'pace') { orbitRadius = 5.0; orbitSpeed = 3.1; inclRad = 1.71; }
+      else if (station.id === 'swot') { orbitRadius = 5.6; orbitSpeed = 2.8; inclRad = 1.35; }
+      else if (station.id === 'grace-fo') { orbitRadius = 4.6; orbitSpeed = 3.4; inclRad = 1.55; }
+      else if (station.id === 'goes-16') { orbitRadius = 7.8; orbitSpeed = 0.7; inclRad = 0.00; }
+      else if (station.parentBody === 'moon') { orbitRadius = 2.4; orbitSpeed = 2.0; inclRad = 0.35; }
+
+      if (station.parentBody === 'earth') {
+        const orbitLine = createSatelliteOrbitRing(orbitRadius, parseInt(station.color.replace('#', '0x')), inclRad);
+        scene.add(orbitLine);
+        satOrbitLines.push(orbitLine);
+      }
 
       stationMeshesRef.current.set(station.id, {
         group: stationGroup,
         label,
         parentId: station.parentBody,
-        orbitRadius: station.id === 'iss' ? 4.5 : station.id === 'tiangong' ? 5.2 : 2.8,
+        orbitRadius,
         angle: Math.random() * Math.PI * 2,
-        orbitSpeed: station.id === 'iss' ? 3.5 : 3.8,
+        orbitSpeed,
+        inclination: inclRad,
       });
     });
+    satOrbitLinesRef.current = satOrbitLines;
 
     // 8. Solar Missions & Interstellar Probes
     SOLAR_MISSIONS.forEach((probe) => {
@@ -1520,22 +2038,55 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           }
         });
 
-        // Space Stations Orbit Earth / Moon with Adaptive Label Visibility
+        // Space Stations & Earth Satellites Orbit Earth / Moon with Adaptive Label Visibility
         const earthData = planetMeshesRef.current.get('earth');
-        const isFocusingStation = targetIdCur === 'iss' || targetIdCur === 'tiangong' || targetIdCur === 'lunar-gateway';
-        const isCloseToEarth = (targetIdCur === 'earth' && camDistanceRef.current < 20);
+        const moonMeshObj = earthData?.moons?.[0];
+        const isSatellitesView = activeCategoryRef.current === 'satellites';
+        const isFocusingStation = targetIdCur === 'iss' || targetIdCur === 'tiangong' || targetIdCur === 'lunar-gateway' ||
+          targetIdCur === 'hubble' || targetIdCur === 'landsat-9' || targetIdCur === 'pace' ||
+          targetIdCur === 'swot' || targetIdCur === 'grace-fo' || targetIdCur === 'goes-16';
+        const isCloseToEarth = (targetIdCur === 'earth' && camDistanceRef.current < 28) || isSatellitesView || isFocusingStation;
+
+        if (earthData) {
+          satOrbitLinesRef.current.forEach((line) => {
+            line.position.copy(earthData.mesh.position);
+            line.visible = showOrbits && (isCloseToEarth || isSatellitesView);
+          });
+        }
 
         stationMeshesRef.current.forEach((st, id) => {
           st.angle += delta * st.orbitSpeed;
-          if (earthData) {
-            st.group.position.x = earthData.mesh.position.x + Math.cos(st.angle) * st.orbitRadius;
-            st.group.position.y = earthData.mesh.position.y + 0.3;
-            st.group.position.z = earthData.mesh.position.z + Math.sin(st.angle) * st.orbitRadius;
-            st.group.rotation.y += 0.02;
-
-            st.label.position.set(st.group.position.x, st.group.position.y + 1.2, st.group.position.z);
-            st.label.visible = showLabels && showSpacecraft && (targetIdCur === id || (isCloseToEarth && isFocusingStation));
+          let centerPos = earthData ? earthData.mesh.position : new THREE.Vector3();
+          if (st.parentId === 'moon' && moonMeshObj) {
+            centerPos = moonMeshObj.mesh.position;
           }
+
+          const cosA = Math.cos(st.angle) * st.orbitRadius;
+          const sinA = Math.sin(st.angle) * st.orbitRadius;
+          const inc = st.inclination || 0;
+          const x = cosA;
+          const y = sinA * Math.sin(inc);
+          const z = sinA * Math.cos(inc);
+
+          st.group.position.set(
+            centerPos.x + x,
+            centerPos.y + y,
+            centerPos.z + z
+          );
+          st.group.rotation.y += 0.02;
+
+          const satScale = Math.max(0.4, Math.min(1.2, dist / 35));
+          st.label.scale.set(5.6 * satScale, 1.4 * satScale, 1);
+          st.label.position.set(st.group.position.x, st.group.position.y + 0.9 * satScale, st.group.position.z);
+
+          const isThisSatTargeted = targetIdCur === id;
+          const isThisSatHovered = Boolean(hoverEntity && hoverEntity.name.toLowerCase().includes(id));
+          const isInspectingThisSat = isThisSatTargeted && camDistanceRef.current < 18;
+
+          st.label.visible = Boolean(
+            showLabels && showSpacecraft && !isInspectingThisSat &&
+            (isThisSatTargeted || isThisSatHovered || (isCloseToEarth && isSatellitesView))
+          );
         });
 
         // Probe Labels: Show only when probe is targeted or zoomed near it, keeping overview clean
@@ -1748,6 +2299,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span>{isDrawerOpen ? 'Close Telemetry Dossier' : 'Inspect Dossier'}</span>
               </button>
 
+              {/* NASA Live APIs & Open Data Feeds Button */}
+              <button
+                className="ne-telemetry-drawer-btn"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.35), rgba(249, 115, 22, 0.25))',
+                  border: '1px solid rgba(56, 189, 248, 0.6)',
+                  color: '#38bdf8',
+                  marginTop: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '11px',
+                }}
+                onClick={() => {
+                  setIsNasaLiveModalOpen(true);
+                  soundFx.playSuccess();
+                }}
+                title="Open NASA Open Data & Satellite Observatory (api.nasa.gov, earthdata.nasa.gov)"
+              >
+                <Radio size={13} style={{ color: '#38bdf8' }} />
+                <span>NASA Live Feeds &amp; APIs</span>
+              </button>
+
               {/* Quick Outpost Build Action if Target is Moon or Mars */}
               {selectedEntity && (selectedEntity.data.name.toLowerCase().includes('moon') || selectedEntity.data.name.toLowerCase().includes('mars')) && (
                 <button
@@ -1805,6 +2384,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span>Inner Worlds</span>
                 </button>
                 <button
+                  className={`ne-category-tab ${activeCategory === 'satellites' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveCategory('satellites');
+                    flyToTarget('earth');
+                    camDistanceRef.current = 15;
+                    soundFx.playTelemetryChirp();
+                  }}
+                  title="Explore Earth's Orbital Satellite Fleet (ISS, Landsat, Hubble, PACE, SWOT, GOES)"
+                >
+                  <Satellite size={13} />
+                  <span>🛰️ Earth &amp; Satellites</span>
+                </button>
+                <button
                   className={`ne-category-tab ${selectedEntity?.data.id === 'moon' ? 'active' : ''}`}
                   onClick={() => flyToTarget('moon')}
                   title="Focus on the Moon (Target for Artemis Base Camp)"
@@ -1843,6 +2435,61 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span>Tours</span>
                 </button>
               </nav>
+
+              {/* Sub-toolbar: Active Earth Satellite Fleet Selector */}
+              {activeCategory === 'satellites' && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 12px',
+                    background: 'rgba(9, 16, 36, 0.94)',
+                    backdropFilter: 'blur(12px)',
+                    borderRadius: '24px',
+                    border: '1px solid rgba(56, 189, 248, 0.35)',
+                    overflowX: 'auto',
+                    maxWidth: '100%',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  <span style={{ fontSize: '10px', color: '#38bdf8', padding: '0 4px', textTransform: 'uppercase', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                    🛰️ Fleet:
+                  </span>
+                  {['iss', 'hubble', 'landsat-9', 'pace', 'swot', 'grace-fo', 'goes-16', 'tiangong'].map((satId) => {
+                    const sat = SPACE_STATIONS.find((s) => s.id === satId);
+                    if (!sat) return null;
+                    const isCur = selectedEntity?.data.id === sat.id;
+                    return (
+                      <button
+                        key={sat.id}
+                        onClick={() => {
+                          flyToTarget(sat.id);
+                          soundFx.playClick(900);
+                        }}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: '14px',
+                          border: isCur ? '1.5px solid #38bdf8' : '1px solid rgba(148, 163, 184, 0.25)',
+                          background: isCur ? 'rgba(56, 189, 248, 0.3)' : 'rgba(30, 41, 59, 0.65)',
+                          color: isCur ? '#ffffff' : '#cbd5e1',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: sat.color }} />
+                        <span>{sat.name.split(' (')[0]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Central Search Bar */}
               <div className="ne-search-wrapper">
@@ -1941,8 +2588,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
-          {/* ═══ FLAGSHIP HOME HERO OVERLAY (Visible on first load, dismissible) ═══ */}
-          {!isHeroDismissed && (
+          {/* ═══ FLAGSHIP HOME HERO OVERLAY (Visible on first load in home mode, dismissible) ═══ */}
+          {mode !== 'explore' && !isHeroDismissed && (
             <div className="ne-home-hero-overlay nasa-eyes-interactive">
               <div className="ne-home-hero-card">
                 <button
@@ -2199,6 +2846,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   Overview
                 </button>
                 <button
+                  className={`ne-drawer-tab ${drawerTab === 'earthdata' ? 'active' : ''}`}
+                  onClick={() => setDrawerTab('earthdata')}
+                >
+                  NASA Earthdata
+                </button>
+                <button
                   className={`ne-drawer-tab ${drawerTab === 'indepth' ? 'active' : ''}`}
                   onClick={() => setDrawerTab('indepth')}
                 >
@@ -2215,6 +2868,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onClick={() => setDrawerTab('missions')}
                 >
                   Missions
+                </button>
+                <button
+                  className={`ne-drawer-tab ${drawerTab === 'quiz' ? 'active' : ''}`}
+                  onClick={() => setDrawerTab('quiz')}
+                >
+                  Cadet Quiz (+25 🪙)
                 </button>
                 <button
                   className={`ne-drawer-tab ${drawerTab === 'compare' ? 'active' : ''}`}
@@ -2248,6 +2907,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       <p className="ne-narrative-text">
                         {'funFact' in selectedEntity.data ? selectedEntity.data.funFact : ('description' in selectedEntity.data ? selectedEntity.data.description : selectedEntity.data.missionObjective)}
                       </p>
+
+                      {/* What this does for Earth & Humanity */}
+                      {'whatItDoesForEarth' in selectedEntity.data && selectedEntity.data.whatItDoesForEarth && (
+                        <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)', borderRadius: '8px' }}>
+                          <div style={{ fontSize: '10.5px', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <Globe size={12} />
+                            <span>How This Helps People on Earth (NASA Space Place)</span>
+                          </div>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#ecfdf5', lineHeight: 1.45 }}>
+                            {selectedEntity.data.whatItDoesForEarth}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quick STEM Navigation Buttons */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <button
+                        className="ne-btn-secondary"
+                        style={{ padding: '8px 10px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                        onClick={() => setDrawerTab('earthdata')}
+                      >
+                        <Globe size={13} style={{ color: '#38bdf8' }} />
+                        <span>NASA Earthdata</span>
+                      </button>
+
+                      <button
+                        className="ne-btn-secondary"
+                        style={{ padding: '8px 10px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#f59e0b' }}
+                        onClick={() => setDrawerTab('quiz')}
+                      >
+                        <Award size={13} />
+                        <span>Cadet Quiz (+25 🪙)</span>
+                      </button>
                     </div>
 
                     {/* Contextual Website Elements Actions */}
@@ -2339,7 +3032,117 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </>
                 )}
 
-                {/* TAB 2: IN DEPTH (Geology & Atmosphere) */}
+                {/* TAB: NASA EARTHDATA & SCIENCE SENSORS */}
+                {drawerTab === 'earthdata' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Header info */}
+                    <div className="ne-drawer-hero-card">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '11px', color: '#10b981', fontFamily: 'monospace', fontWeight: 800 }}>
+                          NASA EARTH SYSTEM OBSERVATORY
+                        </span>
+                        <span style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(15, 23, 42, 0.8)', padding: '2px 6px', borderRadius: '4px' }}>
+                          earthdata.nasa.gov
+                        </span>
+                      </div>
+                      <p style={{ margin: '6px 0 0 0', fontSize: '12.5px', color: '#cbd5e1', lineHeight: 1.5 }}>
+                        {'whatItDoesForEarth' in selectedEntity.data && selectedEntity.data.whatItDoesForEarth
+                          ? selectedEntity.data.whatItDoesForEarth
+                          : 'NASA monitors Earth’s atmosphere, oceans, land, and ice to protect our home planet and ensure astronaut survivability in deep space.'}
+                      </p>
+                    </div>
+
+                    {/* Scientific Instruments Payload */}
+                    {'nasaInstruments' in selectedEntity.data && selectedEntity.data.nasaInstruments && selectedEntity.data.nasaInstruments.length > 0 && (
+                      <div className="ne-drawer-hero-card">
+                        <h4 style={{ margin: '0 0 8px 0', fontSize: '12.5px', color: '#38bdf8', fontWeight: 800, textTransform: 'uppercase' }}>
+                          🔬 Scientific Sensor Payload
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {selectedEntity.data.nasaInstruments.map((inst, idx) => (
+                            <div key={idx} style={{ padding: '8px 10px', background: 'rgba(2, 6, 23, 0.6)', borderRadius: '6px', borderLeft: '3px solid #38bdf8' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <strong style={{ fontSize: '12px', color: '#ffffff' }}>{inst.acronym}</strong>
+                                <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>{inst.name}</span>
+                              </div>
+                              <div style={{ fontSize: '11.5px', color: '#cbd5e1', marginTop: '3px', lineHeight: 1.35 }}>{inst.purpose}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Earth Observation Data Products */}
+                    {'earthdataProducts' in selectedEntity.data && selectedEntity.data.earthdataProducts && (
+                      <div className="ne-drawer-hero-card">
+                        <h4 style={{ margin: '0 0 8px 0', fontSize: '12.5px', color: '#4ade80', fontWeight: 800, textTransform: 'uppercase' }}>
+                          📊 NASA Earthdata Science Products
+                        </h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {selectedEntity.data.earthdataProducts.map((prod, idx) => (
+                            <span key={idx} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '4px', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.3)', color: '#86efac' }}>
+                              {prod}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* If Earth: Show Global Vital Signs */}
+                    {selectedEntity.data.id === 'earth' && (
+                      <div className="ne-drawer-hero-card">
+                        <h4 style={{ margin: '0 0 8px 0', fontSize: '12.5px', color: '#38bdf8', fontWeight: 800, textTransform: 'uppercase' }}>
+                          🌍 Planetary Vital Signs (earthdata.nasa.gov)
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          {NASA_EARTH_VITAL_SIGNS.slice(0, 4).map((sign) => (
+                            <div key={sign.id} style={{ padding: '8px 10px', background: 'rgba(2, 6, 23, 0.6)', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.15)' }}>
+                              <div style={{ fontSize: '10px', color: '#94a3b8' }}>{sign.metric}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>{sign.value}</div>
+                              <div style={{ fontSize: '9.5px', color: sign.trend === 'up' ? '#f87171' : '#60a5fa' }}>{sign.changeRate}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Verified Links to NASA Platforms */}
+                    <div className="ne-drawer-hero-card">
+                      <h4 style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#ffffff', fontWeight: 700 }}>
+                        Official NASA Science Portals:
+                      </h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <a
+                          href={'earthdataUrl' in selectedEntity.data && selectedEntity.data.earthdataUrl ? selectedEntity.data.earthdataUrl : 'https://earthdata.nasa.gov/'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#38bdf8', fontSize: '11.5px', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'rgba(2, 6, 23, 0.5)', borderRadius: '6px' }}
+                        >
+                          <span>NASA Earthdata (earthdata.nasa.gov)</span>
+                          <ExternalLink size={12} />
+                        </a>
+                        <a
+                          href={'spacePlaceUrl' in selectedEntity.data && selectedEntity.data.spacePlaceUrl ? selectedEntity.data.spacePlaceUrl : 'https://spaceplace.nasa.gov/menu/earth/'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#38bdf8', fontSize: '11.5px', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'rgba(2, 6, 23, 0.5)', borderRadius: '6px' }}
+                        >
+                          <span>NASA Space Place Educational Portal</span>
+                          <ExternalLink size={12} />
+                        </a>
+                        <a
+                          href="https://data.nasa.gov/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#38bdf8', fontSize: '11.5px', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'rgba(2, 6, 23, 0.5)', borderRadius: '6px' }}
+                        >
+                          <span>NASA Open Data Catalog (data.nasa.gov)</span>
+                          <ExternalLink size={12} />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {drawerTab === 'indepth' && (
                   <>
                     {'interiorLayers' in selectedEntity.data && (
@@ -2474,6 +3277,143 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* TAB: CADET QUIZ (+25 ASTRO-COINS) */}
+                {drawerTab === 'quiz' && (
+                  <div className="ne-drawer-hero-card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Award size={16} style={{ color: '#f59e0b' }} />
+                        <span style={{ fontSize: '12px', fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase' }}>
+                          NASA Space Place Discovery Challenge
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#4ade80', background: 'rgba(34, 197, 94, 0.2)', padding: '2px 8px', borderRadius: '10px' }}>
+                        +25 Astro-Coins 🪙
+                      </span>
+                    </div>
+
+                    {(() => {
+                      const qData = ('quiz' in selectedEntity.data && selectedEntity.data.quiz)
+                        ? selectedEntity.data.quiz
+                        : {
+                            question: `What is the primary scientific mission of ${selectedEntity.data.name}?`,
+                            options: [
+                              'Planetary exploration and scientific data gathering',
+                              'Deep space mining',
+                              'Space tourist cruises',
+                              'Asteroid deflection test'
+                            ],
+                            correctIndex: 0,
+                            explanation: `NASA explores ${selectedEntity.data.name} to expand human scientific knowledge of solar system astrophysics and geology!`,
+                          };
+
+                      const ansState = quizAnsweredState[selectedEntity.data.id];
+
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#ffffff', lineHeight: 1.45 }}>
+                            {qData.question}
+                          </p>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {qData.options.map((option, idx) => {
+                              const isSelected = ansState?.selected === idx;
+                              const isCorrectOpt = qData.correctIndex === idx;
+                              let bg = 'rgba(15, 23, 42, 0.8)';
+                              let border = '1px solid rgba(148, 163, 184, 0.2)';
+                              let color = '#e2e8f0';
+
+                              if (ansState) {
+                                if (isCorrectOpt) {
+                                  bg = 'rgba(34, 197, 94, 0.25)';
+                                  border = '1.5px solid #22c55e';
+                                  color = '#86efac';
+                                } else if (isSelected && !ansState.isCorrect) {
+                                  bg = 'rgba(239, 68, 68, 0.25)';
+                                  border = '1.5px solid #ef4444';
+                                  color = '#fca5a5';
+                                }
+                              }
+
+                              return (
+                                <button
+                                  key={idx}
+                                  disabled={Boolean(ansState?.isCorrect)}
+                                  onClick={() => {
+                                    const isCorr = idx === qData.correctIndex;
+                                    setQuizAnsweredState((prev) => ({
+                                      ...prev,
+                                      [selectedEntity.data.id]: { selected: idx, isCorrect: isCorr },
+                                    }));
+                                    if (isCorr) {
+                                      soundFx.playSuccess();
+                                      if (currentUser) {
+                                        authService.awardCoins(currentUser.id, 25);
+                                        const updated = authService.getCurrentUser();
+                                        if (updated && onUserUpdate) onUserUpdate(updated);
+                                        studentActivityService.logActivity({
+                                          studentUsername: currentUser.username,
+                                          studentFullName: currentUser.fullName || currentUser.username,
+                                          studentAvatar: currentUser.avatar || '👨‍🚀',
+                                          characterName: currentUser.selectedCharacterId || 'Cadet',
+                                          actionType: 'EXAM_PASSED',
+                                          missionTitle: `Discovery Quiz: ${selectedEntity.data.name}`,
+                                          destination: 'EARTH',
+                                          scoreXp: 50,
+                                          coinsEarned: 25,
+                                          outcomeStatus: 'EXCELLENT',
+                                          notes: `Solved NASA Space Place quiz for ${selectedEntity.data.name}`,
+                                        });
+                                      }
+                                    } else {
+                                      soundFx.playClick(320);
+                                    }
+                                  }}
+                                  style={{
+                                    padding: '10px 14px',
+                                    borderRadius: '8px',
+                                    background: bg,
+                                    border,
+                                    color,
+                                    fontSize: '12px',
+                                    textAlign: 'left',
+                                    cursor: ansState?.isCorrect ? 'default' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    lineHeight: 1.35,
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                >
+                                  <span>{option}</span>
+                                  {ansState && isCorrectOpt && <Check size={14} style={{ color: '#4ade80' }} />}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {ansState && (
+                            <div
+                              style={{
+                                padding: '10px 12px',
+                                borderRadius: '8px',
+                                background: ansState.isCorrect ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                border: ansState.isCorrect ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                                fontSize: '12px',
+                                lineHeight: 1.4,
+                                color: ansState.isCorrect ? '#86efac' : '#fca5a5',
+                              }}
+                            >
+                              <strong>{ansState.isCorrect ? '🎉 Correct! NASA Space Place Insight:' : '⚠️ Try again or inspect the science dossier!'}</strong>
+                              <div style={{ marginTop: '4px' }}>{qData.explanation}</div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
@@ -2695,6 +3635,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           }}
         />
       )}
+
+      {/* Real-Time NASA Live Observatory Modal (Open Data, Earthdata, APOD, NeoWs, Mars Weather) */}
+      <NasaLiveObservatoryModal
+        isOpen={isNasaLiveModalOpen}
+        onClose={() => setIsNasaLiveModalOpen(false)}
+        onSelectSatellite={(satId) => {
+          setActiveCategory('satellites');
+          flyToTarget(satId);
+        }}
+      />
     </div>
   );
 };
