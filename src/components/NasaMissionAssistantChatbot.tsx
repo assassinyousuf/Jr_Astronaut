@@ -20,7 +20,8 @@ import {
   Maximize2,
   Compass,
   Layers,
-  ChevronDown
+  ChevronDown,
+  MessageCircle,
 } from 'lucide-react';
 import { soundFx } from '../utils/audioEffects';
 import { speechEngine } from '../utils/speechEngine';
@@ -311,52 +312,78 @@ export const NasaMissionAssistantChatbot: React.FC<NasaMissionAssistantChatbotPr
 
   return (
     <>
-      {/* Floating Launcher Button */}
-      {floatingMode && (
-        <button
-          onClick={handleToggleOpen}
-          className="copilot-floating-trigger-btn"
-          aria-label="Open NASA Mission Assistant & Student Mentor"
+      {/* Floating Launcher Widget (You're not on this mission alone. + Ask your mentor) */}
+      {floatingMode && !isOpen && (
+        <div
+          className="copilot-floating-trigger-btn mentor-floating-widget"
           style={{
             position: 'fixed',
             bottom: '24px',
             right: '24px',
             zIndex: 9990,
             display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '12px 20px',
-            borderRadius: '9999px',
-            background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0c4a6e 100%)',
-            border: '2px solid rgba(56, 189, 248, 0.6)',
-            color: '#ffffff',
-            boxShadow: '0 0 25px rgba(56, 189, 248, 0.45), 0 8px 24px rgba(0,0,0,0.6)',
-            cursor: 'pointer',
-            transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            fontFamily: 'var(--font-mono, monospace)',
-            fontWeight: 800,
-            fontSize: '13px',
-            letterSpacing: '0.04em',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: '8px',
+            pointerEvents: 'auto',
           }}
-          title="Open NASA Cadet Mentor & Copilot AI"
         >
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Bot size={20} className="text-cyan-300" />
-            <span
-              style={{
-                position: 'absolute',
-                top: '-2px',
-                right: '-2px',
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: '#22c55e',
-                boxShadow: '0 0 8px #22c55e',
-              }}
-            />
+          {/* Supportive Speech Bubble */}
+          <div
+            style={{
+              padding: '7px 18px',
+              borderRadius: '9999px',
+              background: 'rgba(11, 20, 42, 0.94)',
+              border: '1.5px solid rgba(56, 189, 248, 0.35)',
+              color: '#f8fafc',
+              fontSize: '13.5px',
+              fontWeight: 500,
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.65)',
+              backdropFilter: 'blur(12px)',
+              letterSpacing: '0.01em',
+              fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+              whiteSpace: 'nowrap',
+              animation: 'fadeInUp 0.3s ease-out',
+            }}
+          >
+            You’re not on this mission alone.
           </div>
-          <span className="hidden sm:inline">NASA MENTOR AI</span>
-        </button>
+
+          {/* Action Pill Button */}
+          <button
+            onClick={handleToggleOpen}
+            aria-label="Ask your mentor"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 22px',
+              borderRadius: '9999px',
+              background: 'linear-gradient(135deg, #0284c7 0%, #0891b2 100%)',
+              border: '2px solid #38bdf8',
+              color: '#ffffff',
+              boxShadow: '0 0 24px rgba(56, 189, 248, 0.45), 0 8px 24px rgba(0,0,0,0.6)',
+              cursor: 'pointer',
+              transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+              fontWeight: 700,
+              fontSize: '15px',
+              letterSpacing: '0.01em',
+            }}
+            title="Ask your NASA Student Mentor for guidance"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.03)';
+              e.currentTarget.style.boxShadow = '0 0 30px rgba(56, 189, 248, 0.65), 0 10px 28px rgba(0,0,0,0.7)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 0 24px rgba(56, 189, 248, 0.45), 0 8px 24px rgba(0,0,0,0.6)';
+            }}
+          >
+            <MessageCircle size={20} style={{ strokeWidth: 2.2, color: '#ffffff' }} />
+            <span>Ask your mentor</span>
+          </button>
+        </div>
       )}
 
       {/* Main Chatbot Panel Dialog */}
