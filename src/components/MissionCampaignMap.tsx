@@ -16,13 +16,17 @@ import {
   Trophy,
   Star,
   Search,
+  Lock,
 } from 'lucide-react';
 import { MISSION_GAME_DATA, type MissionGameConfig, type GameType } from '../game/missionGameData';
+import type { User } from '../types/auth';
 
 interface MissionCampaignMapProps {
   completedMissions: string[];
   onLaunchMission: (missionId: string) => void;
   onClose?: () => void;
+  currentUser?: User | null;
+  isJudgeMode?: boolean;
 }
 
 // Mini Three.js 3D Earth Globe with Orbital Track
@@ -130,6 +134,8 @@ const CampaignGlobePreview: React.FC = () => {
 export const MissionCampaignMap: React.FC<MissionCampaignMapProps> = ({
   completedMissions,
   onLaunchMission,
+  currentUser,
+  isJudgeMode = false,
 }) => {
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -325,12 +331,29 @@ export const MissionCampaignMap: React.FC<MissionCampaignMapProps> = ({
 
               <div className="campaign-grid">
                 {eraMissions.map((mission) => {
+                  const globalIndex = MISSION_GAME_DATA.findIndex((m) => m.id === mission.id);
                   const isDone = completedMissions.includes(mission.id);
+                  const isTeacher = currentUser?.role === 'teacher';
+
+                  // Mission 1 (index 0) is unlocked at the beginning.
+                  // Each subsequent mission unlocks one-by-one only after the prior mission is completed.
+                  const isPriorCompleted = globalIndex === 0 || completedMissions.includes(MISSION_GAME_DATA[globalIndex - 1]?.id);
+                  const isUnlocked = isTeacher || isJudgeMode || isDone || isPriorCompleted;
+                  const isNextTarget = isUnlocked && !isDone;
+                  const prevMission = globalIndex > 0 ? MISSION_GAME_DATA[globalIndex - 1] : null;
 
                   return (
                     <div
                       key={mission.id}
-                      className={`campaign-card ${isDone ? 'completed' : ''}`}
+                      className={`campaign-card ${isDone ? 'completed' : ''} ${!isUnlocked ? 'locked' : ''} ${isNextTarget ? 'active-next' : ''}`}
+                      style={{
+                        position: 'relative',
+                        opacity: !isUnlocked ? 0.62 : 1,
+                        filter: !isUnlocked ? 'grayscale(45%)' : 'none',
+                        border: isNextTarget ? '2px solid #38bdf8' : isDone ? '1px solid rgba(52, 211, 153, 0.45)' : undefined,
+                        boxShadow: isNextTarget ? '0 0 18px rgba(56, 189, 248, 0.35)' : undefined,
+                        transition: 'all 0.2s ease',
+                      }}
                     >
                       <div>
                         <div className="campaign-card-top">
@@ -339,9 +362,16 @@ export const MissionCampaignMap: React.FC<MissionCampaignMapProps> = ({
                             <span>{mission.gameType.replace('_', ' ')}</span>
                           </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '9px', fontWeight: 800, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.35)', padding: '1px 5px', borderRadius: '4px' }}>
-                              🎬 3D TRAILER
-                            </span>
+                            {isNextTarget && (
+                              <span style={{ fontSize: '9px', fontWeight: 900, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', padding: '1px 6px', borderRadius: '4px' }}>
+                                🚀 NEXT UP
+                              </span>
+                            )}
+                            {!isUnlocked && (
+                              <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', background: 'rgba(51, 65, 85, 0.35)', border: '1px solid rgba(71, 85, 105, 0.4)', padding: '1px 6px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                <Lock size={10} /> LOCKED
+                              </span>
+                            )}
                             <span className="campaign-year-tag">
                               {mission.year}
                               {isDone && <CheckCircle2 size={13} color="#34d399" />}
@@ -350,7 +380,7 @@ export const MissionCampaignMap: React.FC<MissionCampaignMapProps> = ({
                         </div>
 
                         <h4 className="campaign-card-title">{mission.missionName}</h4>
-                        <p className="campaign-card-program">{mission.programName}</p>
+                        <p className="campaign-card-program">Mission #{globalIndex + 1} • {mission.programName}</p>
                         <p className="campaign-card-desc">{mission.objective}</p>
                       </div>
 
@@ -366,21 +396,45 @@ export const MissionCampaignMap: React.FC<MissionCampaignMapProps> = ({
                           ))}
                         </div>
 
-                        <button
-                          onClick={() => onLaunchMission(mission.id)}
-                          className="campaign-play-btn"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            background: 'linear-gradient(135deg, #0284c7, #0369a1)',
-                            border: '1px solid #38bdf8',
-                            color: '#ffffff',
-                          }}
-                        >
-                          <Play size={12} fill="currentColor" />
-                          <span>{isDone ? '🎬 REPLAY TRAILER & 3D' : '🎬 LAUNCH (TRAILER ➔ 3D)'}</span>
-                        </button>
+                        {isUnlocked ? (
+                          <button
+                            onClick={() => onLaunchMission(mission.id)}
+                            className="campaign-play-btn"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: isDone
+                                ? 'linear-gradient(135deg, #0284c7, #0369a1)'
+                                : 'linear-gradient(135deg, #f59e0b, #d97706)',
+                              border: isDone ? '1px solid #38bdf8' : '1px solid #fbbf24',
+                              color: '#ffffff',
+                              boxShadow: isNextTarget ? '0 0 14px rgba(245, 158, 11, 0.4)' : undefined,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Play size={12} fill="currentColor" />
+                            <span>{isDone ? '🎬 REPLAY MISSION' : '🚀 LAUNCH MISSION'}</span>
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="campaign-play-btn"
+                            title={`Complete Mission #${globalIndex} (${prevMission?.missionName}) to unlock.`}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'rgba(30, 41, 59, 0.65)',
+                              border: '1px solid rgba(71, 85, 105, 0.4)',
+                              color: '#94a3b8',
+                              cursor: 'not-allowed',
+                            }}
+                          >
+                            <Lock size={12} />
+                            <span>🔒 LOCKED (BEAT #{globalIndex})</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

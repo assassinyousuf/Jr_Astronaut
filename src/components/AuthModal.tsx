@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   AlertCircle,
   KeyRound,
+  Loader2,
 } from 'lucide-react';
 import type { User, UserRole } from '../types/auth';
 import { authService } from '../utils/authService';
@@ -56,6 +57,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   // Status & Error
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
@@ -69,64 +71,85 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setIsLoading(true);
 
-    const res = authService.login({
-      identifier: username,
-      password: password,
-    });
+    try {
+      const res = await authService.login({
+        identifier: username,
+        password: password,
+      });
 
-    if (res.success && res.user) {
-      setSuccessMessage(`Welcome back, ${res.user.role === 'teacher' ? 'Instructor' : 'Cadet'} ${res.user.username}!`);
-      onAuthChange(res.user);
-      setTimeout(() => {
-        setSuccessMessage(null);
-        onClose();
-      }, 1200);
-    } else {
-      setErrorMessage(res.error || 'Authentication failed.');
+      if (res.success && res.user) {
+        setSuccessMessage(`Welcome back, ${res.user.role === 'teacher' ? 'Instructor' : 'Cadet'} ${res.user.username}!`);
+        onAuthChange(res.user);
+        setTimeout(() => {
+          setSuccessMessage(null);
+          onClose();
+        }, 1200);
+      } else {
+        setErrorMessage(res.error || 'Authentication failed.');
+      }
+    } catch {
+      setErrorMessage('Network or server error during login.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setIsLoading(true);
 
-    const res = authService.register({
-      username,
-      password,
-      role,
-      email: role === 'teacher' ? email : undefined,
-      fullName,
-      schoolOrOrg: role === 'teacher' ? schoolOrOrg : undefined,
-      avatar: selectedAvatar,
-    });
+    try {
+      const res = await authService.register({
+        username,
+        password,
+        role,
+        email: role === 'teacher' ? email : undefined,
+        fullName,
+        schoolOrOrg: role === 'teacher' ? schoolOrOrg : undefined,
+        avatar: selectedAvatar,
+      });
 
-    if (res.success && res.user) {
-      setSuccessMessage(`Security clearance approved! Logged in as ${res.user.username}.`);
-      onAuthChange(res.user);
-      setTimeout(() => {
-        setSuccessMessage(null);
-        onClose();
-      }, 1400);
-    } else {
-      setErrorMessage(res.error || 'Registration failed.');
+      if (res.success && res.user) {
+        setSuccessMessage(`Security clearance approved! Logged in as ${res.user.username}.`);
+        onAuthChange(res.user);
+        setTimeout(() => {
+          setSuccessMessage(null);
+          onClose();
+        }, 1400);
+      } else {
+        setErrorMessage(res.error || 'Registration failed.');
+      }
+    } catch {
+      setErrorMessage('Network or server error during registration.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleQuickDemoUser = (identifier: string, pass: string, label: string) => {
+  const handleQuickDemoUser = async (identifier: string, pass: string, label: string) => {
     setErrorMessage(null);
     setUsername(identifier);
     setPassword(pass);
-    const res = authService.login({ identifier, password: pass });
-    if (res.success && res.user) {
-      onAuthChange(res.user);
-      setSuccessMessage(`Logged in as ${label} (@${res.user.username})`);
-      setTimeout(() => { setSuccessMessage(null); onClose(); }, 900);
-    } else {
-      setErrorMessage(res.error || 'Login failed');
+    setIsLoading(true);
+    try {
+      const res = await authService.login({ identifier, password: pass });
+      if (res.success && res.user) {
+        onAuthChange(res.user);
+        setSuccessMessage(`Logged in as ${label} (@${res.user.username})`);
+        setTimeout(() => { setSuccessMessage(null); onClose(); }, 900);
+      } else {
+        setErrorMessage(res.error || 'Login failed');
+      }
+    } catch {
+      setErrorMessage('Login failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -699,6 +722,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 {/* Submit Button */}
                 <button
                   type="submit"
+                  disabled={isLoading}
                   style={{
                     padding: '12px',
                     borderRadius: '10px',
@@ -710,16 +734,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     fontFamily: 'var(--font-mono)',
                     fontSize: '13px',
                     fontWeight: 800,
-                    cursor: 'pointer',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? 0.75 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
                     boxShadow: role === 'teacher'
                       ? '0 4px 18px rgba(147, 51, 234, 0.4)'
                       : '0 4px 18px rgba(6, 182, 212, 0.4)',
                     marginTop: '8px',
                   }}
                 >
-                  {tab === 'login'
-                    ? (role === 'teacher' ? 'ENTER TEACHER COMMAND' : 'ENTER CADET TERMINAL')
-                    : (role === 'teacher' ? 'CREATE VERIFIED TEACHER ACCOUNT' : 'CREATE JUNIOR ASTRONAUT ACCOUNT')}
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>TRANSMITTING CREDENTIALS...</span>
+                    </>
+                  ) : tab === 'login' ? (
+                    role === 'teacher' ? 'ENTER TEACHER COMMAND' : 'ENTER CADET TERMINAL'
+                  ) : (
+                    role === 'teacher' ? 'CREATE VERIFIED TEACHER ACCOUNT' : 'CREATE JUNIOR ASTRONAUT ACCOUNT'
+                  )}
                 </button>
               </form>
 

@@ -32,10 +32,9 @@ export class ErrorBoundary extends Component<Props, State> {
         <div
           style={{
             padding: '24px',
-            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            borderRadius: '12px',
-            color: '#f8fafc',
+            backgroundColor: 'var(--color-paper-2)',
+            border: 'var(--rule-hair) solid var(--color-error)',
+            color: 'var(--color-ink)',
             textAlign: 'center',
             margin: '12px 0',
             display: 'flex',
@@ -46,21 +45,21 @@ export class ErrorBoundary extends Component<Props, State> {
         >
           <div
             style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              width: '40px',
+              height: '40px',
+              backgroundColor: 'var(--color-paper-3)',
+              border: 'var(--rule-hair) solid var(--color-error)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <AlertTriangle size={24} className="text-rose-400" />
+            <AlertTriangle size={20} color="var(--color-error)" />
           </div>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#fca5a5' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--color-error)', fontFamily: 'var(--font-display)' }}>
             {this.props.fallbackTitle || 'Subsystem Sensor Offline'}
           </h3>
-          <p style={{ fontSize: '0.82rem', color: '#94a3b8', maxWidth: '420px', margin: 0 }}>
+          <p style={{ fontSize: '12.5px', color: 'var(--color-muted)', maxWidth: '420px', margin: 0, lineHeight: 1.45 }}>
             {this.state.error?.message?.includes('WebGL')
               ? 'Hardware 3D WebGL acceleration is currently unavailable on this device or display driver. The tactical bridge is operating in 2D sensor mode.'
               : 'A telemetry subsystem encountered an unexpected state. Mission state and telemetry data remain fully intact.'}
@@ -70,42 +69,20 @@ export class ErrorBoundary extends Component<Props, State> {
             {this.props.onFallback2D && (
               <button
                 onClick={this.props.onFallback2D}
-                style={{
-                  padding: '6px 14px',
-                  backgroundColor: '#38bdf8',
-                  color: '#070a0e',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
+                className="hm-btn-primary hm-nowrap"
+                style={{ padding: '6px 14px', fontSize: '11px', fontFamily: 'var(--font-outlier)' }}
               >
                 <Eye size={14} />
-                <span>Switch to 2D Tactical View</span>
+                <span>2D Tactical View</span>
               </button>
             )}
             <button
               onClick={() => this.setState({ hasError: false, error: null })}
-              style={{
-                padding: '6px 14px',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                color: '#e2e8f0',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '6px',
-                fontWeight: 600,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
+              className="hm-btn-secondary hm-nowrap"
+              style={{ padding: '6px 14px', fontSize: '11px', fontFamily: 'var(--font-outlier)' }}
             >
               <RefreshCw size={14} />
-              <span>Retry Sensor</span>
+              <span>Retry Telemetry</span>
             </button>
           </div>
         </div>

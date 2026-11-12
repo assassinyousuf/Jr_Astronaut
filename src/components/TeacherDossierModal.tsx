@@ -8,6 +8,7 @@ interface TeacherDossierModalProps {
   onClose: () => void;
   currentUser?: User | null;
   onOpenAuth?: () => void;
+  isFullPage?: boolean;
 }
 
 export const TeacherDossierModal: React.FC<TeacherDossierModalProps> = ({
@@ -15,25 +16,31 @@ export const TeacherDossierModal: React.FC<TeacherDossierModalProps> = ({
   onClose,
   currentUser,
   onOpenAuth,
+  isFullPage = false,
 }) => {
-  if (!isOpen) return null;
+  if (!isOpen && !isFullPage) return null;
 
   const isTeacher = currentUser?.role === 'teacher';
   const allUsers = authService.getUsers();
   const enrolledCadets = allUsers.filter((u) => u.role === 'cadet');
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-container" style={{ maxWidth: '820px' }}>
-        <div className="modal-header">
-          <div className="flex items-center gap-2">
-            <GraduationCap size={22} className="text-cyan-400" />
-            <span className="modal-title">Teacher & Classroom Curriculum Dossier</span>
-          </div>
+  const dossierBody = (
+    <div
+      className={isFullPage ? "teacher-fullpage-dossier" : "modal-container"}
+      style={isFullPage ? { maxWidth: '1100px', width: '100%', margin: '0 auto', background: 'var(--color-paper-2)', border: 'var(--rule-hair)', borderRadius: '4px' } : { maxWidth: '820px' }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="modal-header">
+        <div className="flex items-center gap-2">
+          <GraduationCap size={22} className="text-cyan-400" />
+          <span className="modal-title">Teacher &amp; Classroom Curriculum Dossier</span>
+        </div>
+        {!isFullPage && (
           <button onClick={onClose} className="modal-close-btn" aria-label="Close">
             <X size={18} />
           </button>
-        </div>
+        )}
+      </div>
 
         <div className="curriculum-body">
           {/* Educator Status Bar */}
@@ -216,6 +223,19 @@ export const TeacherDossierModal: React.FC<TeacherDossierModalProps> = ({
           </div>
         </div>
       </div>
+  );
+
+  if (isFullPage) {
+    return (
+      <div className="page-teacher-dossier" style={{ minHeight: 'calc(100vh - 52px)', background: 'var(--color-space-950, #04070e)', padding: '16px 20px 48px' }}>
+        {dossierBody}
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      {dossierBody}
     </div>
   );
 };

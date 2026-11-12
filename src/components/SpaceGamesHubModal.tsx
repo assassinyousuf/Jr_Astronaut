@@ -51,10 +51,11 @@ import { MissionCinematicIntro } from './MissionCinematicIntro';
 
 export type GameSuiteMode = 'HUB' | 'MISSION_INTRO' | 'CADET_NMS' | 'OFFICER_KSP' | 'COMMANDER_SC';
 
-interface SpaceGamesHubModalProps {
+export interface SpaceGamesHubModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialGame?: GameSuiteMode;
+  isFullPage?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -119,6 +120,7 @@ export const SpaceGamesHubModal: React.FC<SpaceGamesHubModalProps> = ({
   isOpen,
   onClose,
   initialGame = 'HUB',
+  isFullPage = false,
 }) => {
   const [activeGame, setActiveGame] = useState<GameSuiteMode>(initialGame);
   const [selectedMission, setSelectedMission] = useState<NasaLevelMission>(NASA_30_MISSIONS[0]);
@@ -167,7 +169,16 @@ export const SpaceGamesHubModal: React.FC<SpaceGamesHubModalProps> = ({
 
   return (
     <div
-      style={{
+      style={isFullPage ? {
+        position: 'relative',
+        width: '100%',
+        minHeight: '760px',
+        background: 'rgba(2, 6, 23, 0.96)',
+        display: 'flex',
+        flexDirection: 'column',
+        color: '#f8fafc',
+        fontFamily: 'Inter, system-ui, sans-serif',
+      } : {
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
@@ -349,21 +360,23 @@ export const SpaceGamesHubModal: React.FC<SpaceGamesHubModalProps> = ({
             {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
 
-          <button
-            onClick={onClose}
-            style={{
-              background: 'rgba(239, 68, 68, 0.2)',
-              border: '1px solid rgba(239, 68, 68, 0.4)',
-              color: '#fca5a5',
-              borderRadius: '8px',
-              padding: '7px 14px',
-              cursor: 'pointer',
-              fontWeight: 800,
-              fontSize: '12px',
-            }}
-          >
-            ✕ CLOSE
-          </button>
+          {!isFullPage && (
+            <button
+              onClick={onClose}
+              style={{
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                color: '#fca5a5',
+                borderRadius: '8px',
+                padding: '7px 14px',
+                cursor: 'pointer',
+                fontWeight: 800,
+                fontSize: '12px',
+              }}
+            >
+              ✕ CLOSE
+            </button>
+          )}
         </div>
       </div>
 

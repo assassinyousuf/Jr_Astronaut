@@ -7,9 +7,7 @@ export function getSharedGLTFLoader(): GLTFLoader {
   if (!sharedGLTFLoader) {
     const gltfLoader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
-    // Use local Draco decoder with Google CDN fallback
-    dracoLoader.setDecoderPath('/draco/gltf/');
-    dracoLoader.setDecoderConfig({ type: 'js' });
+    dracoLoader.setDecoderPath('/draco/');
     gltfLoader.setDRACOLoader(dracoLoader);
     sharedGLTFLoader = gltfLoader;
   }

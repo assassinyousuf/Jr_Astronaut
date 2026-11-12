@@ -234,7 +234,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
 
   const handleInitiateLaunch = () => {
     soundFx.playRadioChirp();
-    setCountdown(5);
+    setCountdown(2);
     setIsCountingDown(true);
     multiplayerMissionService.startLaunchCountdown();
   };
@@ -247,12 +247,12 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
         style={{
           maxWidth: '1080px',
           maxHeight: '92vh',
-          borderColor: 'rgba(16, 185, 129, 0.45)',
-          boxShadow: '0 30px 90px rgba(0, 0, 0, 0.9), 0 0 50px rgba(16, 185, 129, 0.2)',
+          border: 'var(--rule-hair)',
+          borderRadius: 0,
           display: 'flex',
           flexDirection: 'column',
-          background: '#070c14',
-          fontFamily: 'var(--font-sans)',
+          background: 'var(--color-paper-2)',
+          fontFamily: 'var(--font-space), -apple-system, sans-serif',
         }}
       >
         {/* Top Header */}
@@ -262,50 +262,47 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '14px 22px',
-            background: 'rgba(10, 18, 28, 0.95)',
-            borderBottom: '1px solid rgba(16, 185, 129, 0.25)',
+            background: 'var(--color-paper-2)',
+            borderBottom: 'var(--rule-hair)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div
               style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
-                background: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
+                width: '36px',
+                height: '36px',
+                border: 'var(--rule-hair)',
+                background: 'var(--color-paper-3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#34d399',
-                fontSize: '1.2rem',
+                color: 'var(--color-accent-green)',
               }}
             >
-              <Users size={22} />
+              <Users size={18} />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span
                   style={{
-                    fontSize: '10px',
+                    fontSize: '9px',
                     fontFamily: 'var(--font-mono)',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    background: 'rgba(16, 185, 129, 0.2)',
-                    color: '#6ee7b7',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    padding: '1px 6px',
+                    background: 'var(--color-paper-3)',
+                    color: 'var(--color-accent-green)',
+                    border: 'var(--rule-hair)',
                   }}
                 >
                   CO-OP FLIGHT DECK
                 </span>
-                <span style={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
-                  Room: <strong style={{ color: '#34d399' }}>{room?.roomId || 'STANDBY'}</strong>
+                <span style={{ fontSize: '11px', color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}>
+                  Room: <strong style={{ color: 'var(--color-accent-green)' }}>{room?.roomId || 'STANDBY'}</strong>
                 </span>
               </div>
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#f8fafc', margin: '3px 0 0 0' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-ink)', margin: '3px 0 0 0' }}>
                 NASA Multi-Crew Mission Briefing Room
               </h2>
             </div>
@@ -322,17 +319,17 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 padding: '6px 12px',
                 fontSize: '11px',
                 fontFamily: 'var(--font-mono)',
-                fontWeight: 800,
-                borderRadius: '8px',
-                background: 'rgba(30, 41, 59, 0.8)',
-                border: '1px solid rgba(148, 163, 184, 0.3)',
-                color: '#e2e8f0',
+                fontWeight: 700,
+                borderRadius: 0,
+                background: 'var(--color-paper)',
+                border: 'var(--rule-hair)',
+                color: 'var(--color-ink)',
                 cursor: 'pointer',
               }}
               title="Copy link to invite a copilot"
             >
-              {copiedLink ? <Check size={14} style={{ color: '#34d399' }} /> : <Copy size={14} />}
-              <span>{copiedLink ? 'COPIED LINK!' : 'SHARE LINK'}</span>
+              {copiedLink ? <Check size={14} style={{ color: 'var(--color-accent-green)' }} /> : <Copy size={14} />}
+              <span>{copiedLink ? 'COPIED LINK' : 'SHARE LINK'}</span>
             </button>
 
             {/* Test 2nd Window */}
@@ -345,11 +342,11 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 padding: '6px 12px',
                 fontSize: '11px',
                 fontFamily: 'var(--font-mono)',
-                fontWeight: 800,
-                borderRadius: '8px',
-                background: 'rgba(6, 78, 59, 0.7)',
-                border: '1px solid rgba(16, 185, 129, 0.5)',
-                color: '#6ee7b7',
+                fontWeight: 700,
+                borderRadius: 0,
+                background: 'var(--color-paper-3)',
+                border: 'var(--rule-hair)',
+                color: 'var(--color-accent-green)',
                 cursor: 'pointer',
               }}
               title="Open a 2nd player window to test co-op on this machine"
@@ -364,17 +361,17 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               style={{
                 width: '32px',
                 height: '32px',
-                borderRadius: '8px',
-                background: 'rgba(30, 41, 59, 0.6)',
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-                color: '#94a3b8',
+                borderRadius: 0,
+                background: 'var(--color-paper)',
+                border: 'var(--rule-hair)',
+                color: 'var(--color-muted)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           </div>
         </div>
@@ -383,22 +380,40 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
         {isCountingDown && (
           <div
             style={{
-              background: 'linear-gradient(90deg, #b45309, #dc2626, #b45309)',
+              background: 'var(--color-accent-amber)',
               padding: '10px 20px',
               textAlign: 'center',
-              color: '#ffffff',
+              color: 'var(--color-paper)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '12px',
-              fontWeight: 800,
+              fontWeight: 700,
               fontFamily: 'var(--font-mono)',
-              fontSize: '13px',
+              fontSize: '12px',
               letterSpacing: '0.05em',
             }}
           >
-            <Radio size={18} />
-            <span>IGNITION SEQUENCE START · ALL STATIONS READY · T-MINUS {countdown} SECONDS</span>
+            <Radio size={16} />
+            <span>IGNITION SEQUENCE START / ALL STATIONS READY / T-MINUS {countdown} SECONDS</span>
+            <button
+              onClick={() => {
+                soundFx.playVictory();
+                multiplayerMissionService.launchMission();
+              }}
+              style={{
+                marginLeft: '12px',
+                padding: '3px 8px',
+                background: 'var(--color-paper)',
+                color: 'var(--color-ink)',
+                border: 'none',
+                fontWeight: 800,
+                fontSize: '10px',
+                cursor: 'pointer',
+              }}
+            >
+              LAUNCH NOW 🚀
+            </button>
           </div>
         )}
 
@@ -418,16 +433,16 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
             <div
               style={{
                 padding: '14px',
-                borderRadius: '12px',
-                background: 'rgba(13, 22, 35, 0.85)',
-                border: '1px solid rgba(30, 41, 59, 0.9)',
+                borderRadius: 0,
+                background: 'var(--color-paper)',
+                border: 'var(--rule-hair)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--color-accent-green)', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Compass size={14} /> Target Flight Mission
                 </span>
-                <span style={{ fontSize: '10.5px', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: '10.5px', color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}>
                   {isHost ? 'Host controls active flight' : 'Selected by Host'}
                 </span>
               </div>
@@ -448,9 +463,9 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                       style={{
                         textAlign: 'left',
                         padding: '10px',
-                        borderRadius: '10px',
-                        border: isSelected ? '2px solid #10b981' : '1px solid rgba(51, 65, 85, 0.6)',
-                        background: isSelected ? 'rgba(6, 78, 59, 0.5)' : 'rgba(15, 23, 42, 0.6)',
+                        borderRadius: 0,
+                        border: isSelected ? '1px solid var(--color-accent-green)' : 'var(--rule-hair)',
+                        background: isSelected ? 'var(--color-paper-3)' : 'var(--color-paper-2)',
                         cursor: isHost ? 'pointer' : 'default',
                         display: 'flex',
                         flexDirection: 'column',
@@ -458,13 +473,13 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '16px' }}>{m.icon}</span>
-                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#f1f5f9' }}>{m.name}</span>
+                        <span style={{ fontSize: '14px' }}>{m.icon}</span>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-ink)' }}>{m.name}</span>
                       </div>
-                      <p style={{ fontSize: '10.5px', color: '#94a3b8', margin: '0 0 6px 0', lineHeight: 1.35 }}>
+                      <p style={{ fontSize: '10.5px', color: 'var(--color-muted)', margin: '0 0 6px 0', lineHeight: 1.35 }}>
                         {m.summary}
                       </p>
-                      <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: '#6ee7b7', background: 'rgba(6, 78, 59, 0.4)', padding: '2px 6px', borderRadius: '4px', alignSelf: 'flex-start' }}>
+                      <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--color-accent-green)', background: 'var(--color-paper)', padding: '2px 6px', border: 'var(--rule-hair)', alignSelf: 'flex-start' }}>
                         {m.stemFocus}
                       </span>
                     </button>
@@ -477,18 +492,88 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
             <div
               style={{
                 padding: '14px',
-                borderRadius: '12px',
-                background: 'rgba(13, 22, 35, 0.85)',
-                border: '1px solid rgba(30, 41, 59, 0.9)',
+                borderRadius: 0,
+                background: 'var(--color-paper)',
+                border: 'var(--rule-hair)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#f1f5f9', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Activity size={14} style={{ color: '#34d399' }} /> Spacecraft Bridge Stations (Choose Seat)
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--color-ink)', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Activity size={14} style={{ color: 'var(--color-accent-green)' }} /> Spacecraft Bridge Stations (Choose Seat)
                 </span>
-                <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#34d399' }}>
-                  {room?.players.filter((p) => !p.isAi).length || 1} Cadets Connected
-                </span>
+                
+                {/* Couch Co-Op Split Screen Mode Toggle */}
+                <button
+                  onClick={() => {
+                    multiplayerMissionService.setSplitScreen(!room?.isSplitScreen);
+                    soundFx.playClick(1000);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 10px',
+                    fontSize: '10px',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: 800,
+                    borderRadius: 0,
+                    background: room?.isSplitScreen ? 'var(--color-accent-green)' : 'var(--color-paper-2)',
+                    color: room?.isSplitScreen ? 'var(--color-paper)' : 'var(--color-ink)',
+                    border: 'var(--rule-hair)',
+                    cursor: 'pointer',
+                  }}
+                  title="2 Players on one screen & keyboard: P1 Pilot (WASD) + P2 Systems (Arrows/Keypad)"
+                >
+                  <span>⚡</span>
+                  <span>COUCH CO-OP (SPLIT-SCREEN): {room?.isSplitScreen ? 'ON [2-PLAYER]' : 'OFF'}</span>
+                </button>
+              </div>
+
+              {/* Split Screen Explanation if Active */}
+              {room?.isSplitScreen && (
+                <div
+                  style={{
+                    marginBottom: '12px',
+                    padding: '8px 12px',
+                    background: 'var(--color-paper-3)',
+                    border: '1px solid var(--color-accent-green)',
+                    fontSize: '10.5px',
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--color-ink)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <strong>🎮 2-PLAYER LOCAL CO-OP READY:</strong> Left Pane = <strong>Commander (WASD + Space)</strong> · Right Pane = <strong>Systems Engineer (Arrow Keys + Keypad / Enter)</strong>
+                  </div>
+                  <span style={{ fontSize: '9.5px', color: 'var(--color-accent-green)', fontWeight: 700 }}>ZERO NETWORK LATENCY</span>
+                </div>
+              )}
+
+              {/* Co-Op Diagnostics & Invariants Banner */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '6px 10px',
+                  background: 'var(--color-paper-2)',
+                  border: 'var(--rule-hair)',
+                  marginBottom: '10px',
+                  fontSize: '9.5px',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--color-muted)',
+                  flexWrap: 'wrap',
+                  gap: '6px',
+                }}
+              >
+                <span>🌐 SYNC: <strong>P2P BROADCAST MESH</strong></span>
+                <span>EPOCH: <strong>#{room?.epoch || 1}</strong></span>
+                <span>DESYNC: <strong style={{ color: 'var(--color-accent-green)' }}>0.00% [LOCKED]</strong></span>
+                <span>TICK: <strong>60 HZ</strong></span>
+                <span style={{ color: 'var(--color-accent-green)', fontWeight: 700 }}>✓ 4 SUBSYSTEMS AUTHORITATIVE</span>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
@@ -502,9 +587,9 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                       key={rKey}
                       style={{
                         padding: '12px',
-                        borderRadius: '10px',
-                        background: isCurrentLocal ? 'rgba(30, 41, 59, 0.9)' : 'rgba(15, 23, 42, 0.6)',
-                        border: `1.5px solid ${isCurrentLocal ? roleData.color : 'rgba(51, 65, 85, 0.6)'}`,
+                        borderRadius: 0,
+                        background: isCurrentLocal ? 'var(--color-paper-3)' : 'var(--color-paper-2)',
+                        border: isCurrentLocal ? '1px solid var(--color-accent-green)' : 'var(--rule-hair)',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
@@ -512,71 +597,93 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                     >
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '20px' }}>{roleData.icon}</span>
+                          <span style={{ fontSize: '18px' }}>{roleData.icon}</span>
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span
                                 style={{
-                                  fontSize: '10px',
+                                  fontSize: '9px',
                                   fontFamily: 'var(--font-mono)',
-                                  fontWeight: 800,
+                                  fontWeight: 700,
                                   padding: '1px 5px',
-                                  borderRadius: '3px',
-                                  backgroundColor: `${roleData.color}25`,
-                                  color: roleData.color,
+                                  background: 'var(--color-paper)',
+                                  border: 'var(--rule-hair)',
+                                  color: 'var(--color-accent-green)',
                                 }}
                               >
                                 {roleData.code}
                               </span>
-                              <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#f8fafc' }}>{roleData.title}</span>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-ink)' }}>{roleData.title}</span>
                             </div>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginTop: '2px' }}>
+                            <span style={{ fontSize: '10px', color: 'var(--color-muted)', display: 'block', marginTop: '2px' }}>
                               {roleData.subsystem}
                             </span>
                           </div>
                         </div>
 
                         {!isCurrentLocal && (
-                          <button
-                            onClick={() => handleRoleSelect(rKey)}
-                            style={{
-                              padding: '3px 8px',
-                              fontSize: '10px',
-                              fontFamily: 'var(--font-mono)',
-                              fontWeight: 800,
-                              borderRadius: '6px',
-                              background: '#1e293b',
-                              border: `1px solid ${roleData.color}`,
-                              color: '#f1f5f9',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            TAKE SEAT
-                          </button>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              onClick={() => handleRoleSelect(rKey)}
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '10px',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 700,
+                                borderRadius: 0,
+                                background: 'var(--color-paper)',
+                                border: 'var(--rule-hair)',
+                                color: 'var(--color-ink)',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              TAKE SEAT
+                            </button>
+                            <button
+                              onClick={() => {
+                                multiplayerMissionService.toggleSlotAi(rKey);
+                                soundFx.playClick(900);
+                              }}
+                              style={{
+                                padding: '3px 6px',
+                                fontSize: '9px',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 700,
+                                borderRadius: 0,
+                                background: assignedPlayer?.isAi ? 'var(--color-paper-3)' : 'var(--color-paper)',
+                                border: 'var(--rule-hair)',
+                                color: assignedPlayer?.isAi ? 'var(--color-accent-green)' : 'var(--color-muted)',
+                                cursor: 'pointer',
+                              }}
+                              title="Toggle between NASA Autonomous AI Copilot and Open Human Cadet slot"
+                            >
+                              {assignedPlayer?.isAi ? '🤖 BOT' : '👤 OPEN'}
+                            </button>
+                          </div>
                         )}
                         {isCurrentLocal && (
-                          <span style={{ padding: '2px 6px', fontSize: '9px', fontFamily: 'var(--font-mono)', fontWeight: 800, borderRadius: '4px', background: 'rgba(16, 185, 129, 0.25)', color: '#34d399', border: '1px solid #10b981' }}>
+                          <span style={{ padding: '2px 6px', fontSize: '9px', fontFamily: 'var(--font-mono)', fontWeight: 700, borderRadius: 0, background: 'var(--color-paper)', color: 'var(--color-accent-green)', border: '1px solid var(--color-accent-green)' }}>
                             YOUR SEAT
                           </span>
                         )}
                       </div>
 
                       {/* Operator info */}
-                      <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(51, 65, 85, 0.5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
+                      <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: 'var(--rule-hair)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span>{assignedPlayer?.avatar || '🤖'}</span>
-                          <span style={{ color: isCurrentLocal ? '#34d399' : '#cbd5e1', fontWeight: 600 }}>
+                          <span style={{ color: isCurrentLocal ? 'var(--color-accent-green)' : 'var(--color-muted)', fontWeight: 600 }}>
                             {assignedPlayer ? assignedPlayer.name : 'Autonomous Copilot AI'}
                           </span>
                         </div>
-                        <span style={{ fontSize: '9.5px', fontWeight: 800, color: assignedPlayer?.isReady ? '#34d399' : '#fbbf24' }}>
+                        <span style={{ fontSize: '9.5px', fontWeight: 700, color: assignedPlayer?.isReady ? 'var(--color-accent-green)' : 'var(--color-accent-amber)' }}>
                           {assignedPlayer?.isReady ? '● GO' : '○ NO-GO'}
                         </span>
                       </div>
 
-                      <div style={{ marginTop: '6px', fontSize: '9.5px', color: '#94a3b8', background: 'rgba(15, 23, 42, 0.6)', padding: '4px 6px', borderRadius: '4px' }}>
-                        <strong style={{ color: '#e2e8f0' }}>Controls: </strong>
-                        {roleData.controls.join(' · ')}
+                      <div style={{ marginTop: '6px', fontSize: '9.5px', color: 'var(--color-muted)', background: 'var(--color-paper)', padding: '4px 6px', border: 'var(--rule-hair)' }}>
+                        <strong style={{ color: 'var(--color-ink)' }}>Controls: </strong>
+                        {roleData.controls.join(' / ')}
                       </div>
                     </div>
                   );
@@ -588,9 +695,9 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
             <div
               style={{
                 padding: '14px 18px',
-                borderRadius: '12px',
-                background: 'rgba(13, 22, 35, 0.85)',
-                border: '1px solid rgba(30, 41, 59, 0.9)',
+                borderRadius: 0,
+                background: 'var(--color-paper)',
+                border: 'var(--rule-hair)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -599,9 +706,9 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               }}
             >
               <div>
-                <div style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>MISSION READINESS</div>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34d399' }} />
+                <div style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>MISSION READINESS</div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '6px', height: '6px', backgroundColor: 'var(--color-accent-green)' }} />
                   READY FOR T-0 COUNTDOWN
                 </div>
               </div>
@@ -613,11 +720,11 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                     padding: '8px 14px',
                     fontSize: '11px',
                     fontFamily: 'var(--font-mono)',
-                    fontWeight: 800,
-                    borderRadius: '8px',
-                    background: '#1e293b',
-                    border: '1px solid #475569',
-                    color: '#e2e8f0',
+                    fontWeight: 700,
+                    borderRadius: 0,
+                    background: 'var(--color-paper-2)',
+                    border: 'var(--rule-hair)',
+                    color: 'var(--color-ink)',
                     cursor: 'pointer',
                   }}
                 >
@@ -629,14 +736,13 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                   disabled={isCountingDown}
                   style={{
                     padding: '10px 20px',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontFamily: 'var(--font-mono)',
-                    fontWeight: 900,
-                    borderRadius: '8px',
-                    background: 'linear-gradient(90deg, #10b981, #059669)',
+                    fontWeight: 700,
+                    borderRadius: 0,
+                    background: 'var(--color-accent-green)',
                     border: 'none',
-                    color: '#020617',
-                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)',
+                    color: 'var(--color-paper)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -645,7 +751,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                     textTransform: 'uppercase',
                   }}
                 >
-                  <Play size={16} fill="currentColor" />
+                  <Play size={14} fill="currentColor" />
                   INITIATE CO-OP MISSION
                 </button>
               </div>
@@ -659,9 +765,9 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               onSubmit={handleJoinByCode}
               style={{
                 padding: '10px',
-                borderRadius: '10px',
-                background: 'rgba(13, 22, 35, 0.85)',
-                border: '1px solid rgba(30, 41, 59, 0.9)',
+                borderRadius: 0,
+                background: 'var(--color-paper)',
+                border: 'var(--rule-hair)',
                 display: 'flex',
                 gap: '8px',
               }}
@@ -673,13 +779,13 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 onChange={(e) => setInputRoomCode(e.target.value.toUpperCase())}
                 style={{
                   flex: 1,
-                  background: '#030712',
-                  border: '1px solid #334155',
-                  borderRadius: '6px',
+                  background: 'var(--color-paper-2)',
+                  border: 'var(--rule-hair)',
+                  borderRadius: 0,
                   padding: '6px 10px',
                   fontSize: '11px',
                   fontFamily: 'var(--font-mono)',
-                  color: '#ffffff',
+                  color: 'var(--color-ink)',
                   outline: 'none',
                 }}
               />
@@ -687,13 +793,13 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 type="submit"
                 style={{
                   padding: '6px 12px',
-                  background: '#1e293b',
-                  border: '1px solid #475569',
-                  color: '#f1f5f9',
-                  borderRadius: '6px',
+                  background: 'var(--color-paper-3)',
+                  border: 'var(--rule-hair)',
+                  color: 'var(--color-accent-green)',
+                  borderRadius: 0,
                   fontSize: '11px',
                   fontFamily: 'var(--font-mono)',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   cursor: 'pointer',
                 }}
               >
@@ -705,20 +811,20 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
             <div
               style={{
                 padding: '14px',
-                borderRadius: '12px',
-                background: 'rgba(13, 22, 35, 0.85)',
-                border: '1px solid rgba(30, 41, 59, 0.9)',
+                borderRadius: 0,
+                background: 'var(--color-paper)',
+                border: 'var(--rule-hair)',
                 height: '380px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid rgba(51, 65, 85, 0.6)' }}>
-                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Radio size={14} /> Bridge Comms & Radio Audio
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: 'var(--rule-hair)' }}>
+                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--color-accent-green)', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Radio size={14} /> Bridge Comms &amp; Radio Audio
                 </span>
-                <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>
+                <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>
                   DSN 100% Locked
                 </span>
               </div>
@@ -737,26 +843,25 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 }}
               >
                 {room?.chat.map((msg) => {
-                  const roleColor = CREW_ROLES[msg.role]?.color || '#94a3b8';
                   return (
                     <div
                       key={msg.id}
                       style={{
                         padding: '6px 8px',
-                        borderRadius: '6px',
-                        background: msg.isSystem ? 'rgba(6, 78, 59, 0.35)' : 'rgba(15, 23, 42, 0.8)',
-                        border: `1px solid ${msg.isSystem ? 'rgba(16, 185, 129, 0.3)' : 'rgba(51, 65, 85, 0.5)'}`,
+                        borderRadius: 0,
+                        background: msg.isSystem ? 'var(--color-paper-3)' : 'var(--color-paper-2)',
+                        border: 'var(--rule-hair)',
                         lineHeight: 1.35,
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
                         <span>{msg.avatar}</span>
-                        <strong style={{ color: roleColor }}>[{msg.role}] {msg.sender}</strong>
-                        <span style={{ fontSize: '8.5px', color: '#64748b', marginLeft: 'auto' }}>
+                        <strong style={{ color: 'var(--color-accent-green)' }}>[{msg.role}] {msg.sender}</strong>
+                        <span style={{ fontSize: '9px', color: 'var(--color-muted)', marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>
                           {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                         </span>
                       </div>
-                      <div style={{ paddingLeft: '20px', color: '#cbd5e1' }}>{msg.text}</div>
+                      <div style={{ paddingLeft: '20px', color: 'var(--color-muted)' }}>{msg.text}</div>
                     </div>
                   );
                 })}
@@ -773,14 +878,14 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                       fontSize: '9.5px',
                       fontFamily: 'var(--font-mono)',
                       padding: '3px 6px',
-                      borderRadius: '4px',
-                      background: '#1e293b',
-                      border: '1px solid #475569',
-                      color: '#cbd5e1',
+                      borderRadius: 0,
+                      background: 'var(--color-paper-2)',
+                      border: 'var(--rule-hair)',
+                      color: 'var(--color-muted)',
                       cursor: 'pointer',
                     }}
                   >
-                    💬 {txt}
+                    {txt}
                   </button>
                 ))}
               </div>
@@ -794,13 +899,13 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                   onChange={(e) => setChatInput(e.target.value)}
                   style={{
                     flex: 1,
-                    background: '#030712',
-                    border: '1px solid #334155',
-                    borderRadius: '6px',
+                    background: 'var(--color-paper-2)',
+                    border: 'var(--rule-hair)',
+                    borderRadius: 0,
                     padding: '6px 10px',
                     fontSize: '11px',
                     fontFamily: 'var(--font-mono)',
-                    color: '#ffffff',
+                    color: 'var(--color-ink)',
                     outline: 'none',
                   }}
                 />
@@ -808,11 +913,11 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                   type="submit"
                   style={{
                     padding: '6px 12px',
-                    background: '#10b981',
+                    background: 'var(--color-accent-green)',
                     border: 'none',
-                    borderRadius: '6px',
-                    color: '#020617',
-                    fontWeight: 800,
+                    borderRadius: 0,
+                    color: 'var(--color-paper)',
+                    fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',

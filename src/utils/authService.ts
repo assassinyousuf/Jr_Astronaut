@@ -206,8 +206,36 @@ export const authService = {
     }
   },
 
-  // Register a new user
-  register(payload: RegisterPayload): AuthResponse {
+  // Helper to call Google Apps Script Web App (Sheet Backend)
+  async callSheetApi(payload: Record<string, unknown>): Promise<{ success: boolean; user?: any; error?: string } | null> {
+    const apiUrl = import.meta.env.VITE_GOOGLE_SHEET_API_URL;
+    if (!apiUrl) return null;
+
+    try {
+      // Use text/plain to avoid CORS preflight (OPTIONS) rejection on Google Apps Script
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        console.warn(`[Google Sheet API] HTTP status: ${response.status}`);
+        return null;
+      }
+
+      const res = await response.json();
+      return res;
+    } catch (err) {
+      console.warn('[Google Sheet API] Network or CORS error:', err);
+      return null;
+    }
+  },
+
+  // Register a new user (Syncs to Google Sheet if online + caches locally)
+  async register(payload: RegisterPayload): Promise<AuthResponse> {
     const { username, password, role, email, fullName, schoolOrOrg, avatar } = payload;
 
     const trimmedUsername = (username || '').trim();
@@ -260,17 +288,45 @@ export const authService = {
       }
     }
 
-    const newUser: User = {
-      id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    const newUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const userRole = role || 'cadet';
+    const userCoins = userRole === 'teacher' ? 9999 : 500;
+    const userRank = userRole === 'teacher' ? 'Classroom Flight Commander' : 'Junior Stargazer';
+    const userFullName = fullName?.trim() || (userRole === 'teacher' ? 'Flight Instructor' : trimmedUsername);
+
+    // Call Google Sheet API
+    const sheetRes = await this.callSheetApi({
+      action: 'register',
+      id: newUserId,
       username: trimmedUsername,
       password: password,
-      role: role,
+      role: userRole,
       email: trimmedEmail,
-      fullName: fullName?.trim() || (role === 'teacher' ? 'Flight Instructor' : trimmedUsername),
+      fullName: userFullName,
       schoolOrOrg: schoolOrOrg?.trim(),
-      avatar: avatar || (role === 'teacher' ? '👩‍🏫' : '👨‍🚀'),
-      cadetRank: role === 'teacher' ? 'Classroom Flight Commander' : 'Junior Stargazer',
-      coins: role === 'teacher' ? 9999 : 500, // New student gets 500 starting coins
+      avatar: avatar || (userRole === 'teacher' ? '👩‍🏫' : '👨‍🚀'),
+      cadetRank: userRank,
+      coins: userCoins,
+    });
+
+    if (sheetRes && !sheetRes.success) {
+      return {
+        success: false,
+        error: sheetRes.error || 'Google Sheet registration rejected.'
+      };
+    }
+
+    const newUser: User = {
+      id: sheetRes?.user?.id || newUserId,
+      username: trimmedUsername,
+      password: password,
+      role: userRole,
+      email: trimmedEmail,
+      fullName: userFullName,
+      schoolOrOrg: schoolOrOrg?.trim(),
+      avatar: avatar || (userRole === 'teacher' ? '👩‍🏫' : '👨‍🚀'),
+      cadetRank: userRank,
+      coins: userCoins,
       selectedCharacterId: 'neil_armstrong',
       unlockedCharacterIds: ['neil_armstrong', 'kalpana_chawla'],
       completedMissions: [],
@@ -285,8 +341,8 @@ export const authService = {
     return { success: true, user: newUser };
   },
 
-  // Login with Username (or Email for teachers) + Password
-  login(payload: LoginPayload): AuthResponse {
+  // Login with Username (or Email for teachers) + Password (Checks Google Sheet first, fallback local)
+  async login(payload: LoginPayload): Promise<AuthResponse> {
     const { identifier, password } = payload;
     const cleanId = (identifier || '').trim().toLowerCase();
     const cleanPass = password || '';
@@ -295,6 +351,46 @@ export const authService = {
       return { success: false, error: 'Please enter your username (or email) and password.' };
     }
 
+    // Try Google Sheet API first
+    const sheetRes = await this.callSheetApi({
+      action: 'login',
+      identifier: cleanId,
+      password: cleanPass,
+    });
+
+    if (sheetRes && sheetRes.success && sheetRes.user) {
+      const u = sheetRes.user;
+      const sheetUser: User = {
+        id: u.id || `cadet-${Date.now()}`,
+        username: u.username,
+        password: cleanPass,
+        role: u.role || 'cadet',
+        email: u.email,
+        fullName: u.fullName || u.username,
+        schoolOrOrg: u.schoolOrOrg,
+        avatar: u.avatar || (u.role === 'teacher' ? '👩‍🏫' : '👨‍🚀'),
+        cadetRank: u.cadetRank || (u.role === 'teacher' ? 'Classroom Flight Commander' : 'Junior Stargazer'),
+        coins: Number(u.coins) || (u.role === 'teacher' ? 9999 : 500),
+        selectedCharacterId: 'neil_armstrong',
+        unlockedCharacterIds: ['neil_armstrong', 'kalpana_chawla'],
+        completedMissions: [],
+        purchasedEquipments: [],
+        createdAt: u.createdAt || new Date().toISOString(),
+      };
+
+      const users = this.getUsers();
+      const existingIdx = users.findIndex((user) => user.username.toLowerCase() === sheetUser.username.toLowerCase());
+      if (existingIdx !== -1) {
+        users[existingIdx] = { ...users[existingIdx], ...sheetUser };
+      } else {
+        users.push(sheetUser);
+      }
+      this.saveUsers(users);
+      this.setCurrentUser(sheetUser);
+      return { success: true, user: sheetUser };
+    }
+
+    // If Google Sheet didn't return success or is offline/not configured, check local users
     const users = this.getUsers();
     const matchedUser = users.find((u) => {
       const matchesUsername = u.username.toLowerCase() === cleanId;
@@ -302,22 +398,25 @@ export const authService = {
       return matchesUsername || matchesEmail;
     });
 
-    if (!matchedUser) {
-      return {
-        success: false,
-        error: 'No astronaut account found matching those credentials. Please check your spelling or register.'
-      };
+    if (matchedUser) {
+      if (matchedUser.password !== cleanPass) {
+        return {
+          success: false,
+          error: 'Incorrect security password. Please try again.'
+        };
+      }
+      this.setCurrentUser(matchedUser);
+      return { success: true, user: matchedUser };
     }
 
-    if (matchedUser.password !== cleanPass) {
-      return {
-        success: false,
-        error: 'Incorrect security password. Please try again.'
-      };
+    if (sheetRes && !sheetRes.success && sheetRes.error) {
+      return { success: false, error: sheetRes.error };
     }
 
-    this.setCurrentUser(matchedUser);
-    return { success: true, user: matchedUser };
+    return {
+      success: false,
+      error: 'No astronaut account found matching those credentials. Please check your spelling or register.'
+    };
   },
 
   // Logout
