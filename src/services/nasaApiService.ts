@@ -694,3 +694,4 @@ export function getSatelliteById(id: string): EarthSatelliteData | undefined {
 export function getEarthVitalSigns(): EarthVitalSign[] {
   return NASA_EARTH_VITAL_SIGNS;
 }
+

@@ -71,3 +71,4 @@ assert.match(scienceReply, /CME-123/);
 assert.match(scienceReply, /gameplay effect is not itself a NASA measurement/);
 
 console.log('Student Mentor: supportive guidance, mission choices, NASA attribution and radiation caveats verified in Jr_Astronaut.');
+
