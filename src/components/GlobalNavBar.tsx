@@ -109,22 +109,19 @@ export const GlobalNavBar: React.FC<GlobalNavBarProps> = ({
           }}
           title="Jr_AstroCamp — Return to Home"
         >
-          <div
+          <img
+            src="/assets/brand/jr_astrocamp_logo.png"
+            alt="Jr. AstroCamp"
             style={{
               width: '32px',
               height: '32px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #0b3d91, #1e3a8a)',
-              border: '1px solid #38bdf8',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              borderRadius: '8px',
+              objectFit: 'cover',
+              border: '1px solid rgba(56, 189, 248, 0.5)',
               flexShrink: 0,
               boxShadow: '0 0 12px rgba(56, 189, 248, 0.4)',
             }}
-          >
-            <Rocket size={18} className="text-amber-400" />
-          </div>
+          />
           <div style={{ textAlign: 'left' }}>
             <div
               style={{
