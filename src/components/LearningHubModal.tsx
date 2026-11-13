@@ -56,6 +56,7 @@ interface LearningHubModalProps {
   currentUser?: any;
   onOpenCertificate?: (milestoneTitle?: string) => void;
   onOpenLeaderboard?: () => void;
+  onOpenExploreSpace?: (targetPlanet: string) => void;
 }
 
 export type HubTab = 'OR_GRAPH' | 'NOTEBOOK' | 'MODELS_3D' | 'VIDEO' | 'AUDIO' | 'COMIC' | 'BRIEFINGS' | 'CATALOG';
@@ -83,6 +84,7 @@ export const LearningHubModal: React.FC<LearningHubModalProps> = ({
   currentUser,
   onOpenCertificate,
   onOpenLeaderboard,
+  onOpenExploreSpace,
 }) => {
   if (!isOpen && !isFullPage) return null;
 
@@ -242,6 +244,7 @@ export const LearningHubModal: React.FC<LearningHubModalProps> = ({
                   setActiveDossierModuleId(moduleId);
                   setIsDossierOpen(true);
                 }}
+                onOpenExploreSpace={onOpenExploreSpace}
                 onSelectStack={(stackType, milestone) => {
                   soundFx.playClick(800);
                   if (stackType === 'video') {
@@ -880,6 +883,7 @@ export const LearningHubModal: React.FC<LearningHubModalProps> = ({
         isOpen={isDossierOpen}
         onClose={() => setIsDossierOpen(false)}
         initialModuleId={activeDossierModuleId}
+        onOpenExploreSpace={onOpenExploreSpace}
         onProceedToStacks={() => {
           setIsDossierOpen(false);
           setActiveTab('OR_GRAPH');

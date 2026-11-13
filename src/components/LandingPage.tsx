@@ -65,7 +65,7 @@ import type { User } from '../types/auth';
 import type { DifficultyMode } from '../types/game';
 import { DestinationSelectionModal } from './DestinationSelectionModal';
 
-type LearningHubTab = 'NOTEBOOK' | 'AUDIO' | 'VIDEO' | 'COMIC' | 'BRIEFINGS' | 'CATALOG';
+type LearningHubTab = 'OR_GRAPH' | 'NOTEBOOK' | 'AUDIO' | 'VIDEO' | 'COMIC' | 'BRIEFINGS' | 'CATALOG';
 
 export interface LandingPageProps {
   onEnter: () => void;
@@ -104,6 +104,7 @@ export interface LandingPageProps {
   onOpenCampaign?: () => void;
   onOpenSpaceGamesHub?: () => void;
   mode?: 'background' | 'explore';
+  initialTarget?: string;
 }
 
 // ── CELESTIAL DATA TYPES ──────────────────────────────────────────────────
@@ -1308,6 +1309,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenCampaign,
   onOpenSpaceGamesHub,
   mode = 'explore',
+  initialTarget,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
 
@@ -1472,6 +1474,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       camDistanceRef.current = 140;
     }
   }, []);
+
+  // Auto-focus celestial target when navigated with initialTarget (e.g. from Prerequisite Dossier)
+  useEffect(() => {
+    if (initialTarget) {
+      const timer = setTimeout(() => {
+        flyToTarget(initialTarget.toLowerCase());
+      }, 450);
+      return () => clearTimeout(timer);
+    }
+  }, [initialTarget, flyToTarget]);
 
   // ── RESET CAMERA VIEW ────────────────────────────────────────────────────
   const handleResetCamera = () => {
@@ -2850,6 +2862,57 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     </span>
                   </div>
                 </div>
+
+                {/* Connected Step 1 Prerequisite Badge */}
+                {'id' in selectedEntity.data && ['earth', 'moon', 'mars', 'jupiter'].includes(selectedEntity.data.id.toLowerCase()) && (
+                  <div
+                    style={{
+                      margin: '10px 14px 4px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(14, 165, 233, 0.05) 100%)',
+                      border: '1px solid rgba(56, 189, 248, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono, monospace)', color: '#38bdf8', fontWeight: 800 }}>
+                        STEP 1: PREREQUISITE BRIEFING
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#f8fafc', fontWeight: 600 }}>
+                        {selectedEntity.data.id.toLowerCase() === 'earth' && 'Milestone #1: Earth Systems & LEO'}
+                        {selectedEntity.data.id.toLowerCase() === 'moon' && 'Milestone #2: Artemis Lunar Base'}
+                        {selectedEntity.data.id.toLowerCase() === 'mars' && 'Milestone #3: Martian Entry (EDL)'}
+                        {selectedEntity.data.id.toLowerCase() === 'jupiter' && 'Milestone #4: Deep Space Cosmic Frontier'}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        soundFx.playClick(850);
+                        if (onOpenLearningHub) {
+                          onOpenLearningHub('OR_GRAPH');
+                        }
+                      }}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                        border: '1px solid #38bdf8',
+                        color: '#ffffff',
+                        fontSize: '10.5px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Dossier Stacks ➔
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Tabs Navigation */}

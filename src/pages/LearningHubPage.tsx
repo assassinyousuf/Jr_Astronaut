@@ -49,6 +49,7 @@ export const LearningHubPage: React.FC<LearningHubPageProps> = ({
       currentUser={currentUser}
       onOpenCertificate={onOpenCertificate}
       onOpenLeaderboard={onOpenLeaderboard}
+      onOpenExploreSpace={(targetPlanet) => onNavigate('explore', { target: targetPlanet })}
     />
   );
 };

@@ -8,6 +8,7 @@ import {
   SPACE_DISCOVERY_MODULES,
   type ScienceModule,
 } from '../../data/spacePlaceKnowledge';
+import { Celestial3DViewer } from './Celestial3DViewer';
 import {
   Globe,
   Compass,
@@ -23,6 +24,7 @@ import {
   ChevronRight,
   Radio,
   Zap,
+  Maximize2,
 } from 'lucide-react';
 import { soundFx } from '../../utils/audioEffects';
 
@@ -30,6 +32,7 @@ interface OuterSpaceDiscoveryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onProceedToStacks: (selectedModuleId: string) => void;
+  onOpenExploreSpace?: (targetPlanetId: string) => void;
   initialModuleId?: string;
 }
 
@@ -37,6 +40,7 @@ export const OuterSpaceDiscoveryModal: React.FC<OuterSpaceDiscoveryModalProps> =
   isOpen,
   onClose,
   onProceedToStacks,
+  onOpenExploreSpace,
   initialModuleId = 'earth-systems',
 }) => {
   const [selectedModuleId, setSelectedModuleId] = useState<string>(initialModuleId);
@@ -296,7 +300,55 @@ export const OuterSpaceDiscoveryModal: React.FC<OuterSpaceDiscoveryModalProps> =
                 <Rocket size={17} />
                 <span>CHOOSE LEARNING STACK ➔</span>
               </button>
+
+              {onOpenExploreSpace && (
+                <button
+                  onClick={() => {
+                    soundFx.playReactorStart();
+                    const planetKey = currentModule.id === 'lunar-gateway' ? 'moon'
+                      : currentModule.id === 'mars-frontier' ? 'mars'
+                      : currentModule.id === 'deep-space-frontier' ? 'jupiter'
+                      : 'earth';
+                    onClose();
+                    onOpenExploreSpace(planetKey);
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 18px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%)',
+                    border: '1.5px solid #38bdf8',
+                    color: '#38bdf8',
+                    fontWeight: 800,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    boxShadow: '0 0 20px rgba(56, 189, 248, 0.25)',
+                    transition: 'all 0.2s ease',
+                    flexShrink: 0,
+                    alignSelf: 'center',
+                  }}
+                >
+                  <Maximize2 size={16} />
+                  <span>3D SPACE EXPLORER ➔</span>
+                </button>
+              )}
             </div>
+          </div>
+
+          {/* ── 3D INTERACTIVE CELESTIAL ROTATION VIEWER ── */}
+          <div style={{ marginBottom: '22px' }}>
+            <Celestial3DViewer
+              moduleId={currentModule.id}
+              height={380}
+              onOpenFullscreenOrrery={(planetKey) => {
+                onClose();
+                if (onOpenExploreSpace) {
+                  onOpenExploreSpace(planetKey);
+                }
+              }}
+            />
           </div>
 
           {/* ── LIVE TELEMETRY STRIP ── */}

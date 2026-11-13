@@ -20,6 +20,7 @@ import {
   Globe,
   Trophy,
   Zap,
+  Compass,
 } from 'lucide-react';
 
 export interface MilestoneNode {
@@ -94,6 +95,7 @@ export const MILESTONES: MilestoneNode[] = [
 interface LearningPathGraphProps {
   currentUser: User | null;
   onOpenSpaceDossier: (moduleId: string) => void;
+  onOpenExploreSpace?: (targetPlanet: string) => void;
   onSelectStack: (stackType: 'video' | 'audio' | 'comic' | 'game', milestone: MilestoneNode) => void;
   onOpenQuiz: (quizId: string) => void;
   onOpenCertificate: (milestoneTitle: string) => void;
@@ -102,6 +104,7 @@ interface LearningPathGraphProps {
 export const LearningPathGraph: React.FC<LearningPathGraphProps> = ({
   currentUser,
   onOpenSpaceDossier,
+  onOpenExploreSpace,
   onSelectStack,
   onOpenQuiz,
   onOpenCertificate,
@@ -111,6 +114,11 @@ export const LearningPathGraph: React.FC<LearningPathGraphProps> = ({
   const activeMilestone =
     MILESTONES.find((m) => m.id === activeMilestoneId) || MILESTONES[0];
 
+  const activePlanetKey = activeMilestone.moduleId === 'lunar-gateway' ? 'moon'
+    : activeMilestone.moduleId === 'mars-frontier' ? 'mars'
+    : activeMilestone.moduleId === 'deep-space-frontier' ? 'jupiter'
+    : 'earth';
+
   const passedQuizzes = currentUser?.passedQuizzes || [];
   const completedLessons = currentUser?.completedLessonIds || [];
   const completedMilestones = currentUser?.completedMilestones || [];
@@ -119,68 +127,130 @@ export const LearningPathGraph: React.FC<LearningPathGraphProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', maxWidth: '1080px', margin: '0 auto' }}>
-      {/* ── TOP HEADER / PREREQUISITE BRIEFING NOTICE ── */}
+      {/* ── TOP HEADER / PREREQUISITE BRIEFING NOTICE (CONNECTED TO 3D SPACE EXPLORER) ── */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 20px',
-          borderRadius: '14px',
-          background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%)',
-          border: '1.5px solid rgba(56, 189, 248, 0.35)',
+          padding: '18px 22px',
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.16) 0%, rgba(15, 23, 42, 0.9) 100%)',
+          border: '1.5px solid rgba(56, 189, 248, 0.45)',
+          boxShadow: '0 8px 32px -8px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.12)',
           flexWrap: 'wrap',
-          gap: '12px',
+          gap: '14px',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Subtle background glow effect */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '-50%',
+            right: '-10%',
+            width: '280px',
+            height: '280px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', zIndex: 1 }}>
           <div
             style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '10px',
-              background: 'rgba(56, 189, 248, 0.2)',
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: 'radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(14, 165, 233, 0.12) 100%)',
+              border: '1.5px solid rgba(56, 189, 248, 0.6)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#38bdf8',
+              boxShadow: '0 0 20px rgba(56, 189, 248, 0.35)',
             }}
           >
-            <Globe size={24} />
+            <Globe size={26} />
           </div>
           <div>
-            <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono, monospace)', color: '#38bdf8', letterSpacing: '0.1em' }}>
-              STEP 1: PREREQUISITE SPACE BRIEFING
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono, monospace)', color: '#38bdf8', letterSpacing: '0.12em', fontWeight: 800 }}>
+                STEP 1: PREREQUISITE SPACE BRIEFING
+              </span>
+              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(34, 197, 94, 0.2)', border: '1px solid #22c55e', color: '#86efac', fontWeight: 800 }}>
+                ORRERY 3D READY
+              </span>
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>
+            <div style={{ fontSize: '14.5px', fontWeight: 700, color: '#f8fafc' }}>
               Read the Outer Space Knowledge Dossier before choosing your stack
+            </div>
+            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>Target World:</span>
+              <strong style={{ color: '#38bdf8' }}>
+                {activePlanetKey === 'earth' && '🌍 Planet Earth & Low Earth Orbit (LEO)'}
+                {activePlanetKey === 'moon' && '🌕 Lunar Gateway & Shackleton Cryo-Ice'}
+                {activePlanetKey === 'mars' && '🔴 Planet Mars & Jezero Crater Expedition'}
+                {activePlanetKey === 'jupiter' && '🪐 Jupiter & Deep Space Slingshots'}
+              </strong>
             </div>
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            soundFx.playClick(850);
-            onOpenSpaceDossier(activeMilestone.moduleId);
-          }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 18px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #0284c7, #0369a1)',
-            border: '1px solid #38bdf8',
-            color: '#ffffff',
-            fontWeight: 800,
-            fontSize: '12.5px',
-            cursor: 'pointer',
-            boxShadow: '0 0 15px rgba(56, 189, 248, 0.3)',
-          }}
-        >
-          <BookOpen size={15} />
-          <span>Read Space Place Dossier ➔</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', zIndex: 1 }}>
+          <button
+            onClick={() => {
+              soundFx.playClick(850);
+              onOpenSpaceDossier(activeMilestone.moduleId);
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '11px 20px',
+              borderRadius: '11px',
+              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+              border: '1.5px solid #38bdf8',
+              color: '#ffffff',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              boxShadow: '0 0 20px rgba(56, 189, 248, 0.35)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <BookOpen size={16} />
+            <span>Read Space Place Dossier ➔</span>
+          </button>
+
+          {onOpenExploreSpace && (
+            <button
+              onClick={() => {
+                soundFx.playReactorStart();
+                onOpenExploreSpace(activePlanetKey);
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '11px 18px',
+                borderRadius: '11px',
+                background: 'rgba(56, 189, 248, 0.14)',
+                border: '1.5px solid rgba(56, 189, 248, 0.45)',
+                color: '#38bdf8',
+                fontWeight: 800,
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Compass size={16} />
+              <span>Explore in 3D Orrery 🪐</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── MILESTONE SELECTOR STRIP ── */}

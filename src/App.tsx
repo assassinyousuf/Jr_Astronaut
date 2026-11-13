@@ -623,6 +623,7 @@ export const App: React.FC = () => {
       case 'explore':
         return (
           <ExploreSpacePage
+            initialTarget={params.target}
             onNavigate={navigate}
             hasSavedGame={!!savedGameInfo}
             savedGameSol={savedGameInfo?.currentSol}
@@ -895,6 +896,10 @@ export const App: React.FC = () => {
         <OuterSpaceDiscoveryModal
           isOpen={isLearningDiscoveryOpen}
           onClose={() => setIsLearningDiscoveryOpen(false)}
+          onOpenExploreSpace={(target) => {
+            setIsLearningDiscoveryOpen(false);
+            navigate('explore', { target });
+          }}
           onProceedToStacks={() => {
             setIsLearningDiscoveryOpen(false);
             navigate('learning', { tab: 'OR_GRAPH' });
