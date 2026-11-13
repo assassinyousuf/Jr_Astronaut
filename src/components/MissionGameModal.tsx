@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Award,
+  ChevronLeft,
   ChevronRight,
   Sparkles,
   Compass,
@@ -23,6 +24,7 @@ import {
   Film,
 } from 'lucide-react';
 import { MISSION_GAME_DATA, type MissionGameConfig } from '../game/missionGameData';
+import { All76MissionsRosterModal } from './All76MissionsRosterModal';
 import { startPhaserMissionGame, destroyPhaserGame } from '../game/PhaserGameManager';
 import { ThreeMissionSimulator, type AstronautAgeTier, ASTRONAUT_TIERS } from './ThreeMissionSimulator';
 import { MissionCinematicIntro } from './MissionCinematicIntro';
@@ -77,10 +79,25 @@ export const MissionGameModal: React.FC<MissionGameModalProps> = ({
     return 'cadet';
   });
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isCatalogOpen, setIsCatalogOpen] = useState<boolean>(false);
 
-  const missionIndex = MISSION_GAME_DATA.findIndex((m) => m.id === missionId);
+  const missionIndex = React.useMemo(() => {
+    if (!missionId) return 0;
+    const clean = missionId.trim().toLowerCase();
+    const idx = MISSION_GAME_DATA.findIndex((m) => {
+      const mid = m.id.toLowerCase();
+      if (mid === clean) return true;
+      if (clean.startsWith('nasa-m') && mid === clean) return true;
+      if (clean.startsWith('historic-flight-') && mid === `nasa-m${clean.replace('historic-flight-', '').padStart(3, '0')}`) return true;
+      if (!isNaN(Number(clean)) && mid === `nasa-m${clean.padStart(3, '0')}`) return true;
+      return false;
+    });
+    return idx >= 0 ? idx : 0;
+  }, [missionId]);
+
   const mission: MissionGameConfig = MISSION_GAME_DATA[missionIndex] || MISSION_GAME_DATA[0];
   const nextMission: MissionGameConfig | undefined = MISSION_GAME_DATA[missionIndex + 1];
+  const prevMission: MissionGameConfig | undefined = MISSION_GAME_DATA[missionIndex - 1];
 
   const isAlreadyCompleted = completedMissions.includes(mission.id);
 
@@ -340,8 +357,77 @@ export const MissionGameModal: React.FC<MissionGameModalProps> = ({
                 {getGameTypeIcon()}
               </div>
               <div>
-                <div className="flight-header-meta">
-                  <span>MISSION #{missionIndex + 1} OF 76 • {mission.year}</span>
+                <div className="flight-header-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <button
+                      onClick={() => {
+                        if (prevMission && onSelectNextMission) onSelectNextMission(prevMission.id);
+                      }}
+                      disabled={!prevMission}
+                      className="flight-nav-btn"
+                      title={prevMission ? `Previous Mission: ${prevMission.missionName}` : 'First mission'}
+                      style={{
+                        padding: '2px 8px',
+                        background: prevMission ? 'rgba(56, 189, 248, 0.15)' : 'rgba(100, 116, 139, 0.2)',
+                        border: '1px solid rgba(56, 189, 248, 0.3)',
+                        borderRadius: '4px',
+                        color: prevMission ? '#38bdf8' : '#64748b',
+                        cursor: prevMission ? 'pointer' : 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <ChevronLeft size={13} /> Prev
+                    </button>
+
+                    <button
+                      onClick={() => setIsCatalogOpen(true)}
+                      data-testid="header-mission-counter-btn"
+                      style={{
+                        cursor: 'pointer',
+                        background: 'rgba(56, 189, 248, 0.1)',
+                        border: '1px solid rgba(56, 189, 248, 0.35)',
+                        color: '#f8fafc',
+                        borderRadius: '4px',
+                        padding: '2px 8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        letterSpacing: '0.04em',
+                      }}
+                      title="Browse full roster of all 76 NASA missions"
+                    >
+                      <span>MISSION #{missionIndex + 1} OF 76 • {mission.year}</span>
+                      <span style={{ color: '#38bdf8', fontSize: '10px' }}>▾</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (nextMission && onSelectNextMission) onSelectNextMission(nextMission.id);
+                      }}
+                      disabled={!nextMission}
+                      className="flight-nav-btn"
+                      title={nextMission ? `Next Mission: ${nextMission.missionName}` : 'Last mission'}
+                      style={{
+                        padding: '2px 8px',
+                        background: nextMission ? 'rgba(56, 189, 248, 0.15)' : 'rgba(100, 116, 139, 0.2)',
+                        border: '1px solid rgba(56, 189, 248, 0.3)',
+                        borderRadius: '4px',
+                        color: nextMission ? '#38bdf8' : '#64748b',
+                        cursor: nextMission ? 'pointer' : 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Next <ChevronRight size={13} />
+                    </button>
+                  </div>
                   <span className="flight-program-pill">{mission.programName}</span>
                   {isAlreadyCompleted && (
                     <span className="flight-completed-pill">
@@ -354,6 +440,21 @@ export const MissionGameModal: React.FC<MissionGameModalProps> = ({
             </div>
 
             <div className="flight-header-actions">
+              <button
+                onClick={() => setIsCatalogOpen(true)}
+                data-testid="header-76-roster-btn"
+                className="flight-astro-toggle-btn"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.35), rgba(14, 165, 233, 0.2))',
+                  borderColor: '#38bdf8',
+                  color: '#e0f2fe',
+                  fontWeight: 800,
+                }}
+                title="Browse All 76 NASA Playable Missions"
+              >
+                <Layers size={14} color="#38bdf8" />
+                <span>76 Missions</span>
+              </button>
               <button
                 onClick={() => setMissionState('trailer')}
                 className="flight-astro-toggle-btn"
@@ -789,12 +890,19 @@ export const MissionGameModal: React.FC<MissionGameModalProps> = ({
                 </div>
               </div>
 
-              <div className="flight-debrief-btns">
+              <div className="flight-debrief-btns" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <button
                   onClick={handleRetry}
                   className="flight-replay-btn"
                 >
                   <RotateCcw size={14} /> Replay
+                </button>
+                <button
+                  onClick={() => setIsCatalogOpen(true)}
+                  className="flight-replay-btn"
+                  style={{ borderColor: 'rgba(56, 189, 248, 0.5)', color: '#38bdf8' }}
+                >
+                  <Layers size={14} /> All 76 Missions
                 </button>
                 {nextMission ? (
                   <button
@@ -805,10 +913,10 @@ export const MissionGameModal: React.FC<MissionGameModalProps> = ({
                   </button>
                 ) : (
                   <button
-                    onClick={onClose}
+                    onClick={() => setIsCatalogOpen(true)}
                     className="flight-next-btn"
                   >
-                    Return to Campaign Map
+                    Browse Campaign Roster
                   </button>
                 )}
               </div>
@@ -848,12 +956,13 @@ export const MissionGameModal: React.FC<MissionGameModalProps> = ({
                 </div>
               </div>
 
-              <div className="flight-debrief-btns">
+              <div className="flight-debrief-btns" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <button
-                  onClick={onClose}
+                  onClick={() => setIsCatalogOpen(true)}
                   className="flight-replay-btn"
+                  style={{ borderColor: 'rgba(56, 189, 248, 0.5)', color: '#38bdf8' }}
                 >
-                  Exit to Catalog
+                  <Layers size={14} /> Browse All 76 Missions
                 </button>
                 <button
                   onClick={handleRetry}
@@ -873,6 +982,20 @@ export const MissionGameModal: React.FC<MissionGameModalProps> = ({
           <span>76 OPERATIONAL FLIGHTS • MERCURY TO ARTEMIS</span>
         </div>
       </div>
+
+      {/* All 76 NASA Missions Roster Modal */}
+      <All76MissionsRosterModal
+        isOpen={isCatalogOpen}
+        onClose={() => setIsCatalogOpen(false)}
+        onSelectMission={(id) => {
+          if (onSelectNextMission) {
+            onSelectNextMission(id);
+          }
+          setIsCatalogOpen(false);
+        }}
+        currentMissionId={mission.id}
+        completedMissions={completedMissions}
+      />
     </div>
   );
 };

@@ -139,6 +139,7 @@ export const MissionCampaignMap: React.FC<MissionCampaignMapProps> = ({
 }) => {
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSandboxUnlocked, setIsSandboxUnlocked] = useState<boolean>(true);
 
   // Group missions into historical eras
   const eras = [
@@ -311,6 +312,28 @@ export const MissionCampaignMap: React.FC<MissionCampaignMapProps> = ({
               className="campaign-search-input"
             />
           </div>
+
+          <button
+            onClick={() => setIsSandboxUnlocked(!isSandboxUnlocked)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 700,
+              background: isSandboxUnlocked ? 'rgba(52, 211, 153, 0.15)' : 'rgba(100, 116, 139, 0.2)',
+              border: isSandboxUnlocked ? '1px solid #34d399' : '1px solid #64748b',
+              color: isSandboxUnlocked ? '#34d399' : '#94a3b8',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              fontFamily: 'inherit',
+            }}
+            title="Toggle Sandbox Mode to unlock all 76 missions for instant flight testing"
+          >
+            {isSandboxUnlocked ? '🔓 All 76 Missions Unlocked' : '🔒 Sequential Campaign Lock'}
+          </button>
         </div>
       </div>
 
@@ -335,10 +358,9 @@ export const MissionCampaignMap: React.FC<MissionCampaignMapProps> = ({
                   const isDone = completedMissions.includes(mission.id);
                   const isTeacher = currentUser?.role === 'teacher';
 
-                  // Mission 1 (index 0) is unlocked at the beginning.
-                  // Each subsequent mission unlocks one-by-one only after the prior mission is completed.
+                  // When sandbox mode is active or prior is completed, mission is unlocked
                   const isPriorCompleted = globalIndex === 0 || completedMissions.includes(MISSION_GAME_DATA[globalIndex - 1]?.id);
-                  const isUnlocked = isTeacher || isJudgeMode || isDone || isPriorCompleted;
+                  const isUnlocked = isSandboxUnlocked || isTeacher || isJudgeMode || isDone || isPriorCompleted;
                   const isNextTarget = isUnlocked && !isDone;
                   const prevMission = globalIndex > 0 ? MISSION_GAME_DATA[globalIndex - 1] : null;
 

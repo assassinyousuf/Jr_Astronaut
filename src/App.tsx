@@ -239,10 +239,15 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Listen for destination & difficulty switch in route params e.g. #/mission?dest=mars&diff=CADET
+  // Listen for destination & difficulty switch in route params e.g. #/mission?dest=mars&diff=CADET or #/campaign?game=NASA-M011
   useEffect(() => {
-    if (params.game) {
-      setActiveMissionGameId(params.game);
+    const rawMission = params.game || params.mission || params.flight || params.id;
+    if (rawMission) {
+      let resolved = rawMission;
+      if (!isNaN(Number(rawMission))) {
+        resolved = `NASA-M${rawMission.padStart(3, '0')}`;
+      }
+      setActiveMissionGameId(resolved);
     }
     if (route === 'mission') {
       if (params.dest) {
@@ -258,7 +263,7 @@ export const App: React.FC = () => {
         }
       }
     }
-  }, [route, params.dest, params.diff]);
+  }, [route, params.dest, params.diff, params.game, params.mission, params.flight, params.id]);
 
   const triggerScreenShake = () => {
     setIsShaking(true);
@@ -696,6 +701,10 @@ export const App: React.FC = () => {
             initialSimulator={params.sim}
             onNavigate={navigate}
             onCompleteRoverMission={handleCompleteRoverEVA}
+            onLaunchMission={handleLaunchMissionGame}
+            completedMissions={completedMissions}
+            currentUser={currentUser}
+            isJudgeMode={isJudgeMode}
           />
         );
 

@@ -10,6 +10,7 @@ import { BlackHoleSimulator } from '../components/BlackHoleSimulator';
 import { EarthToMoonExpeditionModal } from '../components/EarthToMoonExpeditionModal';
 import { RoverExplorationModal } from '../components/RoverExplorationModal';
 import { MoonquakeMapModal } from '../components/MoonquakeMapModal';
+import { MissionCampaignMap } from '../components/MissionCampaignMap';
 import { soundFx } from '../utils/audioEffects';
 import {
   Gamepad2,
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 
 export type SimulatorTab =
+  | 'ALL_76_MISSIONS'
   | 'LUNAR_VOYAGER'
   | 'HARDCORE_SURVIVAL'
   | 'MARS_SURVIVAL'
@@ -42,15 +44,27 @@ export interface SimulatorsHubPageProps {
   initialSimulator?: string;
   onNavigate: (route: AppRoute, params?: Record<string, string>) => void;
   onCompleteRoverMission?: (earnedScience: number, earnedXp: number, summary: string) => void;
+  onLaunchMission?: (missionId: string) => void;
+  completedMissions?: string[];
+  currentUser?: import('../types/auth').User | null;
+  isJudgeMode?: boolean;
 }
 
 export const SimulatorsHubPage: React.FC<SimulatorsHubPageProps> = ({
   initialSimulator,
   onNavigate,
   onCompleteRoverMission,
+  onLaunchMission,
+  completedMissions = [],
+  currentUser,
+  isJudgeMode,
 }) => {
   const getInitialTab = (sim?: string): SimulatorTab => {
     switch (sim) {
+      case '76-missions':
+      case 'campaign':
+      case 'all-76':
+      case 'historic': return 'ALL_76_MISSIONS';
       case 'lunar-voyager':
       case 'vab':
       case 'full-mission':
@@ -77,6 +91,13 @@ export const SimulatorsHubPage: React.FC<SimulatorsHubPageProps> = ({
   }, [initialSimulator]);
 
   const tabs: { id: SimulatorTab; label: string; icon: React.ReactNode; desc: string; tag: string }[] = [
+    {
+      id: 'ALL_76_MISSIONS',
+      label: '76 NASA Historic Missions',
+      icon: <Rocket size={16} />,
+      desc: 'Mercury to Artemis: 76 operational flight simulations with ascent, lunar landing, docking & deep space',
+      tag: '76 FLIGHTS',
+    },
     {
       id: 'LUNAR_VOYAGER',
       label: '3D Lunar Voyager & VAB',
@@ -278,6 +299,23 @@ export const SimulatorsHubPage: React.FC<SimulatorsHubPageProps> = ({
           border: '1px solid rgba(56, 189, 248, 0.25)',
           position: 'relative',
         }}>
+          {activeTab === 'ALL_76_MISSIONS' && (
+            <div style={{ padding: '16px' }}>
+              <MissionCampaignMap
+                completedMissions={completedMissions}
+                onLaunchMission={(mId) => {
+                  if (onLaunchMission) {
+                    onLaunchMission(mId);
+                  } else {
+                    onNavigate('campaign', { game: mId });
+                  }
+                }}
+                currentUser={currentUser}
+                isJudgeMode={isJudgeMode}
+              />
+            </div>
+          )}
+
           {activeTab === 'LUNAR_VOYAGER' && (
             <FullMissionLifecycleModal
               isOpen={true}

@@ -285,6 +285,27 @@ export const GlobalNavBar: React.FC<GlobalNavBarProps> = ({
                 </button>
 
                 <button
+                  onClick={() => handleNavClick('campaign')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#f8fafc',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                  }}
+                >
+                  <Rocket size={15} className="text-amber-400" />
+                  <span>76 Missions Campaign</span>
+                </button>
+
+                <button
                   onClick={() => handleNavClick('simulators')}
                   style={{
                     display: 'flex',
@@ -652,6 +673,26 @@ export const GlobalNavBar: React.FC<GlobalNavBarProps> = ({
           >
             <GraduationCap size={18} />
             <span>Cadet Academy</span>
+          </button>
+
+          <button
+            onClick={() => handleNavClick('campaign')}
+            style={{
+              padding: '12px 14px',
+              borderRadius: '12px',
+              background: '#09122a',
+              border: '1px solid #1e3a8a',
+              color: '#ffffff',
+              fontSize: '14px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              cursor: 'pointer',
+            }}
+          >
+            <Rocket size={18} className="text-amber-400" />
+            <span>76 Missions Campaign</span>
           </button>
 
           <button
