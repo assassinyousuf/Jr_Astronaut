@@ -241,6 +241,9 @@ export const App: React.FC = () => {
 
   // Listen for destination & difficulty switch in route params e.g. #/mission?dest=mars&diff=CADET
   useEffect(() => {
+    if (params.game) {
+      setActiveMissionGameId(params.game);
+    }
     if (route === 'mission') {
       if (params.dest) {
         const targetDest = params.dest.toUpperCase() === 'MARS' ? 'MARS' : 'MOON';
